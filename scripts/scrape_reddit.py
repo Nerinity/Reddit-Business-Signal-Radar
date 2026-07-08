@@ -2,7 +2,7 @@
 """Reddit raw signal scraper.
 
 This script is now window-first and parquet-first:
-  daily-live      -> reddit_json + reddit_rss over the recent live window
+  daily-live      -> reddit_rss over the recent live window
   weekly-backfill -> arctic_shift_reddit over a finalized prior week
 
 Dashboard trend windows should use published_at/event_date. collected_at and
@@ -751,7 +751,7 @@ def main() -> None:
     parser.add_argument("--mode", choices=["daily-live", "weekly-backfill", "manual"], default="manual")
     parser.add_argument("--start", required=True, help="Event window start date (YYYY-MM-DD)")
     parser.add_argument("--end", required=True, help="Event window end date, inclusive (YYYY-MM-DD)")
-    parser.add_argument("--sources", default="reddit_json,rss", help="reddit_json,rss,arctic; hn/gnews are deprecated no-ops")
+    parser.add_argument("--sources", default="rss", help="rss,arctic. reddit_json is optional and disabled by default due to frequent HTTP 403.")
     parser.add_argument("--per-sub", type=int, default=100, help="Max new records per subreddit per source")
     parser.add_argument("--max-pages-per-sort", type=int, default=3, help="Max pages per subreddit/sort")
     parser.add_argument("--sorts", default="new,hot", help="Reddit JSON/RSS sorts. Daily default avoids top.")

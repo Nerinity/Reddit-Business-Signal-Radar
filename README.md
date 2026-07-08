@@ -4,7 +4,7 @@ Long-running Reddit data product for detecting business, product, brand, and con
 
 This repository is structured as production infrastructure, not a one-off dashboard demo:
 
-- **Live collection**: Reddit JSON/RSS scans recent event-time windows every day.
+- **Live collection**: Reddit RSS scans recent event-time windows every day as a provisional signal layer.
 - **Weekly backfill**: Arctic Shift re-scans the finalized prior week after archive lag settles.
 - **Append-only raw data**: raw batches are written as parquet and never mutated in place.
 - **Observable runs**: every source/subreddit/window writes audit rows and JSON state.
@@ -26,7 +26,7 @@ tests/                   Unit and integration tests
 ## Core Commands
 
 ```bash
-python3 scripts/pipeline.py daily-live --days-back 2 --sources reddit_json,rss
+python3 scripts/pipeline.py daily-live --days-back 2 --sources rss
 python3 scripts/pipeline.py weekly-backfill --week 2026-W28 --sources arctic
 python3 scripts/pipeline.py weekly-publish --skip-scrape
 ```
@@ -38,9 +38,21 @@ python3 scripts/scrape_reddit.py \
   --mode daily-live \
   --start 2026-07-07 \
   --end 2026-07-08 \
-  --sources reddit_json,rss \
+  --sources rss \
   --per-sub 80 \
-  --max-pages-per-sort 3
+  --max-pages-per-sort 1
+```
+
+Daily example with explicit optional JSON fallback:
+
+```bash
+python3 scripts/pipeline.py daily-live \
+  --days-back 2 \
+  --sources reddit_json,rss \
+  --sorts new,hot \
+  --per-sub 80 \
+  --max-pages-per-sort 1 \
+  --refresh-legacy-csv
 ```
 
 ## Data Time Semantics
@@ -80,9 +92,18 @@ data/state/scrape_source_state.json
 
 ## Source Defaults
 
-- Daily: `reddit_json,rss`
+- Daily: `rss`
 - Weekly backfill: `arctic`
+- Optional but disabled by default due to frequent HTTP 403: `reddit_json`
 - Deprecated / not default: Hacker News, Google News
+
+## Data Source Semantics
+
+Daily live collection currently uses Reddit RSS by default because Reddit JSON endpoints frequently return HTTP 403. RSS provides lightweight, low-cost incremental coverage for recent posts and early trend detection.
+
+Weekly Arctic Shift backfill is used to recover missed posts and produce finalized weekly trend metrics.
+
+Reddit JSON collection remains implemented and available as an optional explicit source, but it is not enabled by default.
 
 ## Git Policy
 

@@ -4,12 +4,17 @@
 
 Daily:
 
-- Reddit JSON
 - Reddit RSS
 
 Weekly:
 
 - Arctic Shift
+
+## Optional Source Disabled By Default
+
+- Reddit public JSON
+
+The unauthenticated `www.reddit.com/r/{subreddit}/*.json` endpoints return broad HTTP 403 responses in the current runtime. Keep this source out of default daily collection, but preserve it as an explicit optional source so audit rows can capture access conditions and future OAuth work can reuse the connector.
 
 ## Deprecated / Optional
 

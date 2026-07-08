@@ -30,7 +30,7 @@ LOCK_FILE = STATE_DIR / "pipeline.lock"
 STATE_FILE = STATE_DIR / "pipeline_state.json"
 PUBLISH_SCRIPT = ROOT / "scripts" / "publish_streamlit_snapshot.py"
 
-DEFAULT_DAILY_SOURCES = "reddit_json,rss"
+DEFAULT_DAILY_SOURCES = "rss"
 DEFAULT_BACKFILL_SOURCES = "arctic"
 DEFAULT_DATA_WORKSPACE = Path(os.environ.get("TREND_DATA_WORKSPACE", ROOT)).expanduser()
 STREAMLIT_ARTIFACTS = [
@@ -330,12 +330,12 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Run scheduled Reddit Business Signal Radar pipeline tasks.")
     sub = parser.add_subparsers(dest="command", required=True)
 
-    daily = sub.add_parser("daily-live", help="Collect live Reddit JSON/RSS for recent event dates.")
+    daily = sub.add_parser("daily-live", help="Collect live Reddit RSS for recent event dates by default.")
     add_common_scrape_args(daily, daily=True)
     daily.add_argument("--days-back", type=int, default=2)
     daily.add_argument("--sorts", default="new,hot", help="Daily default avoids top because top can pull older posts.")
 
-    legacy_daily = sub.add_parser("daily-scrape", help="Backward-compatible alias for daily-live.")
+    legacy_daily = sub.add_parser("daily-scrape", help="Backward-compatible alias for RSS-first daily-live.")
     add_common_scrape_args(legacy_daily, daily=True)
     legacy_daily.add_argument("--days-back", type=int, default=2)
     legacy_daily.add_argument("--sorts", default="new,hot")

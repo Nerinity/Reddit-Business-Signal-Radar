@@ -11,9 +11,15 @@ state_dir = "data/state"
 dedupe_keys = ["mention_id"]
 
 [sources]
-daily_live = ["reddit_json", "reddit_rss"]
+daily_live = ["reddit_rss"]
 weekly_backfill = ["arctic"]
 deprecated_optional = ["hackernews", "google_news"]
+daily_collection_source = "rss"
+backfill_collection_source = "arctic"
+json_status = "disabled_by_default_due_to_403"
+rss_status = "active"
+last_json_status = "http_403_observed"
+last_rss_status = "active"
 
 [scheduling]
 daily_collection_cron_local = "30 7 * * *"
