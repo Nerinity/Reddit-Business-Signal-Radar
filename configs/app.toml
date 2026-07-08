@@ -1,0 +1,8 @@
+[app]
+name = "Reddit Business Signal Radar"
+dashboard_entrypoint = "apps/dashboard/streamlit_app.py"
+
+[dashboard]
+bundle_path = "data/processed/dashboard_bundle.pkl"
+manifest_path = "data/processed/dashboard_manifest.json"
+default_timezone = "America/Los_Angeles"

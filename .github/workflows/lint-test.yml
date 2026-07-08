@@ -1,0 +1,15 @@
+name: lint-test
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  python-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: python -m py_compile scripts/scrape_reddit.py scripts/pipeline.py src/signal_radar/pipeline/*.py

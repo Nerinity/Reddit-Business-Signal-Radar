@@ -1,0 +1,41 @@
+[runtime]
+default_mode = "incremental"
+timezone = "America/Los_Angeles"
+geo = "US"
+
+[storage]
+raw_dir = "data/raw"
+processed_dir = "data/processed"
+audit_dir = "data/audit"
+state_dir = "data/state"
+dedupe_keys = ["mention_id"]
+
+[sources]
+daily_live = ["reddit_json", "reddit_rss"]
+weekly_backfill = ["arctic"]
+deprecated_optional = ["hackernews", "google_news"]
+
+[scheduling]
+daily_collection_cron_local = "30 7 * * *"
+weekly_dashboard_publish_cron_local = "15 8 * * 1"
+daily_command = "python3 scripts/pipeline.py daily-live --refresh-legacy-csv"
+weekly_backfill_command = "python3 scripts/pipeline.py weekly-backfill --refresh-legacy-csv"
+weekly_publish_command = "python3 scripts/pipeline.py weekly-publish --push"
+
+[scrape.daily_live]
+days_back = 2
+sorts = ["new", "hot"]
+per_subreddit = 80
+max_pages_per_sort = 3
+safety_cap = 75000
+
+[scrape.weekly_backfill]
+source = "arctic"
+per_subreddit = 500
+max_pages_per_sort = 20
+safety_cap = 250000
+
+[monitoring]
+min_rows_per_daily_run = 100
+alert_on_empty_source = true
+alert_on_auth_failure = true

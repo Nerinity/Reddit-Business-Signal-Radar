@@ -1,0 +1,4 @@
+signal_id,signal_name,description
+S001,Product Demand,Users expressing demand, purchase intent, or recommendations
+S002,Brand Momentum,Brands repeatedly mentioned with positive or negative movement
+S003,Pain Point,Repeated complaints, unmet needs, or switching triggers

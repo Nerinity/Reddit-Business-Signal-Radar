@@ -1,0 +1,13 @@
+[trend_score]
+spike_weight = 0.25
+cross_community_weight = 0.25
+sentiment_weight = 0.25
+engagement_weight = 0.25
+
+[direction_thresholds]
+min_current_mentions = 20
+min_prior_mentions = 20
+min_rise_abs_delta = 8
+min_rise_relative_change = 0.12
+min_decline_abs_delta = 30
+min_decline_relative_change = 0.25

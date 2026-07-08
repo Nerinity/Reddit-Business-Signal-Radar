@@ -1,0 +1,6 @@
+{
+  "deprecated_optional_sources": {
+    "hackernews": "Not part of the default Reddit business signal pipeline.",
+    "google_news": "Not part of the default Reddit business signal pipeline."
+  }
+}

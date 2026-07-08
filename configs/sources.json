@@ -1,0 +1,21 @@
+{
+  "reddit": {
+    "subreddit_categories": {
+      "beauty_skincare": [
+        "SkincareAddiction",
+        "AsianBeauty",
+        "MakeupAddiction"
+      ],
+      "shopping_reviews": [
+        "BuyItForLife",
+        "AmazonFinds",
+        "Frugal"
+      ],
+      "consumer_tech": [
+        "gadgets",
+        "headphones",
+        "SmartHome"
+      ]
+    }
+  }
+}

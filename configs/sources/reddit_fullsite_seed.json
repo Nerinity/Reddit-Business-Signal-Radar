@@ -1,0 +1,5 @@
+{
+  "description": "Reserved seed config for future broader Reddit crawling.",
+  "listing_sources": ["new", "hot", "rising"],
+  "enabled": false
+}

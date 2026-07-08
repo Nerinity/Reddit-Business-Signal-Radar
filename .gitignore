@@ -1,0 +1,31 @@
+.DS_Store
+.env
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+
+# Local data and heavy artifacts
+data/raw/**
+data/processed/**
+data/audit/**
+data/state/**
+data/exports/**
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+!data/audit/.gitkeep
+!data/state/.gitkeep
+!data/exports/.gitkeep
+
+*.parquet
+*.pkl
+*.npy
+*.csv
+*.log
+
+# Keep taxonomy/config CSVs under configs versioned.
+!configs/**/*.csv
+!configs/**/*.json
+!configs/**/*.toml

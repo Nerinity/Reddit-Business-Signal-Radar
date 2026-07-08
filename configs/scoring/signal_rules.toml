@@ -1,0 +1,7 @@
+[business_signal_rules]
+event_time_field = "event_date"
+ingestion_time_field = "ingestion_date"
+
+[quality]
+min_active_days_complete_week = 6
+min_coverage_ratio = 0.75
