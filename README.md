@@ -9,6 +9,7 @@ This repository is structured as production infrastructure, not a one-off dashbo
 - **Append-only raw data**: raw batches are written as parquet and never mutated in place.
 - **Observable runs**: every source/subreddit/window writes audit rows and JSON state.
 - **Dashboard artifacts**: product apps should read prebuilt bundles, not raw crawler output.
+- **Product taxonomy**: `configs/taxonomy/product_taxonomy.csv` contains 225 active category labels; `NULL` labels are excluded.
 
 ## Repository Layout
 
