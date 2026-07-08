@@ -134,6 +134,7 @@ def scraper_cmd(
     max_pages_per_sort: int,
     sorts: str,
     safety_cap: int,
+    max_subreddits: int,
     refresh_legacy_csv: bool,
 ) -> list[str]:
     cmd = [
@@ -157,6 +158,8 @@ def scraper_cmd(
         sorts,
         "--safety-cap",
         str(safety_cap),
+        "--max-subreddits",
+        str(max_subreddits),
     ]
     if refresh_legacy_csv:
         cmd.append("--refresh-legacy-csv")
@@ -178,6 +181,7 @@ def daily_live(args: argparse.Namespace) -> None:
             max_pages_per_sort=args.max_pages_per_sort,
             sorts=args.sorts,
             safety_cap=args.safety_cap,
+            max_subreddits=args.max_subreddits,
             refresh_legacy_csv=args.refresh_legacy_csv,
         ),
         f"daily live scrape ({start} → {end})",
@@ -208,6 +212,7 @@ def weekly_backfill(args: argparse.Namespace) -> tuple[str, str, str]:
             max_pages_per_sort=args.max_pages_per_sort,
             sorts="new",
             safety_cap=args.safety_cap,
+            max_subreddits=args.max_subreddits,
             refresh_legacy_csv=args.refresh_legacy_csv,
         ),
         f"weekly Arctic backfill {week} ({start} → {end})",
@@ -261,6 +266,7 @@ def weekly_publish(args: argparse.Namespace) -> None:
             delay=args.delay,
             max_pages_per_sort=args.backfill_max_pages_per_sort,
             safety_cap=args.safety_cap,
+            max_subreddits=args.max_subreddits,
             refresh_legacy_csv=True,
         )
         _, _, backfill_week = weekly_backfill(backfill_args)
@@ -316,6 +322,7 @@ def add_common_scrape_args(parser: argparse.ArgumentParser, *, daily: bool) -> N
     parser.add_argument("--delay", type=float, default=1.5)
     parser.add_argument("--max-pages-per-sort", type=int, default=3 if daily else 20)
     parser.add_argument("--safety-cap", type=int, default=75_000 if daily else 250_000)
+    parser.add_argument("--max-subreddits", type=int, default=0, help="Debug/smoke cap on subreddit count (0 = all).")
     parser.add_argument("--refresh-legacy-csv", action="store_true", help="Refresh data/raw/scraped_2026_large.csv compatibility view.")
 
 
@@ -345,6 +352,7 @@ def main() -> None:
     weekly.add_argument("--backfill-max-pages-per-sort", type=int, default=20)
     weekly.add_argument("--delay", type=float, default=1.5)
     weekly.add_argument("--safety-cap", type=int, default=250_000)
+    weekly.add_argument("--max-subreddits", type=int, default=0, help="Debug/smoke cap on subreddit count (0 = all).")
     weekly.add_argument("--skip-scrape", action="store_true", help="Skip weekly Arctic backfill and process existing raw data.")
     weekly.add_argument("--refresh-legacy-csv", action="store_true", help="Refresh compatibility CSV even when --skip-scrape is used.")
     weekly.add_argument("--skip-forecast", action="store_true")

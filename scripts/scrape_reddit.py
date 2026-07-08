@@ -366,13 +366,18 @@ def scrape_reddit_json(
     max_pages_per_sort: int,
     request_delay: float,
     safety_cap: int,
+    max_subreddits: int = 0,
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     records: list[dict[str, Any]] = []
     audits: list[dict[str, Any]] = []
     session = requests.Session()
     session.headers.update({"User-Agent": USER_AGENT})
 
-    for category, subreddit in subreddit_order():
+    subreddits = subreddit_order()
+    if max_subreddits > 0:
+        subreddits = subreddits[:max_subreddits]
+
+    for category, subreddit in subreddits:
         if len(records) >= safety_cap:
             break
         sub_new = 0
@@ -490,6 +495,7 @@ def scrape_reddit_rss(
     sorts: list[str],
     request_delay: float,
     safety_cap: int,
+    max_subreddits: int = 0,
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     records: list[dict[str, Any]] = []
     audits: list[dict[str, Any]] = []
@@ -497,7 +503,11 @@ def scrape_reddit_rss(
     session = requests.Session()
     session.headers.update({"User-Agent": USER_AGENT})
 
-    for category, subreddit in subreddit_order():
+    subreddits = subreddit_order()
+    if max_subreddits > 0:
+        subreddits = subreddits[:max_subreddits]
+
+    for category, subreddit in subreddits:
         if len(records) >= safety_cap:
             break
         sub_new = 0
@@ -591,13 +601,18 @@ def scrape_reddit_arctic(
     max_pages_per_sort: int,
     request_delay: float,
     safety_cap: int,
+    max_subreddits: int = 0,
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     records: list[dict[str, Any]] = []
     audits: list[dict[str, Any]] = []
     session = requests.Session()
     session.headers.update({"User-Agent": USER_AGENT})
 
-    for category, subreddit in subreddit_order():
+    subreddits = subreddit_order()
+    if max_subreddits > 0:
+        subreddits = subreddits[:max_subreddits]
+
+    for category, subreddit in subreddits:
         if len(records) >= safety_cap:
             break
         audit = new_audit(
@@ -742,6 +757,7 @@ def main() -> None:
     parser.add_argument("--sorts", default="new,hot", help="Reddit JSON/RSS sorts. Daily default avoids top.")
     parser.add_argument("--delay", type=float, default=1.5, help="Delay between successful pages/feeds")
     parser.add_argument("--safety-cap", type=int, default=DEFAULT_SAFETY_CAP, help="Global max new records per run")
+    parser.add_argument("--max-subreddits", type=int, default=0, help="Debug/smoke cap on subreddit count (0 = all)")
     parser.add_argument("--run-id", default="", help="Optional explicit run id")
     parser.add_argument("--refresh-legacy-csv", action="store_true", help="Refresh data/raw/scraped_2026_large.csv compatibility view")
     args = parser.parse_args()
@@ -779,6 +795,7 @@ def main() -> None:
             max_pages_per_sort=args.max_pages_per_sort,
             request_delay=args.delay,
             safety_cap=args.safety_cap,
+            max_subreddits=args.max_subreddits,
         )
         all_records.extend(recs)
         all_audits.extend(audits)
@@ -794,6 +811,7 @@ def main() -> None:
             sorts=sorts,
             request_delay=max(args.delay, 2.0),
             safety_cap=args.safety_cap,
+            max_subreddits=args.max_subreddits,
         )
         all_records.extend(recs)
         all_audits.extend(audits)
@@ -809,6 +827,7 @@ def main() -> None:
             max_pages_per_sort=args.max_pages_per_sort,
             request_delay=args.delay,
             safety_cap=args.safety_cap,
+            max_subreddits=args.max_subreddits,
         )
         all_records.extend(recs)
         all_audits.extend(audits)
