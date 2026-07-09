@@ -9,7 +9,7 @@ This repository is structured as production infrastructure, not a one-off dashbo
 - **Append-only raw data**: raw batches are written as parquet and never mutated in place.
 - **Observable runs**: every source/subreddit/window writes audit rows and JSON state.
 - **Dashboard artifacts**: product apps should read prebuilt bundles, not raw crawler output.
-- **Product taxonomy**: `configs/taxonomy/product_taxonomy.csv` contains 225 active category labels; `NULL` labels are excluded.
+- **Product taxonomy**: `configs/taxonomy/product_taxonomy.csv` contains active category labels; `NULL` labels are excluded.
 
 ## Repository Layout
 
@@ -104,6 +104,33 @@ Daily live collection currently uses Reddit RSS by default because Reddit JSON e
 Weekly Arctic Shift backfill is used to recover missed posts and produce finalized weekly trend metrics.
 
 Reddit JSON collection remains implemented and available as an optional explicit source, but it is not enabled by default.
+
+## NLP Signal Pipeline
+
+The NLP layer turns collected Reddit posts into product-facing signal tables:
+
+```bash
+python3 scripts/run_nlp_signal_pipeline.py
+```
+
+The pipeline cleans Reddit post text, cleans internal product/category reference data, builds second-category cluster profiles, creates a whitelist brand registry, extracts tokens and phrases, runs sentiment, separates brands from product/category/need-state entities, matches posts to internal clusters, and builds a brand-to-post lookup index.
+
+Core outputs are written under `data/processed/`, including:
+
+```text
+clean_reddit_posts.parquet
+clean_internal_products.parquet
+cluster_profiles_226.parquet
+brand_registry.parquet
+entity_mentions.parquet
+cluster_assignments.parquet
+brand_post_index.parquet
+weekly_brand_metrics.parquet
+weekly_cluster_metrics.parquet
+weekly_trend_terms.parquet
+```
+
+The main product contract is that a dashboard can show whether a detected brand is an in-platform whitelist brand, attach sentiment and cluster context, and query back to the original Reddit posts mentioning that brand.
 
 ## Git Policy
 
