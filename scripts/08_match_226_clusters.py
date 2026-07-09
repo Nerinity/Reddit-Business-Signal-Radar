@@ -2,11 +2,10 @@
 from __future__ import annotations
 
 import argparse
+from datetime import datetime, timezone
 import json
 import logging
-import math
 import os
-import re
 import sys
 from collections import Counter
 from pathlib import Path
@@ -17,40 +16,48 @@ import pandas as pd
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from signal_radar.nlp.text_utils import clean_token_text, ensure_parent, parse_json_list, word_tokens
+from signal_radar.nlp.text_utils import ensure_parent, parse_json_list, word_tokens, write_json
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 log = logging.getLogger("match_clusters")
 
 
-def sentence_transformer_similarity(post_texts: list[str], cluster_texts: list[str]) -> np.ndarray | None:
+def sentence_transformer_similarity(
+    post_texts: list[str],
+    cluster_texts: list[str],
+    model_name: str,
+    offline: bool,
+) -> tuple[np.ndarray | None, str | None]:
     try:
         from sentence_transformers import SentenceTransformer  # type: ignore
 
-        os.environ.setdefault("HF_HUB_OFFLINE", "1")
+        if offline:
+            os.environ["HF_HUB_OFFLINE"] = "1"
         try:
-            model = SentenceTransformer("all-MiniLM-L6-v2", local_files_only=True)
+            model = SentenceTransformer(model_name, local_files_only=offline)
         except TypeError:
-            model = SentenceTransformer("all-MiniLM-L6-v2")
+            model = SentenceTransformer(model_name)
         cemb = model.encode(cluster_texts, normalize_embeddings=True, show_progress_bar=False)
         pemb = model.encode(post_texts, normalize_embeddings=True, show_progress_bar=False)
-        return np.asarray(pemb, dtype="float32") @ np.asarray(cemb, dtype="float32").T
+        return np.asarray(pemb, dtype="float32") @ np.asarray(cemb, dtype="float32").T, None
     except Exception as exc:
-        log.info("SentenceTransformer unavailable, using lexical fallback: %s", exc)
-        return None
+        reason = f"SentenceTransformer unavailable: {exc}"
+        log.info("%s; using lexical fallback", reason)
+        return None, reason
 
 
-def tfidf_similarity(post_texts: list[str], cluster_texts: list[str]) -> np.ndarray | None:
+def tfidf_similarity(post_texts: list[str], cluster_texts: list[str]) -> tuple[np.ndarray | None, str | None]:
     try:
         from sklearn.feature_extraction.text import TfidfVectorizer  # type: ignore
         from sklearn.metrics.pairwise import cosine_similarity  # type: ignore
 
         vectorizer = TfidfVectorizer(min_df=1, ngram_range=(1, 2), max_features=50000)
         matrix = vectorizer.fit_transform(cluster_texts + post_texts)
-        return cosine_similarity(matrix[len(cluster_texts) :], matrix[: len(cluster_texts)])
+        return cosine_similarity(matrix[len(cluster_texts) :], matrix[: len(cluster_texts)]), None
     except Exception as exc:
-        log.info("sklearn unavailable, using bag-of-words fallback: %s", exc)
-        return None
+        reason = f"sklearn unavailable: {exc}"
+        log.info("%s; using bag-of-words fallback", reason)
+        return None, reason
 
 
 def bow_similarity(post_texts: list[str], cluster_texts: list[str]) -> np.ndarray:
@@ -71,19 +78,31 @@ def bow_similarity(post_texts: list[str], cluster_texts: list[str]) -> np.ndarra
     return pmat @ cmat.T
 
 
-def build_similarity(post_texts: list[str], cluster_texts: list[str]) -> np.ndarray:
-    semantic = sentence_transformer_similarity(post_texts, cluster_texts)
+def build_similarity(post_texts: list[str], cluster_texts: list[str], model_name: str, offline: bool) -> tuple[np.ndarray, dict]:
+    semantic, st_reason = sentence_transformer_similarity(post_texts, cluster_texts, model_name, offline)
     if semantic is not None:
-        return semantic
-    sim = tfidf_similarity(post_texts, cluster_texts)
+        return semantic, {
+            "similarity_method": "sentence_transformer",
+            "embedding_model": model_name,
+            "fallback_reason": "",
+        }
+    sim, tfidf_reason = tfidf_similarity(post_texts, cluster_texts)
     if sim is not None:
-        return np.asarray(sim)
-    return bow_similarity(post_texts, cluster_texts)
+        return np.asarray(sim), {
+            "similarity_method": "tfidf",
+            "embedding_model": None,
+            "fallback_reason": st_reason or "",
+        }
+    return bow_similarity(post_texts, cluster_texts), {
+        "similarity_method": "bow",
+        "embedding_model": None,
+        "fallback_reason": "; ".join(v for v in [st_reason, tfidf_reason] if v),
+    }
 
 
 def cluster_terms(row) -> set[str]:
     terms = set(word_tokens(str(getattr(row, "cluster_name", ""))))
-    for field in ["leaf_keywords_top", "top_product_terms", "sample_product_titles"]:
+    for field in ["leaf_keywords_top", "top_product_terms", "top_product_phrases", "sample_product_titles"]:
         for item in parse_json_list(getattr(row, field, "")):
             terms.update(word_tokens(item))
     return {t for t in terms if len(t) > 2}
@@ -95,6 +114,9 @@ def main() -> None:
     parser.add_argument("--clusters", default="data/processed/cluster_profiles_226.parquet")
     parser.add_argument("--entities", default="data/processed/entity_mentions.parquet")
     parser.add_argument("--output", default="data/processed/cluster_assignments.parquet")
+    parser.add_argument("--embedding-model", default="all-MiniLM-L6-v2")
+    parser.add_argument("--offline", action="store_true")
+    parser.add_argument("--similarity-report", default="data/processed/cluster_matching_similarity_report.json")
     parser.add_argument("--top-k", type=int, default=10)
     parser.add_argument("--sample", type=int, default=0)
     args = parser.parse_args()
@@ -107,7 +129,7 @@ def main() -> None:
 
     post_texts = posts["text_for_embedding"].fillna("").astype(str).tolist()
     cluster_texts = clusters["cluster_profile_text"].fillna("").astype(str).tolist()
-    sim = build_similarity(post_texts, cluster_texts)
+    sim, similarity_report = build_similarity(post_texts, cluster_texts, args.embedding_model, args.offline)
 
     cluster_term_sets = [cluster_terms(r) for r in clusters.itertuples(index=False)]
     entity_by_post: dict[str, pd.DataFrame] = {}
@@ -122,10 +144,13 @@ def main() -> None:
         order = np.argsort(-sim[i])[:k]
         post_terms = set(word_tokens(str(getattr(post, "text_for_tokenization", ""))))
         post_entities = entity_by_post.get(mention_id, pd.DataFrame())
-        brand_cluster_ids = set()
+        primary_brand_cluster_ids = set()
+        related_brand_cluster_ids = set()
         if len(post_entities):
             brand_rows = post_entities[post_entities.get("entity_type", "") == "brand"]
-            brand_cluster_ids = {str(v) for v in brand_rows.get("matched_cluster_id", []) if str(v).strip()}
+            primary_brand_cluster_ids = {str(v) for v in brand_rows.get("matched_cluster_id", []) if str(v).strip()}
+            for value in brand_rows.get("related_cluster_ids", []):
+                related_brand_cluster_ids.update(v for v in parse_json_list(value) if str(v).strip())
 
         candidates = []
         for idx in order:
@@ -133,7 +158,13 @@ def main() -> None:
             semantic = float(sim[i, idx])
             overlap_terms = post_terms.intersection(cluster_term_sets[int(idx)])
             keyword_score = min(len(overlap_terms) / 8.0, 0.2)
-            brand_prior = 0.15 if str(c.cluster_id) in brand_cluster_ids else 0.0
+            cid = str(c.cluster_id)
+            if cid in primary_brand_cluster_ids:
+                brand_prior = 0.20
+            elif cid in related_brand_cluster_ids:
+                brand_prior = 0.10
+            else:
+                brand_prior = 0.0
             confidence = min(max(semantic, 0.0) * 0.78 + keyword_score + brand_prior, 1.0)
             candidates.append({
                 "cluster_id": str(c.cluster_id),
@@ -178,6 +209,14 @@ def main() -> None:
     alias = Path("data/processed/cluster_assignments_226.parquet")
     ensure_parent(alias)
     out.to_parquet(alias, index=False)
+    similarity_report.update({
+        "post_count": int(len(posts)),
+        "cluster_count": int(len(clusters)),
+        "top_k": int(k),
+        "output_path": args.output,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    })
+    write_json(Path(args.similarity_report), similarity_report)
     log.info("Wrote %d cluster assignments", len(out))
 
 

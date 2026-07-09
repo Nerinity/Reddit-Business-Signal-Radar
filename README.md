@@ -132,6 +132,12 @@ weekly_trend_terms.parquet
 
 The main product contract is that a dashboard can show whether a detected brand is an in-platform whitelist brand, attach sentiment and cluster context, and query back to the original Reddit posts mentioning that brand.
 
+Optional NLP dependencies are handled defensively:
+
+- If `sentence-transformers` or the configured embedding model is unavailable, cluster matching falls back to TF-IDF, then bag-of-words, and records the selected method in `data/processed/cluster_matching_similarity_report.json`.
+- If VADER is unavailable, sentiment falls back to phrase-count scoring.
+- If spaCy or `en_core_web_sm` is unavailable, tokenization and phrase extraction fall back to regex tokenization and n-grams.
+
 ## Git Policy
 
 The repository should keep code, configs, docs, and lightweight dashboard artifacts only. Large raw data, processed parquet files, embeddings, and model outputs should stay out of git unless explicitly promoted as small shareable artifacts.

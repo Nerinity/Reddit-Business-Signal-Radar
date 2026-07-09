@@ -15,11 +15,23 @@ from signal_radar.nlp.text_utils import clean_readable_text, ensure_parent, goog
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 log = logging.getLogger("brand_post_index")
+OUTPUT_COLUMNS = [
+    "brand_norm", "brand_display", "in_platform_brand", "mention_id", "title", "text_snippet",
+    "subreddit", "published_at", "url", "sentiment_label", "sentiment_compound",
+    "final_cluster_id", "final_cluster_name", "engagement_score", "context_window", "google_search_url",
+]
 
 
 def snippet(text: str, n: int = 320) -> str:
     text = clean_readable_text(text)
     return text[: n - 3].rstrip() + "..." if len(text) > n else text
+
+
+def write_empty(path: str) -> None:
+    out = pd.DataFrame(columns=OUTPUT_COLUMNS)
+    ensure_parent(Path(path))
+    out.to_parquet(path, index=False)
+    log.warning("Wrote empty brand-post index -> %s", path)
 
 
 def main() -> None:
@@ -32,6 +44,9 @@ def main() -> None:
     parser.add_argument("--sample", type=int, default=0)
     args = parser.parse_args()
 
+    if not Path(args.entities).exists():
+        write_empty(args.output)
+        return
     entities = pd.read_parquet(args.entities)
     posts = pd.read_parquet(args.posts)
     if args.sample:
@@ -45,13 +60,7 @@ def main() -> None:
     )
     brands = entities[allowed].copy()
     if brands.empty:
-        out = pd.DataFrame(columns=[
-            "brand_norm", "brand_display", "in_platform_brand", "mention_id", "title", "text_snippet",
-            "subreddit", "published_at", "url", "sentiment_label", "sentiment_compound",
-            "final_cluster_id", "final_cluster_name", "engagement_score", "context_window", "google_search_url",
-        ])
-        ensure_parent(Path(args.output))
-        out.to_parquet(args.output, index=False)
+        write_empty(args.output)
         return
 
     post_cols = ["mention_id", "title_clean", "text_for_display", "subreddit", "published_at", "url", "score", "num_comments"]
@@ -59,8 +68,14 @@ def main() -> None:
     merged = brands.merge(posts_small, on="mention_id", how="left")
     if len(sentiment):
         merged = merged.merge(sentiment[["mention_id", "sentiment_label", "sentiment_compound"]], on="mention_id", how="left")
+    else:
+        merged["sentiment_label"] = pd.NA
+        merged["sentiment_compound"] = pd.NA
     if len(clusters):
         merged = merged.merge(clusters[["mention_id", "final_cluster_id", "final_cluster_name"]], on="mention_id", how="left")
+    else:
+        merged["final_cluster_id"] = pd.NA
+        merged["final_cluster_name"] = pd.NA
 
     merged["brand_norm"] = merged["brand_norm"].where(merged["brand_norm"].astype(str).str.len() > 0, merged["entity_norm"])
     merged["brand_display"] = merged["brand_display"].where(merged["brand_display"].astype(str).str.len() > 0, merged["entity_text"])
@@ -74,15 +89,10 @@ def main() -> None:
         merged["brand_display"].map(google_brand_url),
     )
 
-    out_cols = [
-        "brand_norm", "brand_display", "in_platform_brand", "mention_id", "title", "text_snippet",
-        "subreddit", "published_at", "url", "sentiment_label", "sentiment_compound",
-        "final_cluster_id", "final_cluster_name", "engagement_score", "context_window", "google_search_url",
-    ]
-    for col in out_cols:
+    for col in OUTPUT_COLUMNS:
         if col not in merged.columns:
             merged[col] = ""
-    out = merged[out_cols].drop_duplicates(["brand_norm", "mention_id"])
+    out = merged[OUTPUT_COLUMNS].drop_duplicates(["brand_norm", "mention_id"])
     ensure_parent(Path(args.output))
     out.to_parquet(args.output, index=False)
     log.info("Wrote %d brand-post index rows", len(out))

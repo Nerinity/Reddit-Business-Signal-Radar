@@ -21,6 +21,10 @@ def run(script: str, extra: list[str] | None = None) -> None:
     subprocess.run(cmd, cwd=ROOT, check=True)
 
 
+def exists(path: str) -> bool:
+    return (ROOT / path).exists()
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Run the Reddit NLP signal pipeline.")
     parser.add_argument("--skip-cleaning", action="store_true")
@@ -29,6 +33,7 @@ def main() -> None:
     parser.add_argument("--skip-sentiment", action="store_true")
     parser.add_argument("--skip-entities", action="store_true")
     parser.add_argument("--skip-cluster-matching", action="store_true")
+    parser.add_argument("--skip-brand-index", action="store_true")
     parser.add_argument("--skip-weekly-metrics", action="store_true")
     parser.add_argument("--sample", type=int, default=0)
     args = parser.parse_args()
@@ -49,7 +54,11 @@ def main() -> None:
         run("07_extract_entities.py", sample_args)
     if not args.skip_cluster_matching:
         run("08_match_226_clusters.py", sample_args)
-    run("09_build_brand_post_index.py", sample_args)
+    if not args.skip_brand_index:
+        if args.skip_entities and not exists("data/processed/entity_mentions.parquet"):
+            log.warning("Skipping brand index because entity extraction was skipped and entity_mentions.parquet is missing")
+        else:
+            run("09_build_brand_post_index.py", sample_args)
     if not args.skip_weekly_metrics:
         run("10_build_weekly_metrics.py")
 

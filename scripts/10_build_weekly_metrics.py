@@ -48,6 +48,7 @@ def main() -> None:
     parser.add_argument("--brand-output", default="data/processed/weekly_brand_metrics.parquet")
     parser.add_argument("--cluster-output", default="data/processed/weekly_cluster_metrics.parquet")
     parser.add_argument("--terms-output", default="data/processed/weekly_trend_terms.parquet")
+    parser.add_argument("--include-unassigned", action="store_true")
     args = parser.parse_args()
 
     posts = pd.read_parquet(args.posts)
@@ -63,7 +64,10 @@ def main() -> None:
     if len(sentiment):
         base = base.merge(sentiment[["mention_id", "sentiment_label", "sentiment_compound"]], on="mention_id", how="left")
     if len(clusters):
-        base = base.merge(clusters[["mention_id", "final_cluster_id", "final_cluster_name"]], on="mention_id", how="left")
+        cluster_cols = ["mention_id", "final_cluster_id", "final_cluster_name"]
+        if "assignment_status" in clusters.columns:
+            cluster_cols.append("assignment_status")
+        base = base.merge(clusters[cluster_cols], on="mention_id", how="left")
     base = add_week(base)
     score = pd.to_numeric(base.get("score", 0), errors="coerce").fillna(0)
     comments = pd.to_numeric(base.get("num_comments", 0), errors="coerce").fillna(0)
@@ -93,7 +97,24 @@ def main() -> None:
     else:
         brand_metrics = pd.DataFrame()
 
-    cluster_metrics = base.groupby(["week_start", "final_cluster_id", "final_cluster_name"], dropna=False).agg(
+    cluster_base = base.copy()
+    for col in ["final_cluster_id", "final_cluster_name", "assignment_status"]:
+        if col not in cluster_base.columns:
+            cluster_base[col] = ""
+    cluster_base["final_cluster_id"] = cluster_base["final_cluster_id"].fillna("").astype(str)
+    cluster_base["final_cluster_name"] = cluster_base["final_cluster_name"].fillna("").astype(str)
+    if args.include_unassigned:
+        is_empty = cluster_base["final_cluster_id"].str.strip().eq("")
+        is_unassigned = cluster_base["assignment_status"].fillna("").astype(str).eq("unassigned")
+        mask = is_empty | is_unassigned
+        cluster_base.loc[mask, "final_cluster_id"] = "UNASSIGNED"
+        cluster_base.loc[mask, "final_cluster_name"] = "Unassigned / Low Confidence"
+    else:
+        cluster_base = cluster_base[cluster_base["final_cluster_id"].str.strip().ne("")]
+        if "assignment_status" in cluster_base.columns:
+            cluster_base = cluster_base[cluster_base["assignment_status"].fillna("").astype(str).ne("unassigned")]
+
+    cluster_metrics = cluster_base.groupby(["week_start", "final_cluster_id", "final_cluster_name"], dropna=False).agg(
         mentions=("mention_id", "count"),
         unique_posts=("mention_id", "nunique"),
         unique_subreddits=("subreddit", "nunique"),

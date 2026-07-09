@@ -27,6 +27,7 @@ WS_RE = re.compile(r"\s+")
 PUNCT_SPAM_RE = re.compile(r"([!?.,]){3,}")
 EMOJI_SYMBOL_RE = re.compile(r"[\U00010000-\U0010ffff]", flags=re.UNICODE)
 WORD_RE = re.compile(r"[A-Za-z][A-Za-z0-9'&+-]*")
+ALNUM_RE = re.compile(r"[a-z0-9]+")
 
 DELETED_VALUES = {"[deleted]", "[removed]", "deleted", "removed", "nan", "none", "null"}
 BOT_AUTHOR_RE = re.compile(r"bot$|automod|auto[_-]?moderator|moderator", re.I)
@@ -58,6 +59,11 @@ def normalize_unicode(value: object) -> str:
     return text
 
 
+def ascii_fold(value: object) -> str:
+    text = normalize_unicode(value)
+    return unicodedata.normalize("NFKD", text).encode("ascii", "ignore").decode("ascii")
+
+
 def strip_markup(text: str, *, preserve_subreddit_name: bool = True) -> str:
     text = normalize_unicode(text)
     text = html.unescape(text)
@@ -83,8 +89,14 @@ def clean_readable_text(text: object) -> str:
 
 
 def clean_token_text(text: object) -> str:
-    text = clean_readable_text(text).lower()
+    text = ascii_fold(clean_readable_text(text)).lower()
     text = re.sub(r"[^a-z0-9\s'&+-]", " ", text)
+    return WS_RE.sub(" ", text).strip()
+
+
+def normalize_match_text(text: object) -> str:
+    text = ascii_fold(clean_readable_text(text)).lower()
+    text = re.sub(r"[^a-z0-9]+", " ", text)
     return WS_RE.sub(" ", text).strip()
 
 
@@ -94,7 +106,7 @@ def content_hash(*parts: object) -> str:
 
 
 def normalize_brand(value: object) -> str:
-    text = normalize_unicode(value).strip()
+    text = ascii_fold(value).strip()
     text = TRADEMARK_RE.sub("", text)
     text = re.sub(r"\([^)]*\)", " ", text)
     text = CORPORATE_SUFFIX_RE.sub(" ", text)

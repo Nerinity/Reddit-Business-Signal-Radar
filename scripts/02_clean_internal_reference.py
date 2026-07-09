@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import logging
+import re
 import sys
 from pathlib import Path
 
@@ -14,6 +15,7 @@ sys.path.insert(0, str(ROOT / "src"))
 from signal_radar.nlp.text_utils import (
     brand_display,
     clean_readable_text,
+    clean_token_text,
     ensure_parent,
     json_list,
     normalize_brand,
@@ -41,10 +43,43 @@ def get_col(df: pd.DataFrame, *names: str) -> pd.Series:
 
 def clean_product_name(value: object) -> str:
     text = clean_readable_text(value)
-    low = text.lower()
     for phrase in MARKETING_NOISE:
-        low = low.replace(phrase, " ")
-    return clean_readable_text(low)
+        text = re.sub(re.escape(phrase), " ", text, flags=re.I)
+    return clean_readable_text(text)
+
+
+def write_brand_cluster_prior(products: pd.DataFrame, path: Path, top_n: int = 5) -> None:
+    valid = products[
+        products["is_valid_product"]
+        & products["brand_norm"].str.strip().ne("")
+        & products["cluster_id"].str.strip().ne("")
+    ].copy()
+    if valid.empty:
+        out = pd.DataFrame(columns=[
+            "brand_norm", "brand_display", "cluster_id", "cluster_name",
+            "product_count", "cluster_share", "is_primary_cluster",
+        ])
+    else:
+        counts = (
+            valid.groupby(["brand_norm", "cluster_id", "cluster_name"], dropna=False)
+            .agg(
+                brand_display=("brand_display", lambda s: next((v for v in s.astype(str) if v.strip()), "")),
+                product_count=("row_id", "count"),
+            )
+            .reset_index()
+            .sort_values(["brand_norm", "product_count"], ascending=[True, False])
+        )
+        totals = counts.groupby("brand_norm")["product_count"].transform("sum")
+        counts["cluster_share"] = counts["product_count"] / totals
+        counts["rank"] = counts.groupby("brand_norm")["product_count"].rank(method="first", ascending=False)
+        counts["is_primary_cluster"] = counts["rank"].eq(1)
+        out = counts[counts["rank"].le(top_n)].drop(columns=["rank"])
+        out = out[[
+            "brand_norm", "brand_display", "cluster_id", "cluster_name",
+            "product_count", "cluster_share", "is_primary_cluster",
+        ]]
+    ensure_parent(path)
+    out.to_parquet(path, index=False)
 
 
 def main() -> None:
@@ -52,6 +87,7 @@ def main() -> None:
     parser.add_argument("--input", default="data/raw/internal_product_category_examples.csv")
     parser.add_argument("--output", default="data/processed/clean_internal_products.parquet")
     parser.add_argument("--report", default="data/processed/clean_internal_products_quality_report.json")
+    parser.add_argument("--brand-prior-output", default="data/processed/brand_cluster_prior.parquet")
     parser.add_argument("--sample", type=int, default=0)
     args = parser.parse_args()
 
@@ -81,6 +117,7 @@ def main() -> None:
     out["leaf_keywords_clean"] = [json_list(split_keywords(v)) for v in out["leaf_category_name_raw"]]
     out["product_name_raw"] = product_raw.fillna("").astype(str)
     out["product_name_clean"] = out["product_name_raw"].map(clean_product_name)
+    out["product_name_norm"] = out["product_name_clean"].map(clean_token_text)
     out["brand_name_raw"] = brand_raw.fillna("").astype(str)
     out["brand_display"] = out["brand_name_raw"].map(brand_display)
     out["brand_norm"] = out["brand_name_raw"].map(normalize_brand)
@@ -98,6 +135,7 @@ def main() -> None:
     ]
     ensure_parent(Path(args.output))
     out.to_parquet(args.output, index=False)
+    write_brand_cluster_prior(out, Path(args.brand_prior_output))
 
     valid = out[out["is_valid_product"]]
     counts = valid.groupby(["cluster_id", "cluster_name"]).size().reset_index(name="product_count")

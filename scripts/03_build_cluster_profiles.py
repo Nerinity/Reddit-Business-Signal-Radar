@@ -12,7 +12,7 @@ import pandas as pd
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from signal_radar.nlp.text_utils import ensure_parent, json_list, parse_json_list, word_tokens
+from signal_radar.nlp.text_utils import ensure_parent, json_list, ngrams, parse_json_list, word_tokens
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 log = logging.getLogger("build_cluster_profiles")
@@ -24,6 +24,26 @@ def top_terms(texts: list[str], n: int = 30) -> list[str]:
     for text in texts:
         c.update(t for t in word_tokens(text) if len(t) > 2 and t not in stop)
     return [k for k, _ in c.most_common(n)]
+
+
+def top_phrases(texts: list[str], leaf_keywords: list[str], n: int = 40) -> list[str]:
+    stop = {
+        "the", "and", "for", "with", "from", "that", "this", "your", "you", "are",
+        "product", "item", "new", "hot", "best", "sale", "free", "shipping",
+    }
+    noise = {"high quality", "best seller", "free shipping", "hot sale"}
+    counter = Counter()
+    for phrase in leaf_keywords:
+        toks = [t for t in word_tokens(phrase) if t not in stop]
+        if len(toks) >= 2:
+            counter[" ".join(toks)] += 3
+    for text in texts:
+        toks = [t for t in word_tokens(text) if len(t) > 1 and t not in stop]
+        for size in (2, 3):
+            for phrase in ngrams(toks, size):
+                if phrase not in noise and any(ch.isalpha() for ch in phrase):
+                    counter[phrase] += 1
+    return [k for k, _ in counter.most_common(n)]
 
 
 def main() -> None:
@@ -47,6 +67,10 @@ def main() -> None:
         samples = grp["product_name_clean"].dropna().astype(str).drop_duplicates().head(args.sample_products).tolist()
         terms = top_terms(samples + grp["second_category_name_clean"].astype(str).head(100).tolist())
         leaf_top = [k for k, _ in leaf_counter.most_common(30)]
+        phrases = top_phrases(
+            grp["product_name_clean"].dropna().astype(str).head(300).tolist(),
+            leaf_top,
+        )
         cluster_name = cname.iloc[0] if len(cname) else str(cid)
         first_name = first.iloc[0] if len(first) else ""
         rows.append({
@@ -57,6 +81,7 @@ def main() -> None:
             "top_brands": json_list(brands),
             "sample_product_titles": json_list(samples),
             "top_product_terms": json_list(terms),
+            "top_product_phrases": json_list(phrases),
             "product_count": int(len(grp)),
             "cluster_profile_text": (
                 f"Cluster: {cluster_name}.\n"
@@ -64,7 +89,8 @@ def main() -> None:
                 f"Leaf keywords: {', '.join(leaf_top[:20])}.\n"
                 f"Representative brands: {', '.join(brands[:15])}.\n"
                 f"Representative products: {', '.join(samples[:8])}.\n"
-                f"Common product terms: {', '.join(terms[:20])}."
+                f"Common product terms: {', '.join(terms[:20])}.\n"
+                f"Common product phrases: {', '.join(phrases[:20])}."
             ),
             "low_sample_cluster": bool(len(grp) < 30),
         })
