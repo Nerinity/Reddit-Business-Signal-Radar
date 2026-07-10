@@ -110,10 +110,31 @@ Reddit JSON collection remains implemented and available as an optional explicit
 The NLP layer turns collected Reddit posts into product-facing signal tables:
 
 ```bash
-python3 scripts/run_nlp_signal_pipeline.py
+python3 scripts/run_nlp_signal_pipeline.py --reddit-sample 5000
 ```
 
-The pipeline cleans Reddit post text, cleans internal product/category reference data, builds second-category cluster profiles, creates a whitelist brand registry, extracts tokens and phrases, runs sentiment, separates brands from product/category/need-state entities, matches posts to internal clusters, and builds a brand-to-post lookup index.
+`--reddit-sample` caps Reddit posts only, for smoke tests. It never truncates brand or product
+reference data — those default to building in full, and have their own `--brand-sample` /
+`--product-sample` debug caps if you explicitly want a smaller reference build.
+
+The pipeline cleans Reddit post text, cleans internal product/category reference data, builds second-category cluster profiles, creates a brand registry, extracts tokens and phrases, runs sentiment, separates brands from product/category/need-state entities, matches posts to internal clusters, builds a brand-to-post lookup index, and rolls everything up into weekly cluster-level discussion and brand tables.
+
+### Brand sources
+
+Two files feed the brand registry, at different confidence levels:
+
+```text
+data/raw/brand_whitelist.csv                high-confidence, manually approved brand list
+data/raw/Brand List Available全域.xlsx      broader full-domain known brand catalog (unvetted, ~100k rows)
+```
+
+`brand_registry.parquet` unifies both without collapsing the distinction:
+
+- `is_whitelist_brand=True` — approved platform brand (`review_status="approved"`, matched at confidence 1.0)
+- `is_catalog_brand=True, is_whitelist_brand=False` — catalog-only (`review_status="catalog_observed"`, matched at confidence 0.85)
+- both flags `False` — not in either source; Reddit regex/context candidates that match neither stay out of the registry entirely as `entity_type="unknown_candidate"` (confidence 0.45)
+
+The catalog is too large (100k rows) to hand-curate a denylist for the way `configs/taxonomy/brand_denylist.csv` does for the 500-row whitelist, and it turns out to contain large amounts of ordinary English words/phrases filed as `brand_name` ("Monday", "Keep", "Social Media" are literal rows). `04_build_brand_registry.py` filters stopword-only phrases and, where `wordfreq` is installed, corpus-frequency-common phrases before they ever reach the registry; matching in `07_extract_entities.py` additionally requires purchase/brand context for single-word catalog hits. Expect some residual noise in `catalog_known_brand` — it is a lower-confidence tier by design, not a bug when it shows up.
 
 Core outputs are written under `data/processed/`, including:
 
@@ -122,15 +143,33 @@ clean_reddit_posts.parquet
 clean_internal_products.parquet
 cluster_profiles_226.parquet
 brand_registry.parquet
+brand_alias_lookup.parquet
+brand_source_quality_report.json
 entity_mentions.parquet
-cluster_assignments.parquet
+cluster_assignments_226.parquet
 brand_post_index.parquet
 weekly_brand_metrics.parquet
 weekly_cluster_metrics.parquet
 weekly_trend_terms.parquet
+weekly_cluster_discussion_terms.parquet
+weekly_cluster_brand_mentions.parquet
+high_precision_cluster_posts.parquet
 ```
 
-The main product contract is that a dashboard can show whether a detected brand is an in-platform whitelist brand, attach sentiment and cluster context, and query back to the original Reddit posts mentioning that brand.
+Table roles:
+
+- `cluster_assignments_226.parquet` — post-to-cluster assignment, with `assignment_confidence`, the legacy `assignment_status` (confident/uncertain/unassigned, used for high-precision evidence), and `cluster_usage_tier` (strong_match/usable_match/weak_match/unassigned, the more permissive dimension downstream cluster intelligence should gate on).
+- `brand_registry.parquet` — unified brand registry across both source files; see "Brand sources" above.
+- `brand_alias_lookup.parquet` — canonical alias-matching table (`alias_norm` → `brand_norm`), `source` ∈ {whitelist, catalog, manual_alias}.
+- `entity_mentions.parquet` — post-level extracted brands, product phrases, need states, and non-whitelist candidates. Its `matched_cluster_id`/`matched_cluster_name` is a brand's static registry home cluster, unrelated to what the post is actually about — do not use it as a dashboard cluster filter. `brand_signal_type` (confirmed_whitelist_brand / catalog_known_brand / candidate_non_whitelist_brand) carries the confidence tier per mention.
+- `weekly_cluster_discussion_terms.parquet` — canonical source for "what is this cluster discussing": by-cluster keyword/topic/need-state frequency, always keyed off a post's own `final_cluster_id`.
+- `weekly_cluster_brand_mentions.parquet` — canonical source for "which brands show up in this cluster": approved platform brands, known catalog brands, and non-whitelist Reddit candidates, kept as separate `brand_signal_type` values, never merged.
+- `high_precision_cluster_posts.parquet` — `assignment_status = confident` posts only. Useful as spot-check evidence; not the source for cluster-level discussion intelligence, which would starve almost empty under a confident-only gate.
+- `weekly_cluster_metrics.parquet` — cluster-level post volume and sentiment overview (not keyword/brand-level).
+- `weekly_brand_metrics.parquet` — global brand overview, not filtered by cluster.
+- `weekly_trend_terms.parquet` — global trend term view only; not the source for cluster filtering.
+
+The main product contract is that a dashboard can show whether a detected brand is an approved platform brand, a known catalog brand, or an emerging Reddit-only candidate, attach sentiment and cluster context, query back to the original Reddit posts mentioning it, and for any given cluster surface what people are discussing and what they like/dislike.
 
 Optional NLP dependencies are handled defensively:
 

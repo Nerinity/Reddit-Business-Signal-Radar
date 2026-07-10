@@ -29,10 +29,17 @@ BRAND_CONTEXT_RE = re.compile(
     r"\b(bought|ordered|recommend|recommended|worth it|vs|dupe|alternative|broke|returned|review|from|brand)\b",
     re.I,
 )
+WORD_BOUNDARY_RE = re.compile(r"[A-Za-z0-9'&+\-]+")
 ALLCAPS_RE = re.compile(r"\b[A-Z][A-Z0-9&+-]{1,10}\b")
 CAMEL_RE = re.compile(r"\b[A-Z][a-z]+[A-Z][A-Za-z0-9]+\b")
-TITLE_PHRASE_RE = re.compile(r"\b[A-Z][a-z]{2,}(?:\s+[A-Z][a-z]{2,}){0,2}\b")
+# TITLE_PHRASE_RE requires at least two consecutive capitalized words (e.g. "Louis Vuitton
+# Keepall"). A single title-case word is far too weak a signal on its own -- it matches any
+# capitalized common noun -- so it is deliberately excluded here (see the single-word guard
+# below, which also applies to QUOTE_RE for the same reason). ALLCAPS_RE and CAMEL_RE remain
+# valid as single tokens because that casing pattern is itself a strong brand-like signal.
+TITLE_PHRASE_RE = re.compile(r"\b[A-Z][a-z]{2,}(?:\s+[A-Z][a-z]{2,}){1,2}\b")
 QUOTE_RE = re.compile(r"['\"]([^'\"]{3,40})['\"]")
+WEAK_SINGLE_WORD_SOURCES = {"regex_title", "regex_quote"}
 
 NEED_STATES = [
     "worth it", "dupe", "alternative", "under desk", "sensitive skin", "travel friendly",
@@ -74,11 +81,43 @@ def find_alias_matches(text_original: str, text_norm: str, alias_text: str, alia
     return matches
 
 
+def match_catalog_ngrams(text: str, catalog_norm_to_display: dict[str, str], skip_norms: set[str], max_n: int = 3):
+    """Hash-lookup matcher for the full-domain catalog (tens of thousands of brands).
+
+    The whitelist path above can afford a per-alias regex scan because it only has a few
+    hundred entries. At catalog scale that would mean tens of thousands of regex scans per
+    post, so instead this tokenizes the post once and checks each 1-3 word window against a
+    brand_norm hash set -- O(text length) per post rather than O(brand count x text length).
+    Longest windows are matched first and claim their tokens so "Louis Vuitton" doesn't also
+    fire separate single-word matches on "Louis" and "Vuitton" if both happen to be in the catalog.
+    """
+    tokens = list(WORD_BOUNDARY_RE.finditer(text))
+    n_tokens = len(tokens)
+    claimed = [False] * n_tokens
+    matches = []
+    for n in range(max_n, 0, -1):
+        for i in range(n_tokens - n + 1):
+            if any(claimed[i:i + n]):
+                continue
+            start = tokens[i].start()
+            end = tokens[i + n - 1].end()
+            span_text = text[start:end]
+            span_norm = normalize_brand(span_text)
+            if not span_norm or len(span_norm) < 3 or span_norm in skip_norms:
+                continue
+            display = catalog_norm_to_display.get(span_norm)
+            if display:
+                matches.append((start, end, span_text, span_norm, display))
+                for k in range(i, i + n):
+                    claimed[k] = True
+    return matches
+
+
 def add_entity(rows: list[dict], *, post, text: str, entity_text: str, entity_type: str, confidence: float,
                source: str, is_brand: bool = False, in_platform_brand: bool = False,
                brand_display: str = "", brand_norm: str = "", start: int = -1, end: int = -1,
                review_status: str = "approved", cluster_id: str = "", cluster_name: str = "",
-               related_cluster_ids: str = "[]") -> None:
+               related_cluster_ids: str = "[]", brand_signal_type: str = "") -> None:
     if not entity_text.strip():
         return
     if start < 0:
@@ -92,6 +131,7 @@ def add_entity(rows: list[dict], *, post, text: str, entity_text: str, entity_ty
         "entity_type": entity_type,
         "is_brand": bool(is_brand),
         "in_platform_brand": bool(in_platform_brand),
+        "brand_signal_type": brand_signal_type,
         "brand_display": brand_display,
         "brand_norm": brand_norm,
         "confidence": float(confidence),
@@ -154,31 +194,44 @@ def main() -> None:
     token_map = {r.mention_id: r for r in tokens.itertuples(index=False)} if len(tokens) else {}
     cluster_terms = load_cluster_terms(Path(args.clusters))
 
-    alias_entries = []
-    brand_meta = {}
-    if len(alias_df):
-        for r in alias_df.itertuples(index=False):
-            alias_entries.append({
-                "alias_norm": str(r.alias_norm),
-                "alias_text": str(getattr(r, "alias_text", "") or getattr(r, "brand_display", "")),
-                "brand_norm": str(r.brand_norm),
-                "brand_display": str(r.brand_display),
-                "source": "whitelist" if str(r.alias_norm) == str(r.brand_norm) else "alias",
-            })
+    # brand_registry.parquet distinguishes three confidence tiers:
+    #   is_whitelist_brand=True                  -> confirmed_whitelist_brand (matched via the
+    #                                                small, regex-based alias_entries path below)
+    #   is_catalog_brand=True, is_whitelist=False -> catalog_known_brand (matched via the
+    #                                                hash-lookup n-gram path -- the catalog is
+    #                                                tens of thousands of brands, too many for a
+    #                                                per-brand regex scan per post)
+    #   neither                                   -> not in the registry at all; regex/context
+    #                                                candidates become unknown_candidate instead
+    whitelist_brand_norms: set[str] = set()
+    catalog_norm_to_display: dict[str, str] = {}
+    brand_meta: dict[str, tuple[str, str, str]] = {}
     if len(brand_df):
         for r in brand_df.itertuples(index=False):
-            alias_entries.append({
-                "alias_norm": str(r.brand_norm),
-                "alias_text": str(r.brand_display),
-                "brand_norm": str(r.brand_norm),
-                "brand_display": str(r.brand_display),
-                "source": "whitelist",
-            })
-            brand_meta[str(r.brand_norm)] = (
+            bnorm = str(r.brand_norm)
+            brand_meta[bnorm] = (
                 str(getattr(r, "primary_cluster_id", "") or ""),
                 str(getattr(r, "primary_cluster_name", "") or ""),
                 str(getattr(r, "related_cluster_ids", "[]") or "[]"),
             )
+            if bool(getattr(r, "is_whitelist_brand", False)):
+                whitelist_brand_norms.add(bnorm)
+            elif bool(getattr(r, "is_catalog_brand", False)):
+                catalog_norm_to_display[bnorm] = str(r.brand_display)
+    known_brand_norms = whitelist_brand_norms | set(catalog_norm_to_display)
+
+    alias_entries = []
+    if len(alias_df):
+        for r in alias_df.itertuples(index=False):
+            bnorm = str(r.brand_norm)
+            if bnorm not in whitelist_brand_norms:
+                continue  # catalog-only aliases are matched via the n-gram path, not regex
+            alias_entries.append({
+                "alias_norm": str(r.alias_norm),
+                "alias_text": str(getattr(r, "alias_text", "") or getattr(r, "brand_display", "")),
+                "brand_norm": bnorm,
+                "brand_display": str(r.brand_display),
+            })
     seen_aliases = set()
     deduped_alias_entries = []
     for entry in alias_entries:
@@ -187,7 +240,6 @@ def main() -> None:
             seen_aliases.add(key)
             deduped_alias_entries.append(entry)
     alias_entries = deduped_alias_entries
-    alias_norms = {entry["alias_norm"] for entry in alias_entries}
 
     rows: list[dict] = []
     review_rows: list[dict] = []
@@ -206,10 +258,35 @@ def main() -> None:
                 cid, cname, related = brand_meta.get(bnorm, ("", "", "[]"))
                 add_entity(rows, post=post, text=text, entity_text=matched_text, entity_type="brand",
                            is_brand=True, in_platform_brand=True, brand_display=entry["brand_display"], brand_norm=bnorm,
-                           confidence=1.0, source=entry["source"], start=start, end=end,
+                           confidence=1.0, source="whitelist", start=start, end=end,
+                           review_status="approved", brand_signal_type="confirmed_whitelist_brand",
                            cluster_id=cid, cluster_name=cname, related_cluster_ids=related)
+                # Two forms so both the n-gram matcher below (normalize_brand-keyed) and
+                # useful_phrase() further down (clean_token_text-keyed) dedupe correctly.
+                emitted_brand_norms.add(bnorm)
                 emitted_brand_norms.add(clean_token_text(matched_text))
                 break
+
+        # Full-domain catalog brands: hash-lookup n-gram match, lower confidence than whitelist,
+        # never merged into confirmed_whitelist_brand. The 100k-row catalog is far too large to
+        # hand-curate a denylist for (unlike the 500-row whitelist), and it turns out to contain
+        # huge amounts of plain English words as "brand_name" rows ("Make", "cookies", "this",
+        # "and", ...). A single-word catalog hit is therefore only kept when it has the same kind
+        # of purchase/brand context the regex candidate path already requires; multi-word hits
+        # are far less likely to coincide by chance and are kept as-is.
+        for start, end, span_text, span_norm, display in match_catalog_ngrams(
+            text, catalog_norm_to_display, skip_norms=emitted_brand_norms,
+        ):
+            if " " not in span_text.strip() and not BRAND_CONTEXT_RE.search(context_window(text, start, end)):
+                continue
+            cid, cname, related = brand_meta.get(span_norm, ("", "", "[]"))
+            add_entity(rows, post=post, text=text, entity_text=span_text, entity_type="brand",
+                       is_brand=True, in_platform_brand=True, brand_display=display, brand_norm=span_norm,
+                       confidence=0.85, source="catalog", start=start, end=end,
+                       review_status="catalog_observed", brand_signal_type="catalog_known_brand",
+                       cluster_id=cid, cluster_name=cname, related_cluster_ids=related)
+            emitted_brand_norms.add(span_norm)
+            emitted_brand_norms.add(clean_token_text(span_text))
 
         # Product/category phrases from token outputs.
         tok = token_map.get(post.mention_id)
@@ -244,13 +321,15 @@ def main() -> None:
             for m in regex.finditer(text):
                 raw = m.group(1) if regex is QUOTE_RE else m.group(0)
                 norm = normalize_brand(raw)
-                if not norm or norm in alias_norms or len(norm) < 3:
+                if not norm or norm in known_brand_norms or len(norm) < 3:
+                    continue
+                if source in WEAK_SINGLE_WORD_SOURCES and " " not in raw.strip():
                     continue
                 ctx = context_window(text, m.start(), m.end())
                 if BRAND_CONTEXT_RE.search(ctx):
                     add_entity(rows, post=post, text=text, entity_text=raw, entity_type="unknown_candidate",
                                is_brand=False, confidence=0.45, source=source, start=m.start(), end=m.end(),
-                               review_status="candidate")
+                               review_status="candidate", brand_signal_type="candidate_non_whitelist_brand")
                     review_rows.append({
                         "mention_id": post.mention_id, "entity_text": raw, "entity_norm": norm,
                         "source": source, "context_window": ctx, "review_status": "candidate",

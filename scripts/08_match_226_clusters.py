@@ -181,18 +181,37 @@ def main() -> None:
         second = candidates[1] if len(candidates) > 1 else {"cluster_id": "", "confidence": 0.0, "semantic_score": 0.0}
         gap = float(top["confidence"] - second["confidence"])
         confidence = float(top["confidence"])
-        if confidence >= 0.70 and gap >= 0.10:
+
+        # assignment_status: legacy precision label, kept for the high-precision evidence table.
+        if confidence >= 0.55 and gap >= 0.05:
             status = "confident"
-        elif confidence >= 0.50:
+        elif confidence >= 0.30:
             status = "uncertain"
         else:
             status = "unassigned"
+
+        # cluster_usage_tier: the dimension downstream cluster-discussion-intelligence logic
+        # should actually gate on. It is deliberately more permissive than assignment_status in
+        # the 0.25-0.30 confidence band -- Reddit post text vs. commerce-taxonomy profile text
+        # rarely scores much higher than this on semantic similarity alone, so a strict
+        # confident-only gate starves cluster-level keyword/brand mining almost entirely.
+        if confidence >= 0.55 and gap >= 0.05:
+            usage_tier = "strong_match"
+        elif confidence >= 0.35:
+            usage_tier = "usable_match"
+        elif confidence >= 0.25:
+            usage_tier = "weak_match"
+        else:
+            usage_tier = "unassigned"
+
+        has_cluster = usage_tier != "unassigned"
         rows.append({
             "mention_id": mention_id,
-            "final_cluster_id": top["cluster_id"] if status != "unassigned" else "",
-            "final_cluster_name": top["cluster_name"] if status != "unassigned" else "",
+            "final_cluster_id": top["cluster_id"] if has_cluster else "",
+            "final_cluster_name": top["cluster_name"] if has_cluster else "",
             "assignment_confidence": confidence,
             "assignment_status": status,
+            "cluster_usage_tier": usage_tier,
             "semantic_score": float(top["semantic_score"]),
             "brand_prior_score": float(top["brand_prior_score"]),
             "keyword_overlap_score": float(top["keyword_overlap_score"]),

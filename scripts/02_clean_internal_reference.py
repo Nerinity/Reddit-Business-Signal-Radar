@@ -49,16 +49,17 @@ def clean_product_name(value: object) -> str:
 
 
 def write_brand_cluster_prior(products: pd.DataFrame, path: Path, top_n: int = 5) -> None:
+    columns = [
+        "brand_norm", "brand_display", "cluster_id", "cluster_name",
+        "product_count", "cluster_share", "is_primary_cluster", "source",
+    ]
     valid = products[
         products["is_valid_product"]
         & products["brand_norm"].str.strip().ne("")
         & products["cluster_id"].str.strip().ne("")
     ].copy()
     if valid.empty:
-        out = pd.DataFrame(columns=[
-            "brand_norm", "brand_display", "cluster_id", "cluster_name",
-            "product_count", "cluster_share", "is_primary_cluster",
-        ])
+        out = pd.DataFrame(columns=columns)
     else:
         counts = (
             valid.groupby(["brand_norm", "cluster_id", "cluster_name"], dropna=False)
@@ -73,11 +74,11 @@ def write_brand_cluster_prior(products: pd.DataFrame, path: Path, top_n: int = 5
         counts["cluster_share"] = counts["product_count"] / totals
         counts["rank"] = counts.groupby("brand_norm")["product_count"].rank(method="first", ascending=False)
         counts["is_primary_cluster"] = counts["rank"].eq(1)
+        # Derived from clean_internal_products.parquet -- the brand source files carry no
+        # category/cluster columns of their own (see 04_build_brand_registry.py).
+        counts["source"] = "internal_products"
         out = counts[counts["rank"].le(top_n)].drop(columns=["rank"])
-        out = out[[
-            "brand_norm", "brand_display", "cluster_id", "cluster_name",
-            "product_count", "cluster_share", "is_primary_cluster",
-        ]]
+        out = out[columns]
     ensure_parent(path)
     out.to_parquet(path, index=False)
 

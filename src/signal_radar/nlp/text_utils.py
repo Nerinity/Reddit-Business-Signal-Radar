@@ -40,7 +40,7 @@ GENERIC_KEYWORDS = {
 }
 NO_BRAND_VALUES = {
     "", "no brand", "nobrand", "generic", "unbranded", "unknown", "none", "n/a", "na",
-    "not applicable", "no_brand", "null", "nan",
+    "not applicable", "not appliable", "not sure", "no_brand", "null", "nan",
 }
 CORPORATE_SUFFIX_RE = re.compile(r"\b(inc|llc|ltd|limited|corp|corporation|co|company|official store|store)\b\.?", re.I)
 TRADEMARK_RE = re.compile(r"[®™©]")
@@ -165,8 +165,11 @@ def parse_json_list(value: object) -> list[str]:
 
 
 def safe_read_table(path: Path) -> pd.DataFrame:
-    if path.suffix.lower() == ".parquet":
+    suffix = path.suffix.lower()
+    if suffix == ".parquet":
         return pd.read_parquet(path)
+    if suffix in (".xlsx", ".xls"):
+        return pd.read_excel(path)
     return pd.read_csv(path)
 
 
