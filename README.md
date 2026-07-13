@@ -177,6 +177,19 @@ Optional NLP dependencies are handled defensively:
 - If VADER is unavailable, sentiment falls back to phrase-count scoring.
 - If spaCy or `en_core_web_sm` is unavailable, tokenization and phrase extraction fall back to regex tokenization and n-grams.
 
+Strongly recommend installing `en_core_web_sm` and `langdetect` rather than relying on the fallbacks:
+
+```bash
+python3 -m pip install langdetect
+python3 -m pip install "https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl"
+```
+
+Without `en_core_web_sm`, `noun_phrases` degrades to raw adjacent-token bigrams, and
+`product_phrase`/`category_keyword` entities end up dominated by stopword fragments
+("i just", "how to", "in my") instead of real product/topic signal — this was bad enough
+to have previously made `weekly_cluster_discussion_terms.parquet` nearly unusable. Without
+`langdetect`, language detection falls back to a much cruder heuristic.
+
 ## Git Policy
 
 The repository should keep code, configs, docs, and lightweight dashboard artifacts only. Large raw data, processed parquet files, embeddings, and model outputs should stay out of git unless explicitly promoted as small shareable artifacts.
