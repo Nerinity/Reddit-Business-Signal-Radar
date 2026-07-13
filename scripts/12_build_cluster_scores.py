@@ -79,18 +79,13 @@ def bucket_from_percentile(value: float) -> int:
     return 1
 
 
-def sentiment_bucket(value: float) -> int:
+def sentiment_continuous_score(value: float) -> float:
     if pd.isna(value):
-        return 3
-    if value >= 0.35:
-        return 5
-    if value >= 0.15:
-        return 4
-    if value >= -0.05:
-        return 3
-    if value >= -0.25:
-        return 2
-    return 1
+        return 3.0
+    value = float(value)
+    if value >= 0:
+        return round(3.0 + 2.0 * (min(value, 0.70) / 0.70), 2)
+    return round(3.0 - 2.0 * (min(abs(value), 0.35) / 0.35), 2)
 
 
 def percentile_by_week(df: pd.DataFrame, value_col: str, out_col: str) -> None:
@@ -202,7 +197,7 @@ def main() -> None:
     weekly.loc[new_small, "spike_bucket"] = weekly.loc[new_small, "spike_bucket"].clip(upper=3)
     weekly["momentum_score"] = (0.60 * weekly["volume_bucket"] + 0.40 * weekly["spike_bucket"]).round(2)
 
-    weekly["sentiment_score"] = weekly["avg_sentiment_current_week"].map(sentiment_bucket).astype(float)
+    weekly["sentiment_score"] = weekly["avg_sentiment_current_week"].map(sentiment_continuous_score).astype(float)
     weekly["cross_community_score"] = weekly["cross_community_percentile"].map(bucket_from_percentile).astype(int)
     weekly.loc[weekly["current_week_posts"] < 3, "cross_community_score"] = weekly.loc[
         weekly["current_week_posts"] < 3, "cross_community_score"
