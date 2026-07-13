@@ -56,6 +56,20 @@ GENERIC_ENTITY_TERMS = {
     "hot", "best", "sale", "free", "shipping", "quality", "good", "bad", "great",
 }
 SENTIMENT_ONLY = {"love", "hate", "bad", "good", "great", "terrible", "amazing", "disappointed"}
+# spaCy's noun_chunks grammatically includes bare pronouns/quantifiers ("what", "they",
+# "something", "anyone") as one-word noun phrases. They parse correctly but carry zero
+# product/topic signal, so useful_phrase() drops any phrase made up only of these.
+PRONOUN_ENTITY_TERMS = {
+    "i", "me", "my", "mine", "myself", "we", "us", "our", "ours", "ourselves",
+    "you", "your", "yours", "yourself", "yourselves", "you guys",
+    "he", "him", "his", "himself", "she", "her", "hers", "herself",
+    "it", "its", "itself", "they", "them", "their", "theirs", "themselves",
+    "who", "whom", "whose", "whoever", "whichever", "what", "whatever", "which",
+    "this", "that", "these", "those",
+    "anyone", "anybody", "anything", "someone", "somebody", "something",
+    "everyone", "everybody", "everything", "no one", "nobody", "nothing",
+    "some", "any", "all", "none", "both", "either", "neither", "other", "others",
+}
 
 
 def find_case_insensitive(text: str, phrase: str):
@@ -165,6 +179,8 @@ def useful_phrase(phrase: str, emitted_brand_norms: set[str]) -> bool:
         return False
     parts = norm.split()
     if not parts or all(p in GENERIC_ENTITY_TERMS for p in parts):
+        return False
+    if norm in PRONOUN_ENTITY_TERMS or all(p in PRONOUN_ENTITY_TERMS for p in parts):
         return False
     if norm in emitted_brand_norms:
         return False
@@ -288,12 +304,20 @@ def main() -> None:
             emitted_brand_norms.add(span_norm)
             emitted_brand_norms.add(clean_token_text(span_text))
 
-        # Product/category phrases from token outputs.
+        # Product/category phrases from token outputs. noun_phrases is the primary source: with a
+        # real spaCy model it holds genuine noun-chunk spans ("brown leather", "weird noise");
+        # only when spaCy itself degraded to a blank pipeline does 05_tokenize_and_extract_phrases.py
+        # fall back to raw bigrams there. bigrams/trigrams here are a second-line fallback for posts
+        # where noun_phrases came back empty (e.g. no noun chunks found) rather than being blended in
+        # wholesale, since blending in raw stopword-token n-grams alongside good noun phrases drowns
+        # the signal in "i am" / "a lot" / "so i" style filler.
         tok = token_map.get(post.mention_id)
         phrases = []
         if tok is not None:
-            for field in ["noun_phrases", "bigrams", "trigrams"]:
-                phrases.extend(parse_json_list(getattr(tok, field, "")))
+            phrases.extend(parse_json_list(getattr(tok, "noun_phrases", "")))
+            if not phrases:
+                for field in ["bigrams", "trigrams"]:
+                    phrases.extend(parse_json_list(getattr(tok, field, "")))
         for phrase in list(dict.fromkeys(phrases))[:80]:
             norm = clean_token_text(phrase)
             if not useful_phrase(phrase, emitted_brand_norms):
