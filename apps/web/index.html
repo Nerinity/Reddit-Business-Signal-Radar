@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Reddit Product Trend Radar</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <canvas id="hero-canvas" aria-hidden="true"></canvas>
+    <div class="app-shell">
+      <header class="topbar">
+        <button class="brand-lockup" data-view="home">
+          <span class="logo-mark">r/</span>
+          <span>Reddit Product Trend Radar</span>
+        </button>
+        <nav class="top-nav" aria-label="Primary">
+          <button class="nav-link active" data-view="home">Home</button>
+          <button class="nav-link" data-view="explore">Explore</button>
+          <button class="nav-link" data-view="dashboard">Analytics</button>
+        </nav>
+        <div class="top-actions">
+          <select id="period-select" aria-label="Analysis period"></select>
+          <button class="ghost-button" id="export-button">Export</button>
+        </div>
+      </header>
+
+      <main>
+        <section class="view active" id="view-home">
+          <section class="hero">
+            <div class="hero-copy">
+              <div class="eyebrow">AI powered · real consumer signals</div>
+              <h1>Reddit - North America Product Trend Radar</h1>
+              <p>Identify emerging product opportunities from real consumer discussions before they appear in marketplace performance metrics.</p>
+              <div class="hero-controls">
+                <button class="primary-cta" data-view="explore">Explore Trends</button>
+                <button class="secondary-cta" data-view="dashboard">Open Analytics</button>
+              </div>
+            </div>
+            <div class="hero-statbar" id="hero-statbar"></div>
+          </section>
+
+          <section class="route-cards">
+            <button class="route-card route-explore" data-view="explore">
+              <span class="route-icon">↗</span>
+              <span class="route-kicker">Interactive Product</span>
+              <strong>Explore Trends</strong>
+              <span>Find the clusters, keywords, brands, and posts worth investigating this week.</span>
+            </button>
+            <button class="route-card route-analytics" data-view="dashboard">
+              <span class="route-icon">▥</span>
+              <span class="route-kicker">Data Evidence</span>
+              <strong>Open Analytics Dashboard</strong>
+              <span>Validate trend scores, component scores, distribution, and discussion evidence.</span>
+            </button>
+          </section>
+        </section>
+
+        <section class="view" id="view-explore">
+          <section class="workspace-header">
+            <div>
+              <span class="section-kicker">Interactive Product</span>
+              <h2>Explore Signals</h2>
+            </div>
+            <div class="filter-row">
+              <label>
+                Sort
+                <select id="sort-select">
+                  <option value="trend_score">Overall score</option>
+                  <option value="momentum_score">Momentum</option>
+                  <option value="sentiment_score">Sentiment</option>
+                  <option value="cross_community_score">Range</option>
+                  <option value="engagement_score">Engagement</option>
+                </select>
+              </label>
+              <label>
+                Search
+                <input id="search-input" type="search" placeholder="Cluster, keyword, brand" />
+              </label>
+            </div>
+          </section>
+
+          <section class="explore-tabs" aria-label="Explore pages">
+            <button class="explore-tab active" data-explore-tab="trend">
+              <span>Tab 1</span>
+              <strong>Trend Categories</strong>
+              <small>Rank, inspect, and open evidence</small>
+            </button>
+            <button class="explore-tab" data-explore-tab="opportunity">
+              <span>Tab 2</span>
+              <strong>Opportunity Discovery</strong>
+              <small>Find high-growth whitespace</small>
+            </button>
+            <button class="explore-tab" data-explore-tab="mapping">
+              <span>Tab 3</span>
+              <strong>Keyword x Category Map</strong>
+              <small>Map terms to business clusters</small>
+            </button>
+            <button class="explore-tab" data-explore-tab="sparkle">
+              <span>Tab 4</span>
+              <strong>New & Emerging</strong>
+              <small>Spot first-week signals</small>
+            </button>
+          </section>
+
+          <section class="explore-tab-view active trend-view" data-tab-view="trend">
+            <article class="panel guide-panel">
+              <div class="panel-header">
+                <span>How to read this page</span>
+                <h3>Signal Dimensions</h3>
+              </div>
+              <div class="guide-grid">
+                <div><strong>Overall</strong><span>Combined priority score for ranking product opportunity clusters.</span></div>
+                <div><strong>Momentum</strong><span>How quickly discussion is rising versus the comparison period.</span></div>
+                <div><strong>Sentiment</strong><span>How positive or negative consumer language is around the cluster.</span></div>
+                <div><strong>Range</strong><span>How broadly the signal spreads across different Reddit communities.</span></div>
+                <div><strong>Engagement</strong><span>How much attention posts receive through comments and reactions.</span></div>
+              </div>
+            </article>
+            <article class="panel trend-list-panel">
+              <div class="panel-header">
+                <span>Tab 1 · Ranking</span>
+                <h3>Trend Categories</h3>
+              </div>
+              <div class="cluster-list" id="cluster-list"></div>
+            </article>
+
+            <article class="panel detail-panel">
+              <div class="panel-header">
+                <span>Category Detail</span>
+                <h3 id="detail-title">Select a cluster</h3>
+              </div>
+              <div id="cluster-detail"></div>
+            </article>
+          </section>
+
+          <section class="explore-tab-view opportunity-view" data-tab-view="opportunity">
+            <article class="panel opportunity-panel">
+              <div class="panel-header">
+                <span>Tab 2 · Opportunity Quadrant</span>
+                <h3>Growth x Reach Map</h3>
+              </div>
+              <div class="scatter" id="opportunity-scatter"></div>
+            </article>
+            <article class="panel opportunity-list-panel">
+              <div class="panel-header">
+                <span>Top Signals</span>
+                <h3>Opportunity Shortlists</h3>
+              </div>
+              <div class="opportunity-lists" id="opportunity-lists"></div>
+            </article>
+          </section>
+
+          <section class="explore-tab-view mapping-view" data-tab-view="mapping">
+            <article class="panel keyword-panel">
+              <div class="panel-header map-header">
+                <div>
+                  <span>Tab 3 · Keyword / Brand Cards</span>
+                  <h3>Keyword x Category Map</h3>
+                </div>
+                <div class="map-controls card-controls" aria-label="Map controls">
+                  <label>
+                    Brand query
+                    <input id="brand-query-input" type="search" placeholder="Search brand" />
+                  </label>
+                  <button class="filter-chip-button" id="only-brand-toggle" type="button">Only Brand</button>
+                  <label>
+                    Category
+                    <input id="category-filter-input" list="category-options" type="search" placeholder="All categories" />
+                    <datalist id="category-options"></datalist>
+                  </label>
+                </div>
+              </div>
+              <div class="keyword-map" id="keyword-map"></div>
+            </article>
+            <article class="panel signal-detail-panel">
+              <div class="panel-header">
+                <span>Selected Signal</span>
+                <h3 id="signal-detail-title">Choose a keyword or brand</h3>
+              </div>
+              <div id="signal-detail"></div>
+            </article>
+          </section>
+
+          <section class="explore-tab-view sparkle-view" data-tab-view="sparkle">
+            <article class="panel sparkle-panel">
+              <div class="panel-header">
+                <span>Tab 4 · Fresh Signals</span>
+                <h3>New & Emerging</h3>
+              </div>
+              <div class="sparkle-list" id="sparkle-list"></div>
+            </article>
+            <article class="panel detail-panel">
+              <div class="panel-header">
+                <span>Selected Signal</span>
+                <h3 id="sparkle-detail-title">Evidence Preview</h3>
+              </div>
+              <div id="sparkle-detail"></div>
+            </article>
+          </section>
+        </section>
+
+        <section class="view" id="view-dashboard">
+          <section class="workspace-header">
+            <div>
+              <span class="section-kicker teal">Visualization Board</span>
+              <h2>Analytics Dashboard</h2>
+            </div>
+            <div class="score-legend">
+              <span><i class="dot hot"></i> Trend</span>
+              <span><i class="dot good"></i> Positive sentiment</span>
+              <span><i class="dot cool"></i> Cross-community</span>
+            </div>
+          </section>
+          <section class="dashboard-grid">
+            <article class="panel wide">
+              <div class="panel-header">
+                <span>Overall</span>
+                <h3>Category Trend Score Ranking</h3>
+              </div>
+              <div class="bar-chart" id="ranking-chart"></div>
+            </article>
+            <article class="panel">
+              <div class="panel-header"><span>Score</span><h3>Trend Distribution</h3></div>
+              <div class="distribution" id="distribution-chart"></div>
+            </article>
+            <article class="panel">
+              <div class="panel-header"><span>Evidence</span><h3>Brand Signals</h3></div>
+              <div class="brand-table" id="brand-table"></div>
+            </article>
+            <article class="panel wide">
+              <div class="panel-header"><span>Discussion</span><h3>Original Reddit Evidence</h3></div>
+              <div class="post-stream" id="post-stream"></div>
+            </article>
+          </section>
+        </section>
+      </main>
+    </div>
+    <script src="./app.js"></script>
+  </body>
+</html>
