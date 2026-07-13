@@ -8,6 +8,7 @@ Table roles (see also README.md "NLP Signal Pipeline"):
   weekly_cluster_discussion_terms.parquet  canonical source for by-cluster keyword/topic frequency
   weekly_cluster_brand_mentions.parquet    canonical source for by-cluster brand mention frequency
   high_precision_cluster_posts.parquet     confident-only evidence; NOT the source for cluster mining
+  cluster_entity_quality_report.json       per-cluster QA rollup for spot-checking the two tables above
   weekly_cluster_metrics.parquet           cluster-level post volume and sentiment overview
   weekly_brand_metrics.parquet             global brand overview (not cluster-filtered)
   weekly_trend_terms.parquet               global trend term view only, not for cluster filtering
@@ -19,9 +20,11 @@ kept only as a debug hint (entity_matched_cluster_id/name), never as the aggrega
 
 A strict confident-only gate starves cluster-level discussion intelligence almost entirely --
 Reddit post text vs. commerce-taxonomy profile text rarely scores much above 0.5-0.6 on
-semantic similarity alone. Discussion-term and brand-mention mining therefore use their own,
-more permissive gates (see --min-discussion-confidence / --include-weak-matches below), while
-high_precision_cluster_posts.parquet keeps the strict confident-only slice available separately.
+semantic similarity alone. Discussion-term and brand-mention mining therefore gate on
+cluster_usage_tier (08_match_226_clusters.py's more permissive confidence dimension) rather
+than the legacy assignment_status, while high_precision_cluster_posts.parquet keeps the
+strict confident-only slice available separately. assignment_status_distribution is kept
+alongside cluster_usage_tier_distribution in both output tables as a legacy/debug field.
 """
 from __future__ import annotations
 
@@ -45,14 +48,15 @@ TERM_OUTPUT_COLUMNS = [
     "week_start", "cluster_id", "cluster_name", "entity_type", "term", "term_norm",
     "mentions", "unique_posts", "avg_sentiment", "positive_share", "negative_share",
     "sample_post_ids", "sample_titles", "sample_urls", "top_subreddits",
-    "avg_assignment_confidence", "assignment_status_distribution",
+    "avg_assignment_confidence", "cluster_usage_tier_distribution", "assignment_status_distribution",
     "entity_matched_cluster_id", "entity_matched_cluster_name",
 ]
 BRAND_OUTPUT_COLUMNS = [
     "week_start", "cluster_id", "cluster_name", "brand_signal_type", "brand_display", "brand_norm",
     "candidate_text", "in_platform_brand", "mentions", "unique_posts", "avg_sentiment",
     "positive_share", "negative_share", "sample_post_ids", "sample_titles", "sample_urls",
-    "top_subreddits", "google_search_url", "avg_assignment_confidence", "assignment_status_distribution",
+    "top_subreddits", "google_search_url", "avg_assignment_confidence",
+    "cluster_usage_tier_distribution", "assignment_status_distribution",
 ]
 HIGH_PRECISION_COLUMNS = [
     "mention_id", "cluster_id", "cluster_name", "assignment_confidence", "score_gap",
@@ -64,7 +68,17 @@ DISCUSSION_ENTITY_TYPES = {
     "brand", "unknown_candidate",
 }
 BRAND_MENTION_ENTITY_TYPES = {"brand", "unknown_candidate"}
+KNOWN_BRAND_SIGNAL_TYPES = {"confirmed_whitelist_brand", "catalog_known_brand"}
+CANDIDATE_BRAND_SIGNAL_TYPE = "candidate_non_whitelist_brand"
+
+# cluster_usage_tier is the permissive confidence dimension 08_match_226_clusters.py writes
+# alongside the legacy assignment_status. Discussion/brand mining gate on it directly.
+STRONG_AND_USABLE = {"strong_match", "usable_match"}
+STRONG_USABLE_WEAK = {"strong_match", "usable_match", "weak_match"}
 BRAND_MENTION_MIN_CONFIDENCE = 0.30
+BRAND_MENTION_MIN_CONFIDENCE_WEAK = 0.25
+
+QUALITY_REPORT_TOP_N = 10
 
 
 def add_week(df: pd.DataFrame) -> pd.DataFrame:
@@ -100,12 +114,27 @@ def write_empty(path: str, columns: list[str]) -> None:
     log.warning("Wrote empty table -> %s", path)
 
 
+def default_usage_tier(row) -> str:
+    """Fallback for cluster_assignments_226.parquet outputs that predate cluster_usage_tier."""
+    status = row.get("assignment_status", "")
+    conf = row.get("assignment_confidence", 0.0) or 0.0
+    if status == "confident":
+        return "strong_match"
+    if status == "uncertain" and conf >= 0.35:
+        return "usable_match"
+    if conf >= 0.25:
+        return "weak_match"
+    return "unassigned"
+
+
 def build_post_cluster_base(posts: pd.DataFrame, clusters: pd.DataFrame, sentiment: pd.DataFrame) -> pd.DataFrame:
     cluster_cols = [
         "mention_id", "final_cluster_id", "final_cluster_name", "assignment_status",
-        "assignment_confidence", "score_gap", "semantic_score", "keyword_overlap_score", "brand_prior_score",
+        "assignment_confidence", "score_gap", "semantic_score", "keyword_overlap_score",
+        "brand_prior_score", "cluster_usage_tier",
     ]
     cluster_cols = [c for c in cluster_cols if c in clusters.columns]
+    has_usage_tier_col = "cluster_usage_tier" in clusters.columns
     base = posts.merge(clusters[cluster_cols], on="mention_id", how="left")
     if len(sentiment):
         base = base.merge(sentiment[["mention_id", "sentiment_compound", "sentiment_label"]], on="mention_id", how="left")
@@ -119,7 +148,71 @@ def build_post_cluster_base(posts: pd.DataFrame, clusters: pd.DataFrame, sentime
         base[col] = base[col].fillna("").astype(str)
     base["assignment_confidence"] = pd.to_numeric(base.get("assignment_confidence"), errors="coerce").fillna(0.0)
     base["score_gap"] = pd.to_numeric(base.get("score_gap"), errors="coerce").fillna(0.0)
+
+    # cluster_usage_tier: use it straight from cluster_assignments_226.parquet when present.
+    # Fall back to a derived value (a) for older assignment tables that lack the column
+    # entirely, and (b) for individual rows that have no matching row in that table at all.
+    if has_usage_tier_col:
+        base["cluster_usage_tier"] = base["cluster_usage_tier"].astype("string")
+        missing = base["cluster_usage_tier"].isna() | base["cluster_usage_tier"].str.strip().eq("")
+        if missing.any():
+            base.loc[missing, "cluster_usage_tier"] = base.loc[missing].apply(default_usage_tier, axis=1)
+        base["cluster_usage_tier"] = base["cluster_usage_tier"].fillna("unassigned").astype(str)
+    else:
+        base["cluster_usage_tier"] = base.apply(default_usage_tier, axis=1)
+
     return base.rename(columns={"final_cluster_id": "cluster_id", "final_cluster_name": "cluster_name"})
+
+
+def build_quality_report(discussion_posts: pd.DataFrame, term_metrics: pd.DataFrame, brand_metrics: pd.DataFrame) -> list[dict]:
+    reports = []
+    if discussion_posts.empty:
+        return reports
+    for cluster_id, grp in discussion_posts.groupby("cluster_id"):
+        if not str(cluster_id).strip():
+            continue
+        cluster_name = mode_or_blank(grp["cluster_name"])
+
+        terms_grp = term_metrics[term_metrics["cluster_id"] == cluster_id] if len(term_metrics) else pd.DataFrame()
+        top_terms = (
+            terms_grp.sort_values("mentions", ascending=False)
+            .head(QUALITY_REPORT_TOP_N)[["term", "entity_type", "mentions"]]
+            .to_dict("records")
+            if len(terms_grp) else []
+        )
+
+        brands_grp = brand_metrics[brand_metrics["cluster_id"] == cluster_id] if len(brand_metrics) else pd.DataFrame()
+        known_grp = brands_grp[brands_grp["brand_signal_type"].isin(KNOWN_BRAND_SIGNAL_TYPES)] if len(brands_grp) else pd.DataFrame()
+        candidate_grp = brands_grp[brands_grp["brand_signal_type"].eq(CANDIDATE_BRAND_SIGNAL_TYPE)] if len(brands_grp) else pd.DataFrame()
+        top_brands = (
+            known_grp.sort_values("mentions", ascending=False)
+            .head(QUALITY_REPORT_TOP_N)[["brand_display", "brand_signal_type", "mentions"]]
+            .to_dict("records")
+            if len(known_grp) else []
+        )
+        top_candidate_brands = (
+            candidate_grp.sort_values("mentions", ascending=False)
+            .head(QUALITY_REPORT_TOP_N)[["candidate_text", "mentions"]]
+            .to_dict("records")
+            if len(candidate_grp) else []
+        )
+
+        reports.append({
+            "cluster_id": str(cluster_id),
+            "cluster_name": cluster_name,
+            "post_count_included": int(grp["mention_id"].nunique()),
+            "top_discussion_terms": top_terms,
+            "top_brands": top_brands,
+            "top_candidate_brands": top_candidate_brands,
+            "top_subreddits": top_counts(grp["subreddit"], QUALITY_REPORT_TOP_N),
+            "avg_assignment_confidence": float(grp["assignment_confidence"].mean()),
+            "cluster_usage_tier_distribution": json.loads(status_distribution_json(grp["cluster_usage_tier"])),
+            "assignment_status_distribution": json.loads(status_distribution_json(grp["assignment_status"])),
+            "sample_titles": json.loads(json_sample(grp["title_clean"])),
+            "sample_post_ids": json.loads(json_sample(grp["mention_id"])),
+        })
+    reports.sort(key=lambda r: r["post_count_included"], reverse=True)
+    return reports
 
 
 def main() -> None:
@@ -131,11 +224,11 @@ def main() -> None:
     parser.add_argument("--terms-output", default="data/processed/weekly_cluster_discussion_terms.parquet")
     parser.add_argument("--brands-output", default="data/processed/weekly_cluster_brand_mentions.parquet")
     parser.add_argument("--high-precision-output", default="data/processed/high_precision_cluster_posts.parquet")
-    parser.add_argument("--min-discussion-confidence", type=float, default=0.35)
+    parser.add_argument("--quality-report-output", default="data/processed/cluster_entity_quality_report.json")
     parser.add_argument(
         "--include-weak-matches", action="store_true",
-        help="Lower the discussion-term confidence floor to 0.25 and also allow posts whose legacy "
-             "assignment_status is 'unassigned' but still cleared the weak_match usage tier.",
+        help="Also include posts at the weak_match cluster_usage_tier (and lower the brand-mention "
+             "confidence floor from 0.30 to 0.25 to match).",
     )
     args = parser.parse_args()
 
@@ -143,6 +236,8 @@ def main() -> None:
         write_empty(args.terms_output, TERM_OUTPUT_COLUMNS)
         write_empty(args.brands_output, BRAND_OUTPUT_COLUMNS)
         write_empty(args.high_precision_output, HIGH_PRECISION_COLUMNS)
+        ensure_parent(Path(args.quality_report_output))
+        Path(args.quality_report_output).write_text("[]", encoding="utf-8")
         return
 
     posts = pd.read_parquet(args.posts)
@@ -154,6 +249,8 @@ def main() -> None:
         write_empty(args.terms_output, TERM_OUTPUT_COLUMNS)
         write_empty(args.brands_output, BRAND_OUTPUT_COLUMNS)
         write_empty(args.high_precision_output, HIGH_PRECISION_COLUMNS)
+        ensure_parent(Path(args.quality_report_output))
+        Path(args.quality_report_output).write_text("[]", encoding="utf-8")
         return
 
     base = build_post_cluster_base(posts, clusters, sentiment)
@@ -173,28 +270,26 @@ def main() -> None:
     hp_out.to_parquet(args.high_precision_output, index=False)
     log.info("Wrote %d high-precision cluster posts -> %s", len(hp_out), args.high_precision_output)
 
-    # -- Discussion-term gate.
-    if args.include_weak_matches:
-        min_conf = 0.25
-        allowed_status = {"confident", "uncertain", "unassigned"}
-    else:
-        min_conf = args.min_discussion_confidence
-        allowed_status = {"confident", "uncertain"}
-    discussion_gate = (
-        has_cluster
-        & base["assignment_status"].isin(allowed_status)
-        & (base["assignment_confidence"] >= min_conf)
-    )
+    # -- Discussion-term gate: has_cluster AND cluster_usage_tier in {strong_match, usable_match},
+    # plus weak_match when --include-weak-matches is set.
+    discussion_tiers = STRONG_USABLE_WEAK if args.include_weak_matches else STRONG_AND_USABLE
+    discussion_gate = has_cluster & base["cluster_usage_tier"].isin(discussion_tiers)
     discussion_posts = base[discussion_gate]
     log.info(
-        "Discussion-term gate: %d / %d posts included (min_confidence=%.2f, include_weak_matches=%s)",
-        len(discussion_posts), len(base), min_conf, args.include_weak_matches,
+        "Discussion-term gate: %d / %d posts included (cluster_usage_tier in %s)",
+        len(discussion_posts), len(base), sorted(discussion_tiers),
     )
 
-    # -- Brand-mention gate: independent, fixed floor, no assignment_status restriction.
-    brand_gate = has_cluster & (base["assignment_confidence"] >= BRAND_MENTION_MIN_CONFIDENCE)
+    # -- Brand-mention gate: same tier gate as discussion, plus its own confidence floor
+    # (0.30 by default, 0.25 when --include-weak-matches lowers it alongside the tier gate).
+    brand_tiers = STRONG_USABLE_WEAK if args.include_weak_matches else STRONG_AND_USABLE
+    brand_min_conf = BRAND_MENTION_MIN_CONFIDENCE_WEAK if args.include_weak_matches else BRAND_MENTION_MIN_CONFIDENCE
+    brand_gate = has_cluster & base["cluster_usage_tier"].isin(brand_tiers) & (base["assignment_confidence"] >= brand_min_conf)
     brand_posts = base[brand_gate]
-    log.info("Brand-mention gate: %d / %d posts included (min_confidence=%.2f)", len(brand_posts), len(base), BRAND_MENTION_MIN_CONFIDENCE)
+    log.info(
+        "Brand-mention gate: %d / %d posts included (cluster_usage_tier in %s, min_confidence=%.2f)",
+        len(brand_posts), len(base), sorted(brand_tiers), brand_min_conf,
+    )
 
     entity_cols = [
         "mention_id", "entity_text", "entity_norm", "entity_type", "in_platform_brand", "brand_signal_type",
@@ -208,6 +303,7 @@ def main() -> None:
     post_side_cols = [
         "mention_id", "cluster_id", "cluster_name", "week_start", "subreddit", "title_clean", "url",
         "sentiment_compound", "sentiment_label", "assignment_confidence", "assignment_status",
+        "cluster_usage_tier",
     ]
 
     # === A. Cluster discussion terms ===
@@ -215,6 +311,7 @@ def main() -> None:
         discussion_posts[[c for c in post_side_cols if c in discussion_posts.columns]], on="mention_id", how="inner"
     )
     if term_join.empty:
+        term_metrics = pd.DataFrame(columns=TERM_OUTPUT_COLUMNS)
         write_empty(args.terms_output, TERM_OUTPUT_COLUMNS)
     else:
         term_join["is_positive"] = term_join["sentiment_label"].eq("positive")
@@ -233,6 +330,7 @@ def main() -> None:
             sample_urls=("url", json_sample),
             top_subreddits=("subreddit", top_counts_json),
             avg_assignment_confidence=("assignment_confidence", "mean"),
+            cluster_usage_tier_distribution=("cluster_usage_tier", status_distribution_json),
             assignment_status_distribution=("assignment_status", status_distribution_json),
             entity_matched_cluster_id=("entity_matched_cluster_id", mode_or_blank),
             entity_matched_cluster_name=("entity_matched_cluster_name", mode_or_blank),
@@ -247,6 +345,7 @@ def main() -> None:
         brand_posts[[c for c in post_side_cols if c in brand_posts.columns]], on="mention_id", how="inner"
     )
     if brand_join.empty:
+        brand_metrics = pd.DataFrame(columns=BRAND_OUTPUT_COLUMNS)
         write_empty(args.brands_output, BRAND_OUTPUT_COLUMNS)
     else:
         brand_join["is_positive"] = brand_join["sentiment_label"].eq("positive")
@@ -255,7 +354,7 @@ def main() -> None:
         # confirmed_whitelist_brand / catalog_known_brand / candidate_non_whitelist_brand. The
         # first two have a real brand_norm from brand_registry.parquet; only candidates fall
         # back to identifying themselves by their raw (unverified) text.
-        is_known_brand = brand_join["brand_signal_type"].isin(["confirmed_whitelist_brand", "catalog_known_brand"])
+        is_known_brand = brand_join["brand_signal_type"].isin(KNOWN_BRAND_SIGNAL_TYPES)
         brand_join["identity_key"] = brand_join["brand_norm"].where(is_known_brand, brand_join["entity_norm"])
         brand_join["google_search_url"] = brand_join["google_search_url"].where(
             brand_join["google_search_url"].astype(str).str.len() > 0,
@@ -280,15 +379,25 @@ def main() -> None:
             top_subreddits=("subreddit", top_counts_json),
             google_search_url=("google_search_url", mode_or_blank),
             avg_assignment_confidence=("assignment_confidence", "mean"),
+            cluster_usage_tier_distribution=("cluster_usage_tier", status_distribution_json),
             assignment_status_distribution=("assignment_status", status_distribution_json),
         ).reset_index()
-        is_known_brand_row = brand_metrics["brand_signal_type"].isin(["confirmed_whitelist_brand", "catalog_known_brand"])
+        is_known_brand_row = brand_metrics["brand_signal_type"].isin(KNOWN_BRAND_SIGNAL_TYPES)
         brand_metrics.loc[is_known_brand_row, "candidate_text"] = ""
         brand_metrics.loc[~is_known_brand_row, ["brand_norm", "brand_display"]] = ""
-        brand_out = brand_metrics.drop(columns=["identity_key"])[BRAND_OUTPUT_COLUMNS]
+        brand_metrics = brand_metrics.drop(columns=["identity_key"])
+        brand_out = brand_metrics[BRAND_OUTPUT_COLUMNS]
         ensure_parent(Path(args.brands_output))
         brand_out.to_parquet(args.brands_output, index=False)
         log.info("Wrote %d cluster brand-mention rows -> %s", len(brand_out), args.brands_output)
+
+    # === C. Per-cluster QA rollup ===
+    quality_report = build_quality_report(discussion_posts, term_metrics, brand_metrics)
+    ensure_parent(Path(args.quality_report_output))
+    Path(args.quality_report_output).write_text(
+        json.dumps(quality_report, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
+    log.info("Wrote quality report for %d clusters -> %s", len(quality_report), args.quality_report_output)
 
 
 if __name__ == "__main__":
