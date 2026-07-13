@@ -36,6 +36,8 @@ def main() -> None:
     parser.add_argument("--skip-brand-index", action="store_true")
     parser.add_argument("--skip-weekly-metrics", action="store_true")
     parser.add_argument("--skip-cluster-entity-metrics", action="store_true")
+    parser.add_argument("--skip-cluster-scores", action="store_true")
+    parser.add_argument("--include-weak-matches", action="store_true")
     parser.add_argument(
         "--reddit-sample", type=int, default=0,
         help="Smoke-test cap on Reddit posts only. Does not affect brand/product reference data.",
@@ -78,7 +80,11 @@ def main() -> None:
     if not args.skip_weekly_metrics:
         run("10_build_weekly_metrics.py")
     if not args.skip_cluster_entity_metrics:
-        run("11_build_cluster_entity_metrics.py")
+        weak_args = ["--include-weak-matches"] if args.include_weak_matches else []
+        run("11_build_cluster_entity_metrics.py", weak_args)
+    if not args.skip_cluster_scores:
+        weak_args = ["--include-weak-matches"] if args.include_weak_matches else []
+        run("12_build_cluster_scores.py", weak_args)
 
 
 if __name__ == "__main__":

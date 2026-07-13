@@ -50,6 +50,25 @@ INGREDIENT_HINTS = [
     "cotton", "wool", "leather", "uv", "led",
 ]
 RETAILERS = ["amazon", "target", "walmart", "costco", "sephora", "ulta", "temu", "aliexpress"]
+
+
+def build_word_boundary_patterns(phrases: list[str]) -> dict[str, re.Pattern]:
+    """Whole-word/whole-phrase match against clean_token_text's [a-z0-9\\s'&+-] output.
+
+    A naive `phrase in token_text` substring check false-positives badly on short entries --
+    e.g. "led" (from INGREDIENT_HINTS) matches inside "related", "called", "handled". The
+    lookaround treats any alphanumeric on either side as "still inside a word", so multi-word
+    phrases (with their own internal spaces) still match correctly at their outer edges.
+    """
+    return {
+        phrase: re.compile(r"(?<![a-z0-9])" + re.escape(phrase) + r"(?![a-z0-9])")
+        for phrase in phrases
+    }
+
+
+NEED_STATE_PATTERNS = build_word_boundary_patterns(NEED_STATES)
+INGREDIENT_PATTERNS = build_word_boundary_patterns(INGREDIENT_HINTS)
+RETAILER_PATTERNS = build_word_boundary_patterns(RETAILERS)
 SHORT_ALIAS_ALLOWLIST = {"3m", "lg", "hp", "dy"}
 GENERIC_ENTITY_TERMS = {
     "the", "and", "for", "with", "from", "this", "that", "product", "item", "new",
@@ -247,6 +266,7 @@ def main() -> None:
                 "alias_text": str(getattr(r, "alias_text", "") or getattr(r, "brand_display", "")),
                 "brand_norm": bnorm,
                 "brand_display": str(r.brand_display),
+                "match_tokens": set(normalize_match_text(getattr(r, "alias_text", "") or getattr(r, "brand_display", "")).split()),
             })
     seen_aliases = set()
     deduped_alias_entries = []
@@ -263,11 +283,15 @@ def main() -> None:
         text = str(getattr(post, "text_for_brand_matching", ""))
         token_text = clean_token_text(text)
         match_text = normalize_match_text(text)
+        match_words = set(match_text.split())
         emitted_brand_norms: set[str] = set()
 
         for entry in alias_entries:
             alias_norm = entry["alias_norm"]
             if not alias_norm:
+                continue
+            match_tokens = entry.get("match_tokens", set())
+            if match_tokens and not match_tokens.issubset(match_words):
                 continue
             for start, end, matched_text in find_alias_matches(text, match_text, entry["alias_text"], alias_norm):
                 bnorm = entry["brand_norm"]
@@ -327,16 +351,16 @@ def main() -> None:
             add_entity(rows, post=post, text=text, entity_text=phrase, entity_type=etype,
                        confidence=0.65 if cid else 0.45, source="tokens", cluster_id=cid, cluster_name=cname)
 
-        for phrase in NEED_STATES:
-            if phrase in token_text:
+        for phrase, pattern in NEED_STATE_PATTERNS.items():
+            if pattern.search(token_text):
                 add_entity(rows, post=post, text=text, entity_text=phrase, entity_type="need_state",
                            confidence=0.8, source="need_state_rules")
-        for phrase in INGREDIENT_HINTS:
-            if phrase in token_text:
+        for phrase, pattern in INGREDIENT_PATTERNS.items():
+            if pattern.search(token_text):
                 add_entity(rows, post=post, text=text, entity_text=phrase, entity_type="ingredient_material",
                            confidence=0.75, source="material_rules")
-        for phrase in RETAILERS:
-            if phrase in token_text:
+        for phrase, pattern in RETAILER_PATTERNS.items():
+            if pattern.search(token_text):
                 add_entity(rows, post=post, text=text, entity_text=phrase, entity_type="retailer_channel",
                            confidence=0.85, source="retailer_rules")
 
