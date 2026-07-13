@@ -43,6 +43,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Build a lightweight JSON bundle for the web app.")
     parser.add_argument("--processed-dir", default="data/processed")
     parser.add_argument("--output", default="apps/web/public/data/dashboard.json")
+    parser.add_argument("--next-output", default="apps/next/public/data/dashboard.json")
     args = parser.parse_args()
 
     base = Path(args.processed_dir)
@@ -206,8 +207,14 @@ def main() -> None:
     }
     out = Path(args.output)
     out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+    text = json.dumps(payload, ensure_ascii=False, indent=2)
+    out.write_text(text, encoding="utf-8")
     print(f"Wrote {out} with {len(cluster_cards)} clusters, {len(keyword_map)} keywords, {len(brand_signals)} brands")
+    if args.next_output:
+        next_out = Path(args.next_output)
+        next_out.parent.mkdir(parents=True, exist_ok=True)
+        next_out.write_text(text, encoding="utf-8")
+        print(f"Wrote {next_out} for the Next.js app")
 
 
 if __name__ == "__main__":

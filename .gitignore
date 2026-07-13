@@ -25,6 +25,13 @@ data/exports/**
 *.csv
 *.log
 
+# Node / Next.js
+node_modules/
+.next/
+apps/**/node_modules/
+apps/**/.next/
+apps/**/out/
+
 # Keep taxonomy/config CSVs under configs versioned.
 !configs/**/*.csv
 !configs/**/*.json

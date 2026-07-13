@@ -1,27 +1,26 @@
 <!doctype html>
-<html lang="en">
+<html lang="zh-Hans">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Reddit Product Trend Radar</title>
+    <title>Reddit Product Trend Radar · Reddit 产品趋势雷达</title>
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
-    <canvas id="hero-canvas" aria-hidden="true"></canvas>
     <div class="app-shell">
       <header class="topbar">
         <button class="brand-lockup" data-view="home">
           <span class="logo-mark">r/</span>
-          <span>Reddit Product Trend Radar</span>
+          <span>Reddit Product Trend Radar · 产品趋势雷达</span>
         </button>
         <nav class="top-nav" aria-label="Primary">
-          <button class="nav-link active" data-view="home">Home</button>
-          <button class="nav-link" data-view="explore">Explore</button>
-          <button class="nav-link" data-view="dashboard">Analytics</button>
+          <button class="nav-link active" data-view="home">首页 Home</button>
+          <button class="nav-link" data-view="explore">探索 Explore</button>
+          <button class="nav-link" data-view="dashboard">分析 Analytics</button>
         </nav>
         <div class="top-actions">
-          <select id="period-select" aria-label="Analysis period"></select>
-          <button class="ghost-button" id="export-button">Export</button>
+          <select id="period-select" aria-label="分析周期 Analysis period"></select>
+          <button class="ghost-button" id="export-button">导出 HTML Export</button>
         </div>
       </header>
 
@@ -29,29 +28,24 @@
         <section class="view active" id="view-home">
           <section class="hero">
             <div class="hero-copy">
-              <div class="eyebrow">AI powered · real consumer signals</div>
-              <h1>Reddit - North America Product Trend Radar</h1>
-              <p>Identify emerging product opportunities from real consumer discussions before they appear in marketplace performance metrics.</p>
-              <div class="hero-controls">
-                <button class="primary-cta" data-view="explore">Explore Trends</button>
-                <button class="secondary-cta" data-view="dashboard">Open Analytics</button>
-              </div>
+              <div class="eyebrow">AI powered · real consumer signals / AI 驱动 · 真实消费者信号</div>
+              <h1>Reddit - North America Product Trend Radar<br />北美产品趋势雷达</h1>
+              <p>Identify emerging product opportunities from real consumer discussions before they appear in marketplace performance metrics. 从真实 Reddit 讨论中提前发现产品机会。</p>
             </div>
             <div class="hero-statbar" id="hero-statbar"></div>
           </section>
-
           <section class="route-cards">
             <button class="route-card route-explore" data-view="explore">
               <span class="route-icon">↗</span>
-              <span class="route-kicker">Interactive Product</span>
+              <span class="route-kicker">Interactive Product / 交互产品</span>
               <strong>Explore Trends</strong>
-              <span>Find the clusters, keywords, brands, and posts worth investigating this week.</span>
+              <span>Find the categories, keywords, brands, and evidence worth reviewing this week. 快速发现本周值得看的机会。</span>
             </button>
             <button class="route-card route-analytics" data-view="dashboard">
               <span class="route-icon">▥</span>
-              <span class="route-kicker">Data Evidence</span>
-              <strong>Open Analytics Dashboard</strong>
-              <span>Validate trend scores, component scores, distribution, and discussion evidence.</span>
+              <span class="route-kicker">Analytics / 分析看板</span>
+              <strong>Analytics Dashboard</strong>
+              <span>Validate scores, rankings, weekly movement, and keyword sentiment. 验证趋势背后的数据证据。</span>
             </button>
           </section>
         </section>
@@ -59,24 +53,9 @@
         <section class="view" id="view-explore">
           <section class="workspace-header">
             <div>
-              <span class="section-kicker">Interactive Product</span>
+              <span class="section-kicker">Interactive Product / 交互产品</span>
               <h2>Explore Signals</h2>
-            </div>
-            <div class="filter-row">
-              <label>
-                Sort
-                <select id="sort-select">
-                  <option value="trend_score">Overall score</option>
-                  <option value="momentum_score">Momentum</option>
-                  <option value="sentiment_score">Sentiment</option>
-                  <option value="cross_community_score">Range</option>
-                  <option value="engagement_score">Engagement</option>
-                </select>
-              </label>
-              <label>
-                Search
-                <input id="search-input" type="search" placeholder="Cluster, keyword, brand" />
-              </label>
+              <p class="page-intro">Interactive exploration layer: use categories, opportunities, keywords, brands, and evidence to decide what deserves attention this week. 交互探索层：帮助你快速判断本周哪些机会值得看。</p>
             </div>
           </section>
 
@@ -84,42 +63,42 @@
             <button class="explore-tab active" data-explore-tab="trend">
               <span>Tab 1</span>
               <strong>Trend Categories</strong>
-              <small>Rank, inspect, and open evidence</small>
+              <small>Rank, inspect, and open evidence / 排名、查看详情、回看证据</small>
             </button>
             <button class="explore-tab" data-explore-tab="opportunity">
               <span>Tab 2</span>
               <strong>Opportunity Discovery</strong>
-              <small>Find high-growth whitespace</small>
+              <small>Find high-growth whitespace / 发现高增长机会区</small>
             </button>
             <button class="explore-tab" data-explore-tab="mapping">
               <span>Tab 3</span>
-              <strong>Keyword x Category Map</strong>
-              <small>Map terms to business clusters</small>
+              <strong>Keyword / Brand Detail</strong>
+              <small>Inspect signals across clusters / 查看跨类目信号</small>
             </button>
             <button class="explore-tab" data-explore-tab="sparkle">
               <span>Tab 4</span>
               <strong>New & Emerging</strong>
-              <small>Spot first-week signals</small>
+              <small>Spot first-week signals / 发现新出现信号</small>
             </button>
           </section>
 
           <section class="explore-tab-view active trend-view" data-tab-view="trend">
             <article class="panel guide-panel">
               <div class="panel-header">
-                <span>How to read this page</span>
+                <span>How to read this page / 页面说明</span>
                 <h3>Signal Dimensions</h3>
               </div>
               <div class="guide-grid">
-                <div><strong>Overall</strong><span>Combined priority score for ranking product opportunity clusters.</span></div>
-                <div><strong>Momentum</strong><span>How quickly discussion is rising versus the comparison period.</span></div>
-                <div><strong>Sentiment</strong><span>How positive or negative consumer language is around the cluster.</span></div>
-                <div><strong>Range</strong><span>How broadly the signal spreads across different Reddit communities.</span></div>
-                <div><strong>Engagement</strong><span>How much attention posts receive through comments and reactions.</span></div>
+                <button type="button" data-sort-key="trend_score"><strong>Overall</strong><span>Combined priority for ranking opportunity clusters.</span></button>
+                <button type="button" data-sort-key="momentum_score"><strong>Momentum</strong><span>How quickly discussion is rising.</span></button>
+                <button type="button" data-sort-key="sentiment_score"><strong>Sentiment</strong><span>Consumer language positivity or negativity.</span></button>
+                <button type="button" data-sort-key="cross_community_score"><strong>Reach</strong><span>How broadly the signal spreads across communities.</span></button>
+                <button type="button" data-sort-key="engagement_score"><strong>Engagement</strong><span>Attention from comments and reactions.</span></button>
               </div>
             </article>
             <article class="panel trend-list-panel">
               <div class="panel-header">
-                <span>Tab 1 · Ranking</span>
+                <span>Tab 1 · Ranking / 排名</span>
                 <h3>Trend Categories</h3>
               </div>
               <div class="cluster-list" id="cluster-list"></div>
@@ -127,46 +106,79 @@
 
             <article class="panel detail-panel">
               <div class="panel-header">
-                <span>Category Detail</span>
-                <h3 id="detail-title">Select a cluster</h3>
+                <span>Category Detail / 类目详情</span>
+                <h3 id="detail-title">Select a category</h3>
               </div>
               <div id="cluster-detail"></div>
             </article>
           </section>
 
           <section class="explore-tab-view opportunity-view" data-tab-view="opportunity">
+            <article class="panel tab-intro-panel">
+              <div class="tab-intro">
+                <strong>Opportunity Discovery</strong>
+                <span>用气泡图判断哪些类目同时具备讨论热度、扩散潜力和可验证价值。</span>
+              </div>
+            </article>
             <article class="panel opportunity-panel">
               <div class="panel-header">
-                <span>Tab 2 · Opportunity Quadrant</span>
+                <span>Tab 2 · Opportunity Quadrant / 机会象限</span>
                 <h3>Growth x Reach Map</h3>
+              </div>
+              <div class="axis-control">
+                <label for="opportunity-zoom">X Zoom</label>
+                <input id="opportunity-zoom" type="range" min="1" max="3" step="0.1" value="1" />
+                <span id="opportunity-zoom-label">1.0x</span>
+                <label for="opportunity-drag">Drag Right</label>
+                <input id="opportunity-drag" type="range" min="0" max="100" step="1" value="0" />
+                <span id="opportunity-drag-label">0%</span>
               </div>
               <div class="scatter" id="opportunity-scatter"></div>
             </article>
             <article class="panel opportunity-list-panel">
               <div class="panel-header">
-                <span>Top Signals</span>
+                <span>Top Signals / 重点信号</span>
                 <h3>Opportunity Shortlists</h3>
               </div>
               <div class="opportunity-lists" id="opportunity-lists"></div>
             </article>
           </section>
 
+          <section class="explore-tab-view evidence-view" data-tab-view="evidence">
+            <article class="panel wide">
+              <div class="panel-header evidence-header">
+                <div>
+                  <span>Evidence</span>
+                  <h3 id="evidence-title">Reddit Evidence</h3>
+                </div>
+                <button class="ghost-button" id="back-to-category" type="button">Back to Category</button>
+              </div>
+              <div id="evidence-detail"></div>
+            </article>
+          </section>
+
           <section class="explore-tab-view mapping-view" data-tab-view="mapping">
+            <article class="panel tab-intro-panel">
+              <div class="tab-intro">
+                <strong>Keyword / Brand Detail</strong>
+                <span>把关键词和品牌合并成可查询字典，帮助你反查它们出现在哪些类目和语境中。</span>
+              </div>
+            </article>
             <article class="panel keyword-panel">
               <div class="panel-header map-header">
                 <div>
-                  <span>Tab 3 · Keyword / Brand Cards</span>
-                  <h3>Keyword x Category Map</h3>
+                  <span>Tab 3 · Signal Detail / 信号详情</span>
+                  <h3>Keyword / Brand Detail</h3>
                 </div>
                 <div class="map-controls card-controls" aria-label="Map controls">
-                  <label>
-                    Brand query
-                    <input id="brand-query-input" type="search" placeholder="Search brand" />
-                  </label>
                   <button class="filter-chip-button" id="only-brand-toggle" type="button">Only Brand</button>
                   <label>
+                    Brand query
+                    <input id="brand-query-input" type="search" placeholder="Search brand / 搜索品牌" />
+                  </label>
+                  <label>
                     Category
-                    <input id="category-filter-input" list="category-options" type="search" placeholder="All categories" />
+                    <input id="category-filter-input" list="category-options" type="search" placeholder="All categories / 全部类目" />
                     <datalist id="category-options"></datalist>
                   </label>
                 </div>
@@ -175,7 +187,7 @@
             </article>
             <article class="panel signal-detail-panel">
               <div class="panel-header">
-                <span>Selected Signal</span>
+                <span>Selected Signal / 选中信号</span>
                 <h3 id="signal-detail-title">Choose a keyword or brand</h3>
               </div>
               <div id="signal-detail"></div>
@@ -183,16 +195,28 @@
           </section>
 
           <section class="explore-tab-view sparkle-view" data-tab-view="sparkle">
+            <article class="panel tab-intro-panel">
+              <div class="tab-intro">
+                <strong>New & Emerging</strong>
+                <span>捕捉本期新出现的关键词、品牌或类目线索，作为后续验证入口。</span>
+              </div>
+            </article>
+            <article class="panel wide filter-panel">
+              <label>
+                Category Filter
+                <select id="sparkle-category-select"></select>
+              </label>
+            </article>
             <article class="panel sparkle-panel">
               <div class="panel-header">
-                <span>Tab 4 · Fresh Signals</span>
+                <span>Tab 4 · Fresh Signals / 新信号</span>
                 <h3>New & Emerging</h3>
               </div>
               <div class="sparkle-list" id="sparkle-list"></div>
             </article>
             <article class="panel detail-panel">
               <div class="panel-header">
-                <span>Selected Signal</span>
+                <span>Selected Signal / 选中信号</span>
                 <h3 id="sparkle-detail-title">Evidence Preview</h3>
               </div>
               <div id="sparkle-detail"></div>
@@ -203,8 +227,9 @@
         <section class="view" id="view-dashboard">
           <section class="workspace-header">
             <div>
-              <span class="section-kicker teal">Visualization Board</span>
+              <span class="section-kicker teal">Visualization Board / 可视化看板</span>
               <h2>Analytics Dashboard</h2>
+              <p class="page-intro">Dashboard is the evidence layer: trend ranking, dimension rankings, selected-category word cloud, daily movement, and keyword sentiment.</p>
             </div>
             <div class="score-legend">
               <span><i class="dot hot"></i> Trend</span>
@@ -220,17 +245,43 @@
               </div>
               <div class="bar-chart" id="ranking-chart"></div>
             </article>
-            <article class="panel">
-              <div class="panel-header"><span>Score</span><h3>Trend Distribution</h3></div>
-              <div class="distribution" id="distribution-chart"></div>
+            <article class="panel dimension-panel">
+              <div class="panel-header"><span>Momentum</span><h3>Momentum Ranking</h3></div>
+              <div class="dimension-chart" id="momentum-chart"></div>
             </article>
-            <article class="panel">
-              <div class="panel-header"><span>Evidence</span><h3>Brand Signals</h3></div>
-              <div class="brand-table" id="brand-table"></div>
+            <article class="panel dimension-panel">
+              <div class="panel-header"><span>Reach</span><h3>Reach Ranking</h3></div>
+              <div class="dimension-chart" id="reach-chart"></div>
+            </article>
+            <article class="panel dimension-panel">
+              <div class="panel-header"><span>Sentiment</span><h3>Sentiment Ranking</h3></div>
+              <div class="dimension-chart" id="sentiment-chart"></div>
+            </article>
+            <article class="panel dimension-panel">
+              <div class="panel-header"><span>Engagement</span><h3>Engagement Ranking</h3></div>
+              <div class="dimension-chart" id="engagement-chart"></div>
+            </article>
+            <article class="panel wide raw-data-panel">
+              <div class="panel-header"><span>Raw Data</span><h3>Selected Category Reddit Rows</h3></div>
+              <div class="raw-data-table" id="dashboard-raw-data"></div>
+            </article>
+            <article class="panel wide filter-panel">
+              <label>
+                Category Filter
+                <select id="dashboard-category-select"></select>
+              </label>
             </article>
             <article class="panel wide">
-              <div class="panel-header"><span>Discussion</span><h3>Original Reddit Evidence</h3></div>
-              <div class="post-stream" id="post-stream"></div>
+              <div class="panel-header"><span>Topic</span><h3>Word Cloud</h3></div>
+              <div class="dashboard-wordcloud" id="dashboard-wordcloud"></div>
+            </article>
+            <article class="panel dashboard-bottom-panel">
+              <div class="panel-header"><span>Weekly Trend</span><h3>Daily Posts + Avg Sentiment</h3></div>
+              <div class="daily-trend" id="daily-trend"></div>
+            </article>
+            <article class="panel dashboard-bottom-panel">
+              <div class="panel-header"><span>Keyword Sentiment</span><h3>Keyword Sentiment</h3></div>
+              <div class="keyword-sentiment-chart" id="keyword-sentiment-chart"></div>
             </article>
           </section>
         </section>

@@ -1,0 +1,1277 @@
+:root {
+  color-scheme: dark;
+  --bg: #02060b;
+  --panel: rgba(5, 14, 24, 0.82);
+  --panel-strong: rgba(8, 19, 32, 0.94);
+  --border: rgba(132, 218, 255, 0.16);
+  --text: #edf7ff;
+  --muted: #93a8ba;
+  --dim: #617184;
+  --cyan: #14f1ff;
+  --pink: #ff3f8f;
+  --green: #2de58d;
+  --amber: #ffb629;
+  --radius: 8px;
+  --shadow: 0 28px 90px rgba(0, 0, 0, 0.52);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 1120px;
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+    radial-gradient(circle at 13% 17%, rgba(255, 49, 117, 0.14), transparent 26%),
+    radial-gradient(circle at 83% 11%, rgba(14, 229, 255, 0.16), transparent 30%),
+    linear-gradient(135deg, #02050a 0%, #07121e 52%, #02070d 100%);
+  background-size: 44px 44px, 44px 44px, auto, auto, auto;
+  color: var(--text);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 14px;
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+.shell {
+  width: min(1440px, calc(100vw - 48px));
+  margin: 0 auto;
+  padding: 24px 0 48px;
+}
+
+.loading {
+  padding-top: 20vh;
+  color: var(--muted);
+  text-align: center;
+}
+
+.topbar {
+  position: sticky;
+  top: 16px;
+  z-index: 10;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 24px;
+  padding: 14px 18px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: linear-gradient(180deg, rgba(6, 13, 23, 0.92), rgba(4, 9, 16, 0.8));
+  backdrop-filter: blur(18px);
+  box-shadow: var(--shadow);
+}
+
+.brand,
+.topbar nav button,
+.ghost,
+.primary {
+  border: 0;
+  color: inherit;
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  justify-self: start;
+  background: transparent;
+  font-weight: 900;
+}
+
+.brand span {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid rgba(20, 241, 255, 0.5);
+  border-radius: 50%;
+  color: var(--cyan);
+}
+
+.topbar nav {
+  display: inline-flex;
+  gap: 6px;
+  padding: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.topbar nav button,
+.ghost {
+  min-height: 40px;
+  padding: 0 14px;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
+}
+
+.topbar nav button.active,
+.ghost:hover {
+  color: var(--text);
+  background: linear-gradient(135deg, rgba(20, 241, 255, 0.18), rgba(255, 63, 143, 0.15));
+}
+
+.ghost {
+  justify-self: end;
+  border: 1px solid rgba(148, 214, 255, 0.22);
+}
+
+.hero {
+  min-height: 620px;
+  display: grid;
+  align-content: center;
+  gap: 28px;
+  padding: 76px 28px 28px;
+  text-align: center;
+}
+
+.eyebrow,
+.sectionHeader span,
+.panelHeader span {
+  color: var(--cyan);
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+h1 {
+  max-width: 920px;
+  margin: 0 auto;
+  font-size: 56px;
+  line-height: 1.04;
+}
+
+.hero p,
+.sectionHeader p {
+  max-width: 760px;
+  margin: 0 auto;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.primary {
+  width: 220px;
+  height: 48px;
+  margin: 0 auto;
+  border-radius: 6px;
+  background: linear-gradient(135deg, var(--cyan), var(--pink));
+  color: #041017;
+  font-weight: 900;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  width: min(1160px, 100%);
+  margin: 14px auto 0;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--border);
+  gap: 1px;
+}
+
+.stats div {
+  padding: 20px;
+  background: rgba(6, 15, 26, 0.86);
+  text-align: left;
+}
+
+.stats strong,
+.stats span {
+  display: block;
+}
+
+.stats strong {
+  font-size: 24px;
+}
+
+.stats span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.routeCards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  width: min(980px, 100%);
+  margin: 12px auto 0;
+}
+
+.routeCards button,
+.panel,
+.tabs button {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.035), transparent 140px),
+    var(--panel);
+  color: inherit;
+  box-shadow: var(--shadow);
+}
+
+.routeCards button {
+  display: grid;
+  gap: 10px;
+  min-height: 164px;
+  padding: 22px;
+  text-align: left;
+}
+
+.routeCards span {
+  color: var(--cyan);
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.routeCards strong {
+  font-size: 22px;
+}
+
+.routeCards small {
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.sectionHeader {
+  padding: 42px 0 18px;
+}
+
+.sectionHeader h2 {
+  margin: 8px 0;
+  font-size: 32px;
+}
+
+.tabs {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.tabs button {
+  min-height: 96px;
+  padding: 16px;
+  text-align: left;
+}
+
+.tabs button.active {
+  border-color: rgba(20, 241, 255, 0.62);
+  background: linear-gradient(135deg, rgba(20, 241, 255, 0.16), rgba(255, 63, 143, 0.1)), var(--panel);
+}
+
+.tabs small,
+.tabs strong {
+  display: block;
+}
+
+.tabs small {
+  color: var(--cyan);
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.tabs strong {
+  margin-top: 6px;
+  font-size: 15px;
+}
+
+.panel {
+  overflow: hidden;
+  min-height: 220px;
+}
+
+.panelHeader {
+  padding: 16px 18px 10px;
+  border-bottom: 1px solid rgba(148, 214, 255, 0.1);
+}
+
+.panelHeader h3 {
+  margin: 4px 0 0;
+  font-size: 16px;
+}
+
+.splitHeader {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 12px;
+}
+
+.splitHeader span,
+.splitHeader h3 {
+  grid-column: 1;
+}
+
+.splitHeader .ghost {
+  grid-column: 2;
+  grid-row: 1 / 3;
+}
+
+.wide {
+  grid-column: 1 / -1;
+}
+
+.trendGrid {
+  display: grid;
+  grid-template-columns: 0.9fr 1.35fr;
+  gap: 12px;
+}
+
+.dimensionFilters {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+  padding: 14px;
+}
+
+.dimensionFilters button,
+.clusterList button,
+.opportunityRow,
+.termList button,
+.sparkleList button {
+  width: 100%;
+  color: inherit;
+  text-align: left;
+  border: 1px solid rgba(148, 214, 255, 0.1);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.dimensionFilters button {
+  display: grid;
+  min-height: 56px;
+  padding: 12px;
+}
+
+.dimensionFilters button.active {
+  border-color: rgba(20, 241, 255, 0.68);
+  background: linear-gradient(135deg, rgba(20, 241, 255, 0.14), rgba(255, 63, 143, 0.08));
+}
+
+.dimensionFilters strong {
+  color: var(--cyan);
+}
+
+.dimensionFilters small,
+.clusterList small,
+.opportunityRow small,
+.productCards small,
+.sparkleList small {
+  color: var(--muted);
+}
+
+.clusterList {
+  display: grid;
+  gap: 8px;
+  max-height: 780px;
+  overflow: auto;
+  padding: 12px;
+}
+
+.clusterList button {
+  display: grid;
+  grid-template-columns: 34px 58px 1fr;
+  align-items: center;
+  gap: 10px;
+  min-height: 62px;
+  padding: 10px;
+}
+
+.clusterList button.active,
+.termList button.active {
+  border-color: rgba(20, 241, 255, 0.48);
+  background: rgba(20, 241, 255, 0.08);
+}
+
+.clusterList b {
+  color: var(--cyan);
+}
+
+.clusterList i {
+  display: grid;
+  place-items: center;
+  width: 58px;
+  height: 46px;
+  border-radius: 6px;
+  background: linear-gradient(135deg, rgba(20, 241, 255, 0.7), rgba(255, 63, 143, 0.5));
+  color: #fff;
+  font-style: normal;
+  font-weight: 900;
+}
+
+.starStack {
+  display: grid;
+  gap: 8px;
+  padding: 18px;
+}
+
+.starStack div {
+  display: grid;
+  grid-template-columns: 96px 1fr;
+  align-items: center;
+  min-height: 48px;
+  padding: 12px;
+  border: 1px solid rgba(148, 214, 255, 0.1);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.starStack span:first-child {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.stars {
+  display: inline-flex;
+  gap: 2px;
+  color: rgba(255, 255, 255, 0.28);
+  font-size: 17px;
+  white-space: nowrap;
+}
+
+.stars.mini {
+  font-size: 13px;
+}
+
+.stars .on {
+  color: var(--amber);
+  text-shadow: 0 0 12px rgba(255, 182, 41, 0.34);
+}
+
+.sentimentTag {
+  display: inline-flex;
+  width: fit-content;
+  align-items: center;
+  padding: 4px 8px;
+  border: 1px solid rgba(148, 214, 255, 0.12);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  font-size: 11px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.sentimentTag.positive {
+  color: var(--green);
+  border-color: rgba(45, 229, 141, 0.3);
+  background: rgba(45, 229, 141, 0.09);
+}
+
+.sentimentTag.negative {
+  color: var(--pink);
+  border-color: rgba(255, 63, 143, 0.32);
+  background: rgba(255, 63, 143, 0.09);
+}
+
+.sentimentTag.neutral {
+  color: var(--muted);
+}
+
+.rawValue {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+h4 {
+  margin: 18px 18px 10px;
+  color: var(--text);
+}
+
+.sourceGrid,
+.productCards,
+.chips,
+.wordCloud {
+  margin: 0 18px;
+}
+
+.sourceGrid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.sourceGrid a {
+  display: grid;
+  gap: 4px;
+  min-height: 76px;
+  padding: 10px;
+  color: inherit;
+  text-decoration: none;
+  border: 1px solid rgba(148, 214, 255, 0.12);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.wordCloud {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  min-height: 160px;
+  padding: 16px;
+  border: 1px solid rgba(148, 214, 255, 0.1);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.028);
+}
+
+.wordCloud.dashboard {
+  min-height: 230px;
+}
+
+.wordCloud button {
+  color: var(--cyan);
+  border: 0;
+  background: transparent;
+  font-size: 20px;
+  font-weight: 900;
+}
+
+.positive {
+  color: var(--green) !important;
+}
+
+.negative {
+  color: var(--pink) !important;
+}
+
+.neutral {
+  color: var(--cyan) !important;
+}
+
+.productCards {
+  display: grid;
+  gap: 10px;
+  max-height: 360px;
+  overflow: auto;
+  padding-bottom: 18px;
+}
+
+.productCards div {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 6px 12px;
+  min-height: 74px;
+  padding: 12px;
+  border: 1px solid rgba(148, 214, 255, 0.11);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.productCards b,
+.productCards small {
+  display: block;
+}
+
+.productCardText {
+  min-width: 0;
+}
+
+.productCardActions {
+  grid-column: 3;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.brandAvatar,
+.keywordAvatar {
+  display: grid;
+  place-items: center;
+  width: 58px;
+  height: 58px;
+  overflow: hidden;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(20, 241, 255, 0.28), rgba(255, 63, 143, 0.32));
+  color: white;
+  font-style: normal;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.brandAvatar.compact,
+.keywordAvatar {
+  width: 42px;
+  height: 42px;
+  font-size: 11px;
+}
+
+.brandAvatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.brandAvatar em {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  margin: 24px 0 0 24px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: white;
+  color: #4285f4;
+  font-size: 9px;
+  font-style: normal;
+}
+
+.productCards a,
+.productCards button,
+.primaryLink {
+  min-height: 34px;
+  padding: 8px 10px;
+  color: var(--text);
+  border: 1px solid rgba(148, 214, 255, 0.18);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.045);
+  font-size: 12px;
+  text-decoration: none;
+}
+
+.singleColumn {
+  display: grid;
+  gap: 12px;
+}
+
+.axisControls {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  padding: 12px 14px 0;
+}
+
+.axisControls.compact {
+  grid-template-columns: 1fr;
+}
+
+.axisControls label {
+  display: grid;
+  grid-template-columns: auto 1fr 58px;
+  align-items: center;
+  gap: 10px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.axisControls input {
+  accent-color: var(--cyan);
+}
+
+.axisControls em {
+  color: var(--text);
+  font-style: normal;
+  font-weight: 900;
+}
+
+.scatter {
+  position: relative;
+  height: 440px;
+  margin: 14px;
+  overflow: hidden;
+  border: 1px solid rgba(148, 214, 255, 0.11);
+  border-radius: 6px;
+  background: rgba(1, 8, 14, 0.46);
+}
+
+.scatterCanvas {
+  position: absolute;
+  inset: 0;
+  min-width: 100%;
+  transition: transform 120ms ease, width 120ms ease;
+  background:
+    linear-gradient(to right, transparent 49.8%, rgba(255, 255, 255, 0.08) 50%, transparent 50.2%),
+    linear-gradient(to bottom, transparent 49.8%, rgba(255, 255, 255, 0.08) 50%, transparent 50.2%);
+}
+
+.axis {
+  position: absolute;
+  color: var(--dim);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.axis.top {
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.axis.right {
+  top: 50%;
+  right: 14px;
+  transform: translateY(-50%) rotate(90deg);
+}
+
+.scatterCanvas button {
+  position: absolute;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(20, 241, 255, 0.78);
+  box-shadow: 0 0 22px rgba(20, 241, 255, 0.7);
+  transform: translate(-50%, 50%);
+}
+
+.scatterCanvas button.active {
+  background: var(--pink);
+}
+
+.opportunityLists {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  padding: 14px;
+}
+
+.opportunityLists h4 {
+  margin: 0 0 8px;
+  color: var(--cyan);
+}
+
+.opportunityRow {
+  display: grid;
+  grid-template-columns: 34px 1fr 24px;
+  align-items: center;
+  gap: 10px;
+  min-height: 74px;
+  margin-top: 8px;
+  padding: 12px;
+}
+
+.opportunityRow em {
+  color: var(--cyan);
+  font-size: 24px;
+  font-style: normal;
+  line-height: 1;
+  text-align: right;
+}
+
+.mappingGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(360px, 0.75fr);
+  gap: 12px;
+  align-items: start;
+}
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 14px;
+  border-bottom: 1px solid rgba(148, 214, 255, 0.1);
+}
+
+.filters button,
+.filters input,
+.filterPanel select {
+  min-height: 40px;
+  color: var(--text);
+  border: 1px solid rgba(148, 214, 255, 0.18);
+  border-radius: 6px;
+  background: rgba(5, 12, 21, 0.86);
+  padding: 0 12px;
+}
+
+.filters button.active {
+  border-color: rgba(255, 63, 143, 0.5);
+  background: rgba(255, 63, 143, 0.15);
+}
+
+.termList {
+  display: grid;
+  gap: 6px;
+  max-height: 760px;
+  overflow: auto;
+  padding: 14px;
+}
+
+.termList button {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  min-height: 68px;
+  padding: 12px;
+}
+
+.termList b {
+  color: var(--cyan);
+}
+
+.termList strong {
+  font-size: 20px;
+}
+
+.termList span {
+  justify-self: end;
+  padding: 5px 8px;
+  border: 1px solid rgba(148, 214, 255, 0.13);
+  border-radius: 999px;
+  color: var(--cyan);
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.stickyPanel {
+  position: sticky;
+  top: 94px;
+}
+
+.signalDetail {
+  padding: 18px;
+}
+
+.signalHero {
+  display: grid;
+  grid-template-columns: 58px 1fr;
+  align-items: center;
+  gap: 14px;
+  min-height: 86px;
+  padding: 14px;
+  border: 1px solid rgba(148, 214, 255, 0.12);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.signalHero i {
+  display: grid;
+  place-items: center;
+  width: 58px;
+  height: 58px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, rgba(20, 241, 255, 0.26), rgba(255, 63, 143, 0.34));
+  color: white;
+  font-style: normal;
+  font-weight: 900;
+}
+
+.signalHero .brandAvatar {
+  width: 58px;
+  height: 58px;
+}
+
+.signalHero small {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+}
+
+.metricGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.metricGrid .stats {
+  width: auto;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chips button,
+.chips span {
+  padding: 7px 10px;
+  border: 1px solid rgba(148, 214, 255, 0.15);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.045);
+  color: #cfe3f3;
+  font-size: 12px;
+}
+
+.sparkleList {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+}
+
+.sparkleGroup {
+  display: grid;
+  gap: 10px;
+}
+
+.sparkleGroup + .sparkleGroup {
+  padding-top: 12px;
+  border-top: 1px solid rgba(148, 214, 255, 0.1);
+}
+
+.sparkleGroup h4 {
+  margin: 4px 2px;
+  font-size: 13px;
+}
+
+.sparkleList button {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+}
+
+.sparkleList b {
+  padding: 4px 7px;
+  border-radius: 999px;
+  background: var(--pink);
+  color: #fff;
+}
+
+.sparkleList em {
+  color: var(--cyan);
+  font-size: 24px;
+  font-style: normal;
+  line-height: 1;
+  text-align: right;
+}
+
+.evidenceGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  padding: 14px;
+}
+
+.evidenceGrid article {
+  display: grid;
+  gap: 8px;
+  min-height: 150px;
+  padding: 12px;
+  border: 1px solid rgba(148, 214, 255, 0.11);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.evidenceGrid div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.evidenceGrid p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.evidenceGrid a {
+  color: var(--cyan);
+  text-decoration: none;
+}
+
+.dashboardGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.barChart {
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+}
+
+.barChart button {
+  display: grid;
+  grid-template-columns: 230px 1fr 54px;
+  align-items: center;
+  gap: 10px;
+  min-height: 28px;
+  width: 100%;
+  color: inherit;
+  text-align: left;
+  border: 0;
+  background: transparent;
+}
+
+.barChart i,
+.dimensionChart i {
+  display: block;
+  height: 12px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.barChart i b,
+.dimensionChart i b {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--pink), var(--cyan));
+}
+
+.dimensionChart {
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+}
+
+.dimensionChart button {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  grid-template-areas:
+    "rank name"
+    "rank bar"
+    "rank level";
+  gap: 6px 10px;
+  min-height: 66px;
+  padding: 10px;
+  color: inherit;
+  text-align: left;
+  border: 1px solid rgba(148, 214, 255, 0.1);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.dimensionChart button > b {
+  grid-area: rank;
+  align-self: center;
+  color: var(--cyan);
+}
+
+.dimensionChart button > span {
+  grid-area: name;
+  overflow: hidden;
+  font-weight: 900;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dimensionChart i {
+  grid-area: bar;
+}
+
+.dimensionChart em {
+  grid-area: level;
+  color: var(--muted);
+  font-size: 11px;
+  font-style: normal;
+}
+
+.rawPanel {
+  min-height: 360px;
+}
+
+.rawTable {
+  padding: 14px;
+  overflow: auto;
+}
+
+.rawHead,
+.rawRow {
+  display: grid;
+  grid-template-columns: 150px minmax(280px, 1fr) 130px 90px 56px;
+  gap: 10px;
+  align-items: center;
+  min-width: 860px;
+}
+
+.rawHead {
+  padding: 9px 10px;
+  color: var(--cyan);
+  border: 1px solid rgba(148, 214, 255, 0.12);
+  border-radius: 6px;
+  background: rgba(4, 12, 22, 0.94);
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.rawBody {
+  display: grid;
+  gap: 7px;
+  min-width: 860px;
+  max-height: 300px;
+  margin-top: 8px;
+  overflow: auto;
+}
+
+.rawRow {
+  min-height: 58px;
+  padding: 10px;
+  border: 1px solid rgba(148, 214, 255, 0.1);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.028);
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.rawRow strong,
+.rawRow small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rawRow strong {
+  color: var(--text);
+}
+
+.rawRow a {
+  color: var(--cyan);
+  text-decoration: none;
+}
+
+.filterPanel {
+  min-height: auto;
+  padding: 16px 18px;
+}
+
+.filterPanel label {
+  display: grid;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.half {
+  grid-column: span 2;
+  min-height: 470px;
+}
+
+.dailyChart {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  align-items: end;
+  gap: 10px;
+  height: 320px;
+  margin: 14px;
+  padding: 24px 12px 8px;
+  border: 1px solid rgba(148, 214, 255, 0.1);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.026);
+}
+
+.dailyChart div {
+  display: grid;
+  align-content: end;
+  gap: 6px;
+  height: 100%;
+  text-align: center;
+}
+
+.dailyChart i {
+  display: block;
+  width: 70%;
+  min-height: 4px;
+  margin: 0 auto;
+  border-radius: 6px 6px 0 0;
+  background: linear-gradient(180deg, var(--pink), rgba(20, 241, 255, 0.55));
+}
+
+.dailyChart strong,
+.dailyChart small {
+  font-size: 11px;
+}
+
+.dailyChart small {
+  color: var(--muted);
+}
+
+.keywordViewport {
+  overflow: hidden;
+  padding: 14px;
+}
+
+.keywordRows {
+  display: grid;
+  gap: 8px;
+  min-width: 100%;
+  transition: width 120ms ease;
+}
+
+.keywordRows div {
+  display: grid;
+  grid-template-columns: 128px minmax(0, 1fr) 94px;
+  align-items: center;
+  gap: 10px;
+  min-height: 34px;
+  padding: 7px 8px;
+  border: 1px solid rgba(148, 214, 255, 0.1);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.028);
+}
+
+.keywordRows span {
+  overflow: hidden;
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 900;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.keywordRows i {
+  position: relative;
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.keywordRows i b {
+  position: absolute;
+  top: 50%;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--cyan);
+  transform: translate(-50%, -50%);
+}
+
+.keywordRows em {
+  color: var(--muted);
+  font-size: 11px;
+  font-style: normal;
+  text-align: right;
+}
+
+@media (max-width: 900px) {
+  body {
+    min-width: 0;
+  }
+
+  .shell {
+    width: calc(100vw - 24px);
+  }
+
+  .topbar,
+  .stats,
+  .routeCards,
+  .tabs,
+  .trendGrid,
+  .mappingGrid,
+  .opportunityLists,
+  .dashboardGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .wide,
+  .half {
+    grid-column: auto;
+  }
+}

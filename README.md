@@ -173,6 +173,31 @@ Table roles:
 
 The main product contract is that a dashboard can show whether a detected brand is an approved platform brand, a known catalog brand, or an emerging Reddit-only candidate, attach sentiment and cluster context, query back to the original Reddit posts mentioning it, and for any given cluster surface what people are discussing and what they like/dislike.
 
+## Product App
+
+The formal product frontend lives in `apps/next/` as a React / Next.js app. The older `apps/web/` folder is kept as a static prototype snapshot.
+
+Build or refresh the dashboard bundle:
+
+```bash
+python3 scripts/sync_product_app_data.py
+```
+
+This writes the same dashboard JSON to:
+
+```text
+apps/web/public/data/dashboard.json
+apps/next/public/data/dashboard.json
+```
+
+Run the Next.js app:
+
+```bash
+python3 scripts/run_product_app.py --install
+```
+
+The app runs on `http://127.0.0.1:4175` by default.
+
 Optional NLP dependencies are handled defensively:
 
 - If `sentence-transformers` or the configured embedding model is unavailable, cluster matching falls back to TF-IDF, then bag-of-words, and records the selected method in `data/processed/cluster_matching_similarity_report.json`.
