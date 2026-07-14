@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { BrandAvatar } from "./components/BrandAvatar";
 
 type ClusterTerm = {
   term: string;
@@ -174,13 +175,21 @@ function googleBrandUrl(name: string) {
   return `https://www.google.com/search?q=${encodeURIComponent(`${name} brand`)}`;
 }
 
-function BrandAvatar({ name, logoUrl, compact = false }: { name: string; logoUrl?: string; compact?: boolean }) {
-  const initials = clusterInitials(name);
-  return (
-    <span className={`brandAvatar ${compact ? "compact" : ""}`}>
-      {logoUrl ? <img src={logoUrl} alt="" /> : <><em>G</em>{initials}</>}
-    </span>
-  );
+type MomentumTag = { label: string; tone: "opportunity" | "engagement" | "broad" | "risk" | "steady" };
+
+// Numeric scores stay available in every detail view (Dashboard, category stat grid); this
+// is an additional at-a-glance read for list rows, not a replacement for the underlying data.
+function momentumTag(cluster: Cluster): MomentumTag {
+  if (Number(cluster.previous_week_posts || 0) === 0) return { label: "Emerging", tone: "opportunity" };
+  if (Number(cluster.growth_rate || 0) >= 2) return { label: "Exploding", tone: "opportunity" };
+  if (Number(cluster.momentum_score || 0) >= 4) return { label: "High Engagement", tone: "engagement" };
+  if (Number(cluster.cross_community_score || 0) >= 4) return { label: "Broad Adoption", tone: "broad" };
+  if (Number(cluster.sentiment_score || 0) <= 2) return { label: "Risk", tone: "risk" };
+  return { label: "Steady", tone: "steady" };
+}
+
+function TagPill({ tag }: { tag: MomentumTag }) {
+  return <span className={`tag tag-${tag.tone}`}>{tag.label}</span>;
 }
 
 function clusterPosts(posts: Post[], clusterId: string) {
@@ -570,6 +579,7 @@ function TrendTab({
                 <small>
                   {cluster.current_week_posts} posts · {cluster.unique_subreddits} subs · sorted by {scoreLabel[sortBy]}
                 </small>
+                <TagPill tag={momentumTag(cluster)} />
               </span>
             </button>
           ))}
@@ -609,7 +619,7 @@ function TrendTab({
         <div className="productCards">
           {[...selectedCluster.brands.map((item) => ({ type: "brand", name: item.brand_display, tag: brandTag(item.brand_signal_type), mentions: item.mentions || 0, url: item.google_search_url || googleBrandUrl(item.brand_display), logoUrl: item.logo_url || "" })), ...selectedCluster.terms.map((item) => ({ type: "keyword", name: item.term, tag: item.entity_type || "keyword", mentions: item.mentions || 0, url: "", logoUrl: "" }))].slice(0, 18).map((item) => (
             <div key={`${item.type}-${item.name}`}>
-              {item.type === "brand" ? <BrandAvatar name={item.name} logoUrl={item.logoUrl} compact /> : <i className="keywordAvatar">#</i>}
+              {item.type === "brand" ? <BrandAvatar name={item.name} logoUrl={item.logoUrl} size="md" /> : <i className="keywordAvatar">#</i>}
               <span className="productCardText">
                 <b>{item.name}</b>
                 <small>
@@ -730,6 +740,7 @@ function OpportunityList({ title, rows, openClusterDetail }: { title: string; ro
             <small>
               {cluster.current_week_posts} posts · {cluster.unique_subreddits} subreddits
             </small>
+            <TagPill tag={momentumTag(cluster)} />
           </span>
           <em>›</em>
         </button>
@@ -819,7 +830,7 @@ function MappingTab({
         {selected && (
           <div className="signalDetail">
             <div className={`signalHero ${selected.kind}`}>
-              {selected.kind === "brand" ? <BrandAvatar name={selected.display} logoUrl={selected.logoUrl} /> : <i>#</i>}
+              {selected.kind === "brand" ? <BrandAvatar name={selected.display} logoUrl={selected.logoUrl} size="lg" /> : <i>#</i>}
               <span>
                 <strong>{selected.display}</strong>
                 <small>{selected.kind === "brand" ? "Brand signal" : "Keyword / product phrase"}</small>
@@ -950,7 +961,7 @@ function SparkleTab({
                   setTab("mapping");
                 }}
               >
-                <BrandAvatar name={brand.brand_display} logoUrl={brand.logo_url} compact />
+                <BrandAvatar name={brand.brand_display} logoUrl={brand.logo_url} size="md" />
                 <span>
                   <strong>{brand.brand_display}</strong>
                   <small>{brand.mentions} mentions · {brandTag(brand.brand_signal_type)}</small>

@@ -1,18 +1,25 @@
 :root {
   color-scheme: dark;
-  --bg: #02060b;
-  --panel: rgba(5, 14, 24, 0.82);
-  --panel-strong: rgba(8, 19, 32, 0.94);
-  --border: rgba(132, 218, 255, 0.16);
-  --text: #edf7ff;
-  --muted: #93a8ba;
-  --dim: #617184;
-  --cyan: #14f1ff;
-  --pink: #ff3f8f;
-  --green: #2de58d;
-  --amber: #ffb629;
-  --radius: 8px;
-  --shadow: 0 28px 90px rgba(0, 0, 0, 0.52);
+  --bg: #0b0b0f;
+  --surface: #121217;
+  --surface-elevated: #18181f;
+  --border: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.16);
+  --text: #f5f5f7;
+  --text-secondary: #a7a7b0;
+  --muted: #70707a;
+  --dim: #55555e;
+  --cyan: #25f4ee;
+  --red: #fe2c55;
+  --positive: #34d399;
+  --amber: #f5b954;
+  --radius-sm: 6px;
+  --radius: 10px;
+  --radius-lg: 16px;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.28);
+  --shadow: 0 16px 40px rgba(0, 0, 0, 0.36);
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --transition: 180ms var(--ease);
 }
 
 * {
@@ -23,15 +30,13 @@ body {
   margin: 0;
   min-width: 1120px;
   background:
-    linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px),
-    radial-gradient(circle at 13% 17%, rgba(255, 49, 117, 0.14), transparent 26%),
-    radial-gradient(circle at 83% 11%, rgba(14, 229, 255, 0.16), transparent 30%),
-    linear-gradient(135deg, #02050a 0%, #07121e 52%, #02070d 100%);
-  background-size: 44px 44px, 44px 44px, auto, auto, auto;
+    radial-gradient(circle at 16% -4%, rgba(37, 244, 238, 0.05), transparent 40%),
+    radial-gradient(circle at 86% 2%, rgba(254, 44, 85, 0.045), transparent 38%),
+    var(--bg);
   color: var(--text);
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   font-size: 14px;
+  -webkit-font-smoothing: antialiased;
 }
 
 button,
@@ -42,17 +47,23 @@ select {
 
 button {
   cursor: pointer;
+  transition: background var(--transition), border-color var(--transition), color var(--transition),
+    transform var(--transition), box-shadow var(--transition);
+}
+
+a {
+  transition: color var(--transition);
 }
 
 .shell {
   width: min(1440px, calc(100vw - 48px));
   margin: 0 auto;
-  padding: 24px 0 48px;
+  padding: 28px 0 56px;
 }
 
 .loading {
   padding-top: 20vh;
-  color: var(--muted);
+  color: var(--text-secondary);
   text-align: center;
 }
 
@@ -64,12 +75,11 @@ button {
   grid-template-columns: 1fr auto 1fr;
   align-items: center;
   gap: 24px;
-  padding: 14px 18px;
+  padding: 12px 20px;
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  background: linear-gradient(180deg, rgba(6, 13, 23, 0.92), rgba(4, 9, 16, 0.8));
-  backdrop-filter: blur(18px);
-  box-shadow: var(--shadow);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
 }
 
 .brand,
@@ -83,57 +93,89 @@ button {
 .brand {
   display: inline-flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   justify-self: start;
   background: transparent;
-  font-weight: 900;
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: -0.01em;
 }
 
 .brand span {
   display: grid;
   place-items: center;
-  width: 34px;
-  height: 34px;
-  border: 1px solid rgba(20, 241, 255, 0.5);
-  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-elevated);
   color: var(--cyan);
+  font-size: 13px;
+  font-weight: 700;
 }
 
 .topbar nav {
   display: inline-flex;
-  gap: 6px;
-  padding: 4px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: var(--radius);
-  background: rgba(255, 255, 255, 0.04);
+  gap: 2px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
 }
 
-.topbar nav button,
-.ghost {
+.topbar nav button {
+  position: relative;
   min-height: 40px;
   padding: 0 14px;
   border-radius: 6px;
   background: transparent;
-  color: var(--muted);
+  color: var(--text-secondary);
+  font-weight: 500;
 }
 
-.topbar nav button.active,
-.ghost:hover {
+.topbar nav button:hover {
   color: var(--text);
-  background: linear-gradient(135deg, rgba(20, 241, 255, 0.18), rgba(255, 63, 143, 0.15));
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.topbar nav button.active {
+  color: var(--text);
+  background: transparent;
+}
+
+.topbar nav button.active::after {
+  content: "";
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  bottom: -1px;
+  height: 2px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, var(--cyan), var(--red));
 }
 
 .ghost {
   justify-self: end;
-  border: 1px solid rgba(148, 214, 255, 0.22);
+  min-height: 40px;
+  padding: 0 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-secondary);
+}
+
+.ghost:hover {
+  color: var(--text);
+  border-color: var(--border-strong);
+  background: rgba(255, 255, 255, 0.03);
 }
 
 .hero {
-  min-height: 620px;
+  min-height: 560px;
   display: grid;
   align-content: center;
-  gap: 28px;
-  padding: 76px 28px 28px;
+  gap: 32px;
+  padding: 96px 28px 40px;
   text-align: center;
 }
 
@@ -141,24 +183,27 @@ button {
 .sectionHeader span,
 .panelHeader span {
   color: var(--cyan);
-  font-size: 12px;
-  font-weight: 900;
+  font-size: 11px;
+  font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
 h1 {
-  max-width: 920px;
+  max-width: 880px;
   margin: 0 auto;
-  font-size: 56px;
-  line-height: 1.04;
+  font-size: 54px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.08;
 }
 
 .hero p,
 .sectionHeader p {
-  max-width: 760px;
+  max-width: 640px;
   margin: 0 auto;
-  color: var(--muted);
+  color: var(--text-secondary);
+  font-size: 16px;
   line-height: 1.6;
 }
 
@@ -166,17 +211,22 @@ h1 {
   width: 220px;
   height: 48px;
   margin: 0 auto;
-  border-radius: 6px;
-  background: linear-gradient(135deg, var(--cyan), var(--pink));
-  color: #041017;
-  font-weight: 900;
+  border-radius: var(--radius-sm);
+  background: var(--red);
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.primary:hover {
+  background: #ff4568;
+  transform: translateY(-1px);
 }
 
 .stats {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
   width: min(1160px, 100%);
-  margin: 14px auto 0;
+  margin: 8px auto 0;
   overflow: hidden;
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -186,7 +236,7 @@ h1 {
 
 .stats div {
   padding: 20px;
-  background: rgba(6, 15, 26, 0.86);
+  background: var(--surface);
   text-align: left;
 }
 
@@ -196,10 +246,13 @@ h1 {
 }
 
 .stats strong {
-  font-size: 24px;
+  font-size: 22px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
 }
 
 .stats span {
+  margin-top: 4px;
   color: var(--muted);
   font-size: 12px;
 }
@@ -209,7 +262,7 @@ h1 {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 16px;
   width: min(980px, 100%);
-  margin: 12px auto 0;
+  margin: 16px auto 0;
 }
 
 .routeCards button,
@@ -217,64 +270,92 @@ h1 {
 .tabs button {
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.035), transparent 140px),
-    var(--panel);
+  background: var(--surface);
   color: inherit;
-  box-shadow: var(--shadow);
+  box-shadow: var(--shadow-sm);
 }
 
 .routeCards button {
   display: grid;
   gap: 10px;
-  min-height: 164px;
-  padding: 22px;
+  min-height: 168px;
+  padding: 26px;
   text-align: left;
+}
+
+.routeCards button:hover {
+  border-color: var(--border-strong);
+  background: var(--surface-elevated);
+  transform: translateY(-2px);
 }
 
 .routeCards span {
   color: var(--cyan);
-  font-size: 12px;
-  font-weight: 900;
+  font-size: 11px;
+  font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
 .routeCards strong {
-  font-size: 22px;
+  font-size: 20px;
+  font-weight: 600;
 }
 
 .routeCards small {
-  color: var(--muted);
+  color: var(--text-secondary);
   font-size: 14px;
-  line-height: 1.45;
+  line-height: 1.5;
 }
 
 .sectionHeader {
-  padding: 42px 0 18px;
+  padding: 56px 0 24px;
 }
 
 .sectionHeader h2 {
-  margin: 8px 0;
-  font-size: 32px;
+  margin: 10px 0;
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
 }
 
 .tabs {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 10px;
+  gap: 8px;
   margin-bottom: 12px;
 }
 
 .tabs button {
-  min-height: 96px;
-  padding: 16px;
+  position: relative;
+  min-height: 88px;
+  padding: 16px 16px 16px 20px;
   text-align: left;
 }
 
+.tabs button::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 10px;
+  bottom: 10px;
+  width: 2px;
+  border-radius: 2px;
+  background: transparent;
+}
+
+.tabs button:hover:not(.active) {
+  border-color: var(--border-strong);
+  background: var(--surface-elevated);
+}
+
 .tabs button.active {
-  border-color: rgba(20, 241, 255, 0.62);
-  background: linear-gradient(135deg, rgba(20, 241, 255, 0.16), rgba(255, 63, 143, 0.1)), var(--panel);
+  border-color: var(--border-strong);
+  background: var(--surface-elevated);
+}
+
+.tabs button.active::before {
+  background: linear-gradient(180deg, var(--cyan), var(--red));
 }
 
 .tabs small,
@@ -283,14 +364,17 @@ h1 {
 }
 
 .tabs small {
-  color: var(--cyan);
-  font-weight: 900;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
 }
 
 .tabs strong {
   margin-top: 6px;
-  font-size: 15px;
+  font-size: 14px;
+  font-weight: 500;
 }
 
 .panel {
@@ -299,13 +383,14 @@ h1 {
 }
 
 .panelHeader {
-  padding: 16px 18px 10px;
-  border-bottom: 1px solid rgba(148, 214, 255, 0.1);
+  padding: 18px 20px 12px;
+  border-bottom: 1px solid var(--border);
 }
 
 .panelHeader h3 {
   margin: 4px 0 0;
-  font-size: 16px;
+  font-size: 15px;
+  font-weight: 600;
 }
 
 .splitHeader {
@@ -347,27 +432,53 @@ h1 {
 .opportunityRow,
 .termList button,
 .sparkleList button {
+  position: relative;
   width: 100%;
   color: inherit;
   text-align: left;
-  border: 1px solid rgba(148, 214, 255, 0.1);
-  border-radius: 6px;
-  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+}
+
+.dimensionFilters button:hover,
+.clusterList button:hover,
+.opportunityRow:hover,
+.termList button:hover,
+.sparkleList button:hover {
+  border-color: var(--border-strong);
+  background: var(--surface-elevated);
 }
 
 .dimensionFilters button {
   display: grid;
   min-height: 56px;
-  padding: 12px;
+  padding: 12px 12px 12px 16px;
+}
+
+.dimensionFilters button::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 8px;
+  bottom: 8px;
+  width: 2px;
+  border-radius: 2px;
+  background: transparent;
 }
 
 .dimensionFilters button.active {
-  border-color: rgba(20, 241, 255, 0.68);
-  background: linear-gradient(135deg, rgba(20, 241, 255, 0.14), rgba(255, 63, 143, 0.08));
+  border-color: var(--border-strong);
+  background: var(--surface-elevated);
+}
+
+.dimensionFilters button.active::before {
+  background: var(--cyan);
 }
 
 .dimensionFilters strong {
-  color: var(--cyan);
+  color: var(--text);
+  font-weight: 600;
 }
 
 .dimensionFilters small,
@@ -375,7 +486,7 @@ h1 {
 .opportunityRow small,
 .productCards small,
 .sparkleList small {
-  color: var(--muted);
+  color: var(--text-secondary);
 }
 
 .clusterList {
@@ -388,33 +499,59 @@ h1 {
 
 .clusterList button {
   display: grid;
-  grid-template-columns: 34px 58px 1fr;
+  grid-template-columns: 28px 48px 1fr;
   align-items: center;
   gap: 10px;
   min-height: 62px;
-  padding: 10px;
+  padding: 10px 14px 10px 10px;
+}
+
+.clusterList button::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 8px;
+  bottom: 8px;
+  width: 2px;
+  border-radius: 2px;
+  background: transparent;
 }
 
 .clusterList button.active,
 .termList button.active {
-  border-color: rgba(20, 241, 255, 0.48);
-  background: rgba(20, 241, 255, 0.08);
+  border-color: var(--border-strong);
+  background: var(--surface-elevated);
+}
+
+.clusterList button.active::before {
+  background: var(--cyan);
+}
+
+.clusterList button > span,
+.opportunityRow > span {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
 }
 
 .clusterList b {
-  color: var(--cyan);
+  color: var(--muted);
+  font-weight: 600;
+  font-size: 12px;
 }
 
 .clusterList i {
   display: grid;
   place-items: center;
-  width: 58px;
-  height: 46px;
-  border-radius: 6px;
-  background: linear-gradient(135deg, rgba(20, 241, 255, 0.7), rgba(255, 63, 143, 0.5));
-  color: #fff;
+  width: 48px;
+  height: 40px;
+  border-radius: 8px;
+  background: var(--surface-elevated);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
   font-style: normal;
-  font-weight: 900;
+  font-weight: 700;
+  font-size: 12px;
 }
 
 .starStack {
@@ -428,10 +565,10 @@ h1 {
   grid-template-columns: 96px 1fr;
   align-items: center;
   min-height: 48px;
-  padding: 12px;
-  border: 1px solid rgba(148, 214, 255, 0.1);
-  border-radius: 6px;
-  background: rgba(255, 255, 255, 0.035);
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
 }
 
 .starStack span:first-child {
@@ -442,8 +579,8 @@ h1 {
 .stars {
   display: inline-flex;
   gap: 2px;
-  color: rgba(255, 255, 255, 0.28);
-  font-size: 17px;
+  color: var(--border-strong);
+  font-size: 16px;
   white-space: nowrap;
 }
 
@@ -453,48 +590,96 @@ h1 {
 
 .stars .on {
   color: var(--amber);
-  text-shadow: 0 0 12px rgba(255, 182, 41, 0.34);
 }
 
 .sentimentTag {
   display: inline-flex;
   width: fit-content;
   align-items: center;
-  padding: 4px 8px;
-  border: 1px solid rgba(148, 214, 255, 0.12);
+  padding: 3px 9px;
+  border: 1px solid var(--border);
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--surface-elevated);
   font-size: 11px;
-  font-weight: 900;
+  font-weight: 600;
   white-space: nowrap;
 }
 
 .sentimentTag.positive {
-  color: var(--green);
-  border-color: rgba(45, 229, 141, 0.3);
-  background: rgba(45, 229, 141, 0.09);
+  color: var(--positive);
+  border-color: rgba(52, 211, 153, 0.28);
+  background: rgba(52, 211, 153, 0.08);
 }
 
 .sentimentTag.negative {
-  color: var(--pink);
-  border-color: rgba(255, 63, 143, 0.32);
-  background: rgba(255, 63, 143, 0.09);
+  color: var(--red);
+  border-color: rgba(254, 44, 85, 0.28);
+  background: rgba(254, 44, 85, 0.08);
 }
 
 .sentimentTag.neutral {
-  color: var(--muted);
+  color: var(--text-secondary);
 }
 
 .rawValue {
   color: var(--muted);
   font-size: 11px;
-  font-weight: 800;
+  font-weight: 600;
   white-space: nowrap;
+}
+
+/* Semantic momentum tags -- an additional at-a-glance read for list rows. The
+   numeric scores this derives from stay fully visible in the Dashboard / detail
+   views; this never replaces a number, only summarizes it for scanning. */
+.tag {
+  display: inline-block;
+  width: fit-content;
+  margin-top: 2px;
+  padding: 3px 8px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface-elevated);
+  color: var(--text-secondary);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.tag-opportunity {
+  color: var(--cyan);
+  border-color: rgba(37, 244, 238, 0.28);
+  background: rgba(37, 244, 238, 0.08);
+}
+
+.tag-engagement {
+  color: var(--amber);
+  border-color: rgba(245, 185, 84, 0.28);
+  background: rgba(245, 185, 84, 0.08);
+}
+
+.tag-broad {
+  color: var(--positive);
+  border-color: rgba(52, 211, 153, 0.28);
+  background: rgba(52, 211, 153, 0.08);
+}
+
+.tag-risk {
+  color: var(--red);
+  border-color: rgba(254, 44, 85, 0.28);
+  background: rgba(254, 44, 85, 0.08);
+}
+
+.tag-steady {
+  color: var(--muted);
 }
 
 h4 {
   margin: 18px 18px 10px;
   color: var(--text);
+  font-size: 13px;
+  font-weight: 600;
 }
 
 .sourceGrid,
@@ -517,20 +702,25 @@ h4 {
   padding: 10px;
   color: inherit;
   text-decoration: none;
-  border: 1px solid rgba(148, 214, 255, 0.12);
-  border-radius: 6px;
-  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+}
+
+.sourceGrid a:hover {
+  border-color: var(--border-strong);
+  background: var(--surface-elevated);
 }
 
 .wordCloud {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 8px 12px;
   min-height: 160px;
   padding: 16px;
-  border: 1px solid rgba(148, 214, 255, 0.1);
-  border-radius: 6px;
-  background: rgba(255, 255, 255, 0.028);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
 }
 
 .wordCloud.dashboard {
@@ -538,23 +728,27 @@ h4 {
 }
 
 .wordCloud button {
-  color: var(--cyan);
+  color: var(--text-secondary);
   border: 0;
   background: transparent;
-  font-size: 20px;
-  font-weight: 900;
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.wordCloud button:hover {
+  color: var(--text);
 }
 
 .positive {
-  color: var(--green) !important;
+  color: var(--positive) !important;
 }
 
 .negative {
-  color: var(--pink) !important;
+  color: var(--red) !important;
 }
 
 .neutral {
-  color: var(--cyan) !important;
+  color: var(--text-secondary) !important;
 }
 
 .productCards {
@@ -567,14 +761,23 @@ h4 {
 
 .productCards div {
   display: grid;
-  grid-template-columns: 42px minmax(0, 1fr) auto;
+  grid-template-columns: 44px minmax(0, 1fr) auto;
   align-items: center;
   gap: 6px 12px;
   min-height: 74px;
   padding: 12px;
-  border: 1px solid rgba(148, 214, 255, 0.11);
-  border-radius: 6px;
-  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+}
+
+.productCards div:hover {
+  border-color: var(--border-strong);
+  background: var(--surface-elevated);
+}
+
+.productCards div:hover .brandAvatar {
+  transform: scale(1.04);
 }
 
 .productCards b,
@@ -593,46 +796,60 @@ h4 {
   gap: 8px;
 }
 
+/* BrandAvatar -- one shared component, one shared style. A white rounded-square
+   plate at a consistent size/padding regardless of whether it holds a real logo
+   image or the initials fallback, so the two states never look like different
+   components. */
 .brandAvatar,
 .keywordAvatar {
-  display: grid;
+  display: inline-grid;
   place-items: center;
-  width: 58px;
-  height: 58px;
+  flex: none;
   overflow: hidden;
-  border-radius: 50%;
-  background: linear-gradient(135deg, rgba(20, 241, 255, 0.28), rgba(255, 63, 143, 0.32));
-  color: white;
-  font-style: normal;
-  font-size: 12px;
-  font-weight: 900;
+  border-radius: 10px;
+  transition: transform var(--transition);
 }
 
-.brandAvatar.compact,
-.keywordAvatar {
-  width: 42px;
-  height: 42px;
-  font-size: 11px;
+.brandAvatar {
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.06);
 }
 
 .brandAvatar img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
+  padding: 15%;
+  box-sizing: border-box;
 }
 
-.brandAvatar em {
-  position: absolute;
-  width: 14px;
-  height: 14px;
-  margin: 24px 0 0 24px;
-  display: grid;
-  place-items: center;
-  border-radius: 50%;
-  background: white;
-  color: #4285f4;
-  font-size: 9px;
+.brandAvatarInitials {
+  color: #17171c;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.brandAvatar-sm .brandAvatarInitials {
+  font-size: 11px;
+}
+
+.brandAvatar-md .brandAvatarInitials {
+  font-size: 13px;
+}
+
+.brandAvatar-lg .brandAvatarInitials {
+  font-size: 16px;
+}
+
+.keywordAvatar {
+  width: 44px;
+  height: 44px;
+  background: var(--surface-elevated);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
   font-style: normal;
+  font-weight: 600;
+  font-size: 15px;
 }
 
 .productCards a,
@@ -641,11 +858,18 @@ h4 {
   min-height: 34px;
   padding: 8px 10px;
   color: var(--text);
-  border: 1px solid rgba(148, 214, 255, 0.18);
-  border-radius: 6px;
-  background: rgba(255, 255, 255, 0.045);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-elevated);
   font-size: 12px;
   text-decoration: none;
+}
+
+.productCards a:hover,
+.productCards button:hover,
+.primaryLink:hover {
+  border-color: var(--border-strong);
+  color: var(--cyan);
 }
 
 .singleColumn {
@@ -680,7 +904,7 @@ h4 {
 .axisControls em {
   color: var(--text);
   font-style: normal;
-  font-weight: 900;
+  font-weight: 600;
 }
 
 .scatter {
@@ -688,26 +912,26 @@ h4 {
   height: 440px;
   margin: 14px;
   overflow: hidden;
-  border: 1px solid rgba(148, 214, 255, 0.11);
-  border-radius: 6px;
-  background: rgba(1, 8, 14, 0.46);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
 }
 
 .scatterCanvas {
   position: absolute;
   inset: 0;
   min-width: 100%;
-  transition: transform 120ms ease, width 120ms ease;
+  transition: transform 180ms var(--ease), width 180ms var(--ease);
   background:
-    linear-gradient(to right, transparent 49.8%, rgba(255, 255, 255, 0.08) 50%, transparent 50.2%),
-    linear-gradient(to bottom, transparent 49.8%, rgba(255, 255, 255, 0.08) 50%, transparent 50.2%);
+    linear-gradient(to right, transparent 49.8%, var(--border) 50%, transparent 50.2%),
+    linear-gradient(to bottom, transparent 49.8%, var(--border) 50%, transparent 50.2%);
 }
 
 .axis {
   position: absolute;
   color: var(--dim);
   font-size: 11px;
-  font-weight: 900;
+  font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
@@ -726,15 +950,19 @@ h4 {
 
 .scatterCanvas button {
   position: absolute;
-  border: 0;
+  border: 1px solid rgba(37, 244, 238, 0.5);
   border-radius: 50%;
-  background: rgba(20, 241, 255, 0.78);
-  box-shadow: 0 0 22px rgba(20, 241, 255, 0.7);
+  background: rgba(37, 244, 238, 0.5);
   transform: translate(-50%, 50%);
 }
 
+.scatterCanvas button:hover {
+  transform: translate(-50%, 50%) scale(1.15);
+}
+
 .scatterCanvas button.active {
-  background: var(--pink);
+  border-color: var(--red);
+  background: var(--red);
 }
 
 .opportunityLists {
@@ -746,22 +974,28 @@ h4 {
 
 .opportunityLists h4 {
   margin: 0 0 8px;
-  color: var(--cyan);
+  color: var(--text-secondary);
 }
 
 .opportunityRow {
   display: grid;
-  grid-template-columns: 34px 1fr 24px;
+  grid-template-columns: 28px 1fr 20px;
   align-items: center;
   gap: 10px;
   min-height: 74px;
   margin-top: 8px;
-  padding: 12px;
+  padding: 12px 14px;
+}
+
+.opportunityRow b {
+  color: var(--muted);
+  font-weight: 600;
+  font-size: 12px;
 }
 
 .opportunityRow em {
-  color: var(--cyan);
-  font-size: 24px;
+  color: var(--muted);
+  font-size: 18px;
   font-style: normal;
   line-height: 1;
   text-align: right;
@@ -779,7 +1013,7 @@ h4 {
   flex-wrap: wrap;
   gap: 8px;
   padding: 14px;
-  border-bottom: 1px solid rgba(148, 214, 255, 0.1);
+  border-bottom: 1px solid var(--border);
 }
 
 .filters button,
@@ -787,15 +1021,20 @@ h4 {
 .filterPanel select {
   min-height: 40px;
   color: var(--text);
-  border: 1px solid rgba(148, 214, 255, 0.18);
-  border-radius: 6px;
-  background: rgba(5, 12, 21, 0.86);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-elevated);
   padding: 0 12px;
 }
 
+.filters button:hover {
+  border-color: var(--border-strong);
+}
+
 .filters button.active {
-  border-color: rgba(255, 63, 143, 0.5);
-  background: rgba(255, 63, 143, 0.15);
+  border-color: rgba(254, 44, 85, 0.4);
+  background: rgba(254, 44, 85, 0.12);
+  color: var(--text);
 }
 
 .termList {
@@ -808,29 +1047,49 @@ h4 {
 
 .termList button {
   display: grid;
-  grid-template-columns: 48px minmax(0, 1fr) auto;
+  grid-template-columns: 32px minmax(0, 1fr) auto;
   align-items: center;
   gap: 12px;
-  min-height: 68px;
-  padding: 12px;
+  min-height: 64px;
+  padding: 12px 14px 12px 10px;
+}
+
+.termList button::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 8px;
+  bottom: 8px;
+  width: 2px;
+  border-radius: 2px;
+  background: transparent;
+}
+
+.termList button.active::before {
+  background: var(--cyan);
 }
 
 .termList b {
-  color: var(--cyan);
+  color: var(--muted);
+  font-weight: 600;
+  font-size: 12px;
 }
 
 .termList strong {
-  font-size: 20px;
+  font-size: 15px;
+  font-weight: 600;
 }
 
 .termList span {
   justify-self: end;
-  padding: 5px 8px;
-  border: 1px solid rgba(148, 214, 255, 0.13);
+  padding: 4px 8px;
+  border: 1px solid var(--border);
   border-radius: 999px;
-  color: var(--cyan);
-  font-size: 11px;
-  font-weight: 900;
+  color: var(--text-secondary);
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
 }
 
 .stickyPanel {
@@ -849,9 +1108,9 @@ h4 {
   gap: 14px;
   min-height: 86px;
   padding: 14px;
-  border: 1px solid rgba(148, 214, 255, 0.12);
-  border-radius: 6px;
-  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
 }
 
 .signalHero i {
@@ -859,22 +1118,19 @@ h4 {
   place-items: center;
   width: 58px;
   height: 58px;
-  border-radius: 8px;
-  background: linear-gradient(135deg, rgba(20, 241, 255, 0.26), rgba(255, 63, 143, 0.34));
-  color: white;
+  border-radius: 10px;
+  background: var(--surface-elevated);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
   font-style: normal;
-  font-weight: 900;
-}
-
-.signalHero .brandAvatar {
-  width: 58px;
-  height: 58px;
+  font-weight: 600;
+  font-size: 18px;
 }
 
 .signalHero small {
   display: block;
   margin-top: 4px;
-  color: var(--muted);
+  color: var(--text-secondary);
 }
 
 .metricGrid {
@@ -896,12 +1152,17 @@ h4 {
 
 .chips button,
 .chips span {
-  padding: 7px 10px;
-  border: 1px solid rgba(148, 214, 255, 0.15);
+  padding: 6px 10px;
+  border: 1px solid var(--border);
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.045);
-  color: #cfe3f3;
+  background: var(--surface-elevated);
+  color: var(--text-secondary);
   font-size: 12px;
+}
+
+.chips button:hover {
+  border-color: var(--border-strong);
+  color: var(--text);
 }
 
 .sparkleList {
@@ -917,12 +1178,12 @@ h4 {
 
 .sparkleGroup + .sparkleGroup {
   padding-top: 12px;
-  border-top: 1px solid rgba(148, 214, 255, 0.1);
+  border-top: 1px solid var(--border);
 }
 
 .sparkleGroup h4 {
   margin: 4px 2px;
-  font-size: 13px;
+  font-size: 12px;
 }
 
 .sparkleList button {
@@ -930,19 +1191,27 @@ h4 {
   grid-template-columns: auto 1fr auto;
   align-items: center;
   gap: 10px;
-  padding: 12px;
+  padding: 12px 14px;
+}
+
+.sparkleList button:hover .brandAvatar {
+  transform: scale(1.04);
 }
 
 .sparkleList b {
-  padding: 4px 7px;
+  padding: 3px 8px;
   border-radius: 999px;
-  background: var(--pink);
-  color: #fff;
+  background: rgba(254, 44, 85, 0.14);
+  border: 1px solid rgba(254, 44, 85, 0.3);
+  color: var(--red);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
 }
 
 .sparkleList em {
-  color: var(--cyan);
-  font-size: 24px;
+  color: var(--muted);
+  font-size: 18px;
   font-style: normal;
   line-height: 1;
   text-align: right;
@@ -959,10 +1228,14 @@ h4 {
   display: grid;
   gap: 8px;
   min-height: 150px;
-  padding: 12px;
-  border: 1px solid rgba(148, 214, 255, 0.11);
-  border-radius: 6px;
-  background: rgba(255, 255, 255, 0.035);
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+}
+
+.evidenceGrid article:hover {
+  border-color: var(--border-strong);
 }
 
 .evidenceGrid div {
@@ -973,8 +1246,8 @@ h4 {
 
 .evidenceGrid p {
   margin: 0;
-  color: var(--muted);
-  line-height: 1.45;
+  color: var(--text-secondary);
+  line-height: 1.5;
 }
 
 .evidenceGrid a {
@@ -1007,13 +1280,20 @@ h4 {
   background: transparent;
 }
 
+.barChart span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-secondary);
+}
+
 .barChart i,
 .dimensionChart i {
   display: block;
-  height: 12px;
+  height: 8px;
   overflow: hidden;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--surface-elevated);
 }
 
 .barChart i b,
@@ -1021,7 +1301,7 @@ h4 {
   display: block;
   height: 100%;
   border-radius: inherit;
-  background: linear-gradient(90deg, var(--pink), var(--cyan));
+  background: linear-gradient(90deg, var(--cyan), var(--red));
 }
 
 .dimensionChart {
@@ -1032,31 +1312,38 @@ h4 {
 
 .dimensionChart button {
   display: grid;
-  grid-template-columns: 28px minmax(0, 1fr);
+  grid-template-columns: 24px minmax(0, 1fr);
   grid-template-areas:
     "rank name"
     "rank bar"
     "rank level";
   gap: 6px 10px;
   min-height: 66px;
-  padding: 10px;
+  padding: 10px 12px;
   color: inherit;
   text-align: left;
-  border: 1px solid rgba(148, 214, 255, 0.1);
-  border-radius: 6px;
-  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+}
+
+.dimensionChart button:hover {
+  border-color: var(--border-strong);
+  background: var(--surface-elevated);
 }
 
 .dimensionChart button > b {
   grid-area: rank;
   align-self: center;
-  color: var(--cyan);
+  color: var(--muted);
+  font-weight: 600;
+  font-size: 12px;
 }
 
 .dimensionChart button > span {
   grid-area: name;
   overflow: hidden;
-  font-weight: 900;
+  font-weight: 600;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -1091,14 +1378,15 @@ h4 {
 }
 
 .rawHead {
-  padding: 9px 10px;
-  color: var(--cyan);
-  border: 1px solid rgba(148, 214, 255, 0.12);
-  border-radius: 6px;
-  background: rgba(4, 12, 22, 0.94);
+  padding: 9px 12px;
+  color: var(--muted);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-elevated);
   font-size: 11px;
-  font-weight: 900;
+  font-weight: 600;
   text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
 .rawBody {
@@ -1112,11 +1400,11 @@ h4 {
 
 .rawRow {
   min-height: 58px;
-  padding: 10px;
-  border: 1px solid rgba(148, 214, 255, 0.1);
-  border-radius: 6px;
-  background: rgba(255, 255, 255, 0.028);
-  color: var(--muted);
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text-secondary);
   font-size: 12px;
 }
 
@@ -1162,9 +1450,9 @@ h4 {
   height: 320px;
   margin: 14px;
   padding: 24px 12px 8px;
-  border: 1px solid rgba(148, 214, 255, 0.1);
-  border-radius: 6px;
-  background: rgba(255, 255, 255, 0.026);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
 }
 
 .dailyChart div {
@@ -1177,11 +1465,11 @@ h4 {
 
 .dailyChart i {
   display: block;
-  width: 70%;
+  width: 60%;
   min-height: 4px;
   margin: 0 auto;
-  border-radius: 6px 6px 0 0;
-  background: linear-gradient(180deg, var(--pink), rgba(20, 241, 255, 0.55));
+  border-radius: 4px 4px 0 0;
+  background: linear-gradient(180deg, var(--cyan), rgba(37, 244, 238, 0.35));
 }
 
 .dailyChart strong,
@@ -1202,7 +1490,7 @@ h4 {
   display: grid;
   gap: 8px;
   min-width: 100%;
-  transition: width 120ms ease;
+  transition: width 180ms var(--ease);
 }
 
 .keywordRows div {
@@ -1211,33 +1499,33 @@ h4 {
   align-items: center;
   gap: 10px;
   min-height: 34px;
-  padding: 7px 8px;
-  border: 1px solid rgba(148, 214, 255, 0.1);
-  border-radius: 6px;
-  background: rgba(255, 255, 255, 0.028);
+  padding: 7px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
 }
 
 .keywordRows span {
   overflow: hidden;
   color: var(--text);
   font-size: 12px;
-  font-weight: 900;
+  font-weight: 600;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .keywordRows i {
   position: relative;
-  height: 10px;
+  height: 6px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--surface-elevated);
 }
 
 .keywordRows i b {
   position: absolute;
   top: 50%;
-  width: 14px;
-  height: 14px;
+  width: 12px;
+  height: 12px;
   border-radius: 50%;
   background: var(--cyan);
   transform: translate(-50%, -50%);
