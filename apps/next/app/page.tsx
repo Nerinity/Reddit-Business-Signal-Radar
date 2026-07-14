@@ -29,6 +29,8 @@ type Cluster = {
   sentiment_score: number;
   cross_community_score: number;
   engagement_score: number;
+  momentum_percentile?: number;
+  cross_community_percentile?: number;
   current_week_posts: number;
   previous_week_posts: number;
   growth_rate: number;
@@ -756,8 +758,14 @@ function OpportunityTab({
             <span className="axis top">High momentum</span>
             <span className="axis right">Reach</span>
             {clusters.slice(0, 60).map((cluster) => {
-              const x = Math.min(96, Math.max(4, Number(cluster.cross_community_score || 0) * 18));
-              const y = Math.min(92, Math.max(8, Number(cluster.momentum_score || 0) * 18));
+              // Percentiles (0-1, continuous) rather than the 1-5 star scores --
+              // the star scores are bucketed into only ~5-25 distinct values across
+              // the whole cluster set, so plotting by those piles many clusters onto
+              // the same handful of coordinates instead of actually spreading out.
+              const reach = cluster.cross_community_percentile ?? Number(cluster.cross_community_score || 0) / 5;
+              const momentum = cluster.momentum_percentile ?? Number(cluster.momentum_score || 0) / 5;
+              const x = 6 + Math.max(0, Math.min(1, reach)) * 88;
+              const y = 6 + Math.max(0, Math.min(1, momentum)) * 88;
               const size = 8 + 22 * (cluster.current_week_posts / maxPosts);
               return (
                 <button

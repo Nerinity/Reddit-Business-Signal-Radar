@@ -65,6 +65,14 @@ def build_week_bundle(week: str, all_weeks: list[str], scores: pd.DataFrame, ter
             "sentiment_score": safe_float(row.sentiment_score),
             "cross_community_score": safe_float(row.cross_community_score),
             "engagement_score": safe_float(row.engagement_score),
+            # Continuous 0-1 values behind the 1-5 star scores above. momentum_score
+            # itself is 0.60*volume_bucket + 0.40*spike_bucket -- only ~25 distinct
+            # values across the whole cluster set -- so a scatter plot positioned by
+            # the *_score fields piles dozens of clusters on the same handful of
+            # coordinates. These give the opportunity scatter a genuinely continuous,
+            # visually spread-out placement instead.
+            "momentum_percentile": safe_float(0.60 * row.volume_percentile + 0.40 * row.spike_percentile),
+            "cross_community_percentile": safe_float(row.cross_community_percentile),
             "current_week_posts": safe_int(row.current_week_posts),
             "previous_week_posts": safe_int(row.previous_week_posts),
             "growth_rate": safe_float(row.growth_rate),
