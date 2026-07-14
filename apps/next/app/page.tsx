@@ -113,6 +113,20 @@ function fmt(value: number | undefined, digits = 1) {
   return Number(value || 0).toFixed(digits);
 }
 
+// meta.latest_week is just the week's Monday (week_start); show the full Mon-Sun range
+// instead of a single date so "Analysis Week" actually reads as a week, not a day.
+function formatWeekRange(weekStart: string): string {
+  if (!weekStart) return "—";
+  const start = new Date(`${weekStart}T00:00:00Z`);
+  if (Number.isNaN(start.getTime())) return weekStart;
+  const end = new Date(start);
+  end.setUTCDate(end.getUTCDate() + 6);
+  const dayOpts: Intl.DateTimeFormatOptions = { month: "short", day: "numeric", timeZone: "UTC" };
+  const startLabel = start.toLocaleDateString("en-US", dayOpts);
+  const endLabel = end.toLocaleDateString("en-US", { ...dayOpts, year: "numeric" });
+  return `${startLabel} – ${endLabel}`;
+}
+
 function starRating(value: number | undefined, className = "") {
   const score = Math.max(0, Math.min(5, Number(value || 0)));
   const full = Math.round(score);
@@ -149,13 +163,27 @@ function sentimentValue(value?: number) {
   );
 }
 
-function spikeLabel(cluster: Cluster) {
-  if (Number(cluster.previous_week_posts || 0) === 0) return "new";
-  return `${fmt(cluster.growth_rate, 1)}x`;
+// Real week-over-week multiple (current / previous), not the percentage-style
+// growth_rate field -- growth_rate = (current - previous) / previous under-reports
+// the actual multiple by 1x (doubling shows as "1.0x" instead of "2.0x").
+function spikeRatio(cluster: Cluster): number | null {
+  const previous = Number(cluster.previous_week_posts || 0);
+  const current = Number(cluster.current_week_posts || 0);
+  if (previous <= 0) return null;
+  return current / previous;
+}
+
+function spikeValue(cluster: Cluster): string {
+  const ratio = spikeRatio(cluster);
+  return ratio === null ? "new" : `${fmt(ratio, 1)}x`;
+}
+
+function spikeLabel(cluster: Cluster): string {
+  return `spike: ${spikeValue(cluster)}`;
 }
 
 function dimensionRawValue(cluster: Cluster, key: ScoreKey) {
-  if (key === "momentum_score") return <span className="rawValue">{cluster.current_week_posts} posts · {spikeLabel(cluster)} spike</span>;
+  if (key === "momentum_score") return <span className="rawValue">{cluster.current_week_posts} posts · {spikeLabel(cluster)}</span>;
   if (key === "engagement_score") return <span className="rawValue">{fmt(cluster.avg_log_engagement, 2)} engagement</span>;
   if (key === "cross_community_score") return <span className="rawValue">{cluster.unique_subreddits} subreddits</span>;
   if (key === "sentiment_score") return sentimentValue(cluster.avg_sentiment);
@@ -486,7 +514,7 @@ function Home({ data, setView }: { data: DashboardBundle; setView: (view: View) 
       <h1>Reddit - North America Product Trend Radar</h1>
       <p>Identify emerging product opportunities from real consumer discussions before they appear in marketplace metrics.</p>
       <div className="stats">
-        <Stat label="Analysis Week" value={data.meta.latest_week} />
+        <Stat label="Analysis Week" value={formatWeekRange(data.meta.latest_week)} />
         <Stat label="Reddit Posts" value={data.meta.post_count.toLocaleString()} />
         <Stat label="Trend Clusters" value={String(data.meta.cluster_count)} />
         <Stat label="Brand Signals" value={data.meta.brand_signal_count.toLocaleString()} />
@@ -988,7 +1016,7 @@ function SparkleTab({
           </div>
           <div>
             <span>Spike</span>
-            <strong>{spikeLabel(selectedCluster)}</strong>
+            <strong>{spikeValue(selectedCluster)}</strong>
           </div>
           <div>
             <span>Subreddits</span>
