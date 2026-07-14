@@ -213,9 +213,19 @@ def main() -> None:
     brands = pd.read_parquet(base / "weekly_cluster_brand_mentions.parquet")
     posts = pd.read_parquet(base / "brand_post_index.parquet")
 
-    all_weeks = sorted(scores["week_start"].astype(str).unique().tolist(), reverse=True)
+    # A week whose Mon-Sun span isn't fully covered by the raw collection yet (the
+    # trailing edge of whatever the crawler has ingested so far) shows up here with a
+    # handful of clusters instead of the usual ~100+ -- exclude it entirely rather than
+    # ever loading it as the default view or offering it in the switcher, since it reads
+    # as "the data broke" rather than "this week is still in progress."
+    MIN_WEEK_CLUSTER_COUNT = 20
+    cluster_counts = scores.groupby(scores["week_start"].astype(str))["cluster_id"].nunique()
+    all_weeks = sorted(
+        (week for week, count in cluster_counts.items() if count >= MIN_WEEK_CLUSTER_COUNT),
+        reverse=True,
+    )
     if not all_weeks:
-        print("No weeks found in weekly_cluster_scores.parquet; nothing to write.")
+        print("No weeks with enough clusters in weekly_cluster_scores.parquet; nothing to write.")
         return
     latest_week = all_weeks[0]
 
