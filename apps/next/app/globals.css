@@ -999,19 +999,52 @@ h4 {
   transform: translateY(-50%) rotate(90deg);
 }
 
-.scatterCanvas button {
+.scatterPoint {
   position: absolute;
-  border: 1px solid rgba(37, 244, 238, 0.5);
-  border-radius: 50%;
-  background: rgba(37, 244, 238, 0.5);
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
   transform: translate(-50%, 50%);
 }
 
-.scatterCanvas button:hover {
-  transform: translate(-50%, 50%) scale(1.15);
+.scatterPoint:hover {
+  z-index: 2;
 }
 
-.scatterCanvas button.active {
+.scatterPoint button {
+  flex: none;
+  border: 1px solid rgba(37, 244, 238, 0.5);
+  border-radius: 50%;
+  background: rgba(37, 244, 238, 0.5);
+  transition: transform var(--transition), background var(--transition), border-color var(--transition);
+}
+
+.scatterPoint button:hover {
+  transform: scale(1.15);
+}
+
+.scatterLabel {
+  max-width: 108px;
+  overflow: hidden;
+  color: var(--text-secondary);
+  font-size: 10px;
+  font-weight: 500;
+  line-height: 1.15;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.scatterPoint:hover .scatterLabel,
+.scatterPoint button.active + .scatterLabel {
+  color: var(--text);
+  font-weight: 700;
+}
+
+.scatterPoint button.active {
   border-color: var(--red);
   background: var(--red);
 }

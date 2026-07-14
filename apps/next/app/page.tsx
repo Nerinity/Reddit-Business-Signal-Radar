@@ -766,15 +766,17 @@ function OpportunityTab({
               const momentum = cluster.momentum_percentile ?? Number(cluster.momentum_score || 0) / 5;
               const x = 6 + Math.max(0, Math.min(1, reach)) * 88;
               const y = 6 + Math.max(0, Math.min(1, momentum)) * 88;
-              const size = 8 + 22 * (cluster.current_week_posts / maxPosts);
+              const size = 16 + 34 * (cluster.current_week_posts / maxPosts);
               return (
-                <button
-                  key={cluster.cluster_id}
-                  className={selectedClusterId === cluster.cluster_id ? "active" : ""}
-                  title={cluster.cluster_name}
-                  style={{ left: `${x}%`, bottom: `${y}%`, width: size, height: size }}
-                  onClick={() => openClusterDetail(cluster.cluster_id)}
-                />
+                <div key={cluster.cluster_id} className="scatterPoint" style={{ left: `${x}%`, bottom: `${y}%` }}>
+                  <button
+                    className={selectedClusterId === cluster.cluster_id ? "active" : ""}
+                    title={cluster.cluster_name}
+                    style={{ width: size, height: size }}
+                    onClick={() => openClusterDetail(cluster.cluster_id)}
+                  />
+                  <span className="scatterLabel">{cluster.cluster_name}</span>
+                </div>
               );
             })}
           </div>
