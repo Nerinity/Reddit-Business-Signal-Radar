@@ -55,7 +55,7 @@ BRAND_OUTPUT_COLUMNS = [
     "week_start", "cluster_id", "cluster_name", "brand_signal_type", "brand_display", "brand_norm",
     "candidate_text", "in_platform_brand", "mentions", "unique_posts", "avg_sentiment",
     "positive_share", "negative_share", "sample_post_ids", "sample_titles", "sample_urls",
-    "top_subreddits", "google_search_url", "avg_assignment_confidence",
+    "top_subreddits", "google_search_url", "logo_url", "avg_assignment_confidence",
     "cluster_usage_tier_distribution", "assignment_status_distribution",
 ]
 HIGH_PRECISION_COLUMNS = [
@@ -221,6 +221,7 @@ def main() -> None:
     parser.add_argument("--sentiment", default="data/processed/post_sentiment.parquet")
     parser.add_argument("--entities", default="data/processed/entity_mentions.parquet")
     parser.add_argument("--clusters", default="data/processed/cluster_assignments_226.parquet")
+    parser.add_argument("--brand-registry", default="data/processed/brand_registry.parquet")
     parser.add_argument("--terms-output", default="data/processed/weekly_cluster_discussion_terms.parquet")
     parser.add_argument("--brands-output", default="data/processed/weekly_cluster_brand_mentions.parquet")
     parser.add_argument("--high-precision-output", default="data/processed/high_precision_cluster_posts.parquet")
@@ -244,6 +245,7 @@ def main() -> None:
     entities = pd.read_parquet(args.entities)
     clusters = pd.read_parquet(args.clusters)
     sentiment = pd.read_parquet(args.sentiment) if Path(args.sentiment).exists() else pd.DataFrame()
+    brand_registry = pd.read_parquet(args.brand_registry) if Path(args.brand_registry).exists() else pd.DataFrame()
 
     if posts.empty or entities.empty or clusters.empty:
         write_empty(args.terms_output, TERM_OUTPUT_COLUMNS)
@@ -300,6 +302,16 @@ def main() -> None:
         "matched_cluster_id": "entity_matched_cluster_id",
         "matched_cluster_name": "entity_matched_cluster_name",
     })
+    # logo_url lives on brand_registry.parquet (see 13_fetch_brand_logos.py), keyed by
+    # brand_norm, not on entity_mentions.parquet directly -- join it in here so it flows
+    # through to weekly_cluster_brand_mentions.parquet. Only whitelist/catalog brand rows
+    # have a brand_norm to join on; candidate_non_whitelist_brand rows naturally get "".
+    if len(brand_registry) and "logo_url" in brand_registry.columns and "brand_norm" in entities_small.columns:
+        logo_lookup = brand_registry[["brand_norm", "logo_url"]].dropna(subset=["brand_norm"]).drop_duplicates("brand_norm")
+        entities_small = entities_small.merge(logo_lookup, on="brand_norm", how="left")
+    else:
+        entities_small["logo_url"] = ""
+    entities_small["logo_url"] = entities_small["logo_url"].fillna("").astype(str)
     post_side_cols = [
         "mention_id", "cluster_id", "cluster_name", "week_start", "subreddit", "title_clean", "url",
         "sentiment_compound", "sentiment_label", "assignment_confidence", "assignment_status",
@@ -378,13 +390,14 @@ def main() -> None:
             sample_urls=("url", json_sample),
             top_subreddits=("subreddit", top_counts_json),
             google_search_url=("google_search_url", mode_or_blank),
+            logo_url=("logo_url", mode_or_blank),
             avg_assignment_confidence=("assignment_confidence", "mean"),
             cluster_usage_tier_distribution=("cluster_usage_tier", status_distribution_json),
             assignment_status_distribution=("assignment_status", status_distribution_json),
         ).reset_index()
         is_known_brand_row = brand_metrics["brand_signal_type"].isin(KNOWN_BRAND_SIGNAL_TYPES)
         brand_metrics.loc[is_known_brand_row, "candidate_text"] = ""
-        brand_metrics.loc[~is_known_brand_row, ["brand_norm", "brand_display"]] = ""
+        brand_metrics.loc[~is_known_brand_row, ["brand_norm", "brand_display", "logo_url"]] = ""
         brand_metrics = brand_metrics.drop(columns=["identity_key"])
         brand_out = brand_metrics[BRAND_OUTPUT_COLUMNS]
         ensure_parent(Path(args.brands_output))
