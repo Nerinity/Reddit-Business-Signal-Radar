@@ -39,28 +39,14 @@ def safe_int(value, default=0):
         return default
 
 
-def main() -> None:
-    parser = argparse.ArgumentParser(description="Build a lightweight JSON bundle for the web app.")
-    parser.add_argument("--processed-dir", default="data/processed")
-    parser.add_argument("--output", default="apps/web/public/data/dashboard.json")
-    parser.add_argument("--next-output", default="apps/next/public/data/dashboard.json")
-    args = parser.parse_args()
-
-    base = Path(args.processed_dir)
-    scores = pd.read_parquet(base / "weekly_cluster_scores.parquet")
-    terms = pd.read_parquet(base / "weekly_cluster_discussion_terms.parquet")
-    brands = pd.read_parquet(base / "weekly_cluster_brand_mentions.parquet")
-    posts = pd.read_parquet(base / "brand_post_index.parquet")
-
-    scores = scores.sort_values(["week_start", "trend_score", "current_week_posts"], ascending=[False, False, False])
-    latest_week = str(scores["week_start"].max()) if len(scores) else ""
-    latest = scores[scores["week_start"].astype(str).eq(latest_week)].copy()
+def build_week_bundle(week: str, all_weeks: list[str], scores: pd.DataFrame, terms: pd.DataFrame,
+                       brands: pd.DataFrame, posts: pd.DataFrame) -> dict:
+    latest = scores[scores["week_start"].astype(str).eq(week)].copy()
     top_scores = latest.sort_values(["trend_score", "current_week_posts"], ascending=[False, False]).head(40)
 
     cluster_cards = []
     for row in top_scores.itertuples(index=False):
         cid = str(row.cluster_id)
-        week = str(row.week_start)
         cluster_terms = terms[
             (terms["week_start"].astype(str) == week)
             & (terms["cluster_id"].astype(str) == cid)
@@ -114,7 +100,7 @@ def main() -> None:
         })
 
     top_terms = (
-        terms[terms["week_start"].astype(str).eq(latest_week)]
+        terms[terms["week_start"].astype(str).eq(week)]
         .sort_values("mentions", ascending=False)
         .head(120)
     )
@@ -132,7 +118,7 @@ def main() -> None:
     ]
 
     brand_rows = (
-        brands[brands["week_start"].astype(str).eq(latest_week)]
+        brands[brands["week_start"].astype(str).eq(week)]
         .sort_values(["mentions", "unique_posts"], ascending=[False, False])
         .head(80)
     )
@@ -153,7 +139,14 @@ def main() -> None:
         for r in brand_rows.itertuples(index=False)
     ]
 
-    post_rows = posts.sort_values("published_at", ascending=False).head(120)
+    # Evidence stream is scoped to this week's own date range (week_start inclusive,
+    # +7 days exclusive) so switching weeks actually shows different source posts
+    # instead of the same always-most-recent 120 rows regardless of which week is selected.
+    week_start_dt = pd.Timestamp(week, tz="UTC")
+    week_end_dt = week_start_dt + pd.Timedelta(days=7)
+    published = pd.to_datetime(posts["published_at"], errors="coerce", utc=True)
+    week_posts = posts[(published >= week_start_dt) & (published < week_end_dt)]
+    post_rows = week_posts.sort_values("published_at", ascending=False).head(120)
     post_index = [
         {
             "brand_display": str(r.brand_display),
@@ -173,11 +166,11 @@ def main() -> None:
     ]
 
     meta = {
-        "latest_week": latest_week,
+        "latest_week": week,
         "cluster_count": int(latest["cluster_id"].nunique()) if len(latest) else 0,
         "post_count": int(latest["current_week_posts"].sum()) if len(latest) else 0,
-        "brand_signal_count": int(len(brands)),
-        "term_signal_count": int(len(terms)),
+        "brand_signal_count": int(len(brands[brands["week_start"].astype(str).eq(week)])),
+        "term_signal_count": int(len(terms[terms["week_start"].astype(str).eq(week)])),
         "avg_trend_score": round(float(latest["trend_score"].mean()), 2) if len(latest) else 0,
         "max_trend_score": round(float(latest["trend_score"].max()), 2) if len(latest) else 0,
     }
@@ -193,7 +186,7 @@ def main() -> None:
         if len(latest) else pd.Series(dtype=int)
     )
 
-    payload = {
+    return {
         "meta": meta,
         "clusters": cluster_cards,
         "keywords": keyword_map,
@@ -203,18 +196,45 @@ def main() -> None:
             {"band": str(k), "count": int(v)}
             for k, v in trend_distribution.items()
         ],
-        "weeks": sorted(scores["week_start"].astype(str).unique().tolist(), reverse=True),
+        "weeks": all_weeks,
     }
-    out = Path(args.output)
-    out.parent.mkdir(parents=True, exist_ok=True)
-    text = json.dumps(payload, ensure_ascii=False, indent=2)
-    out.write_text(text, encoding="utf-8")
-    print(f"Wrote {out} with {len(cluster_cards)} clusters, {len(keyword_map)} keywords, {len(brand_signals)} brands")
-    if args.next_output:
-        next_out = Path(args.next_output)
-        next_out.parent.mkdir(parents=True, exist_ok=True)
-        next_out.write_text(text, encoding="utf-8")
-        print(f"Wrote {next_out} for the Next.js app")
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description="Build per-week JSON bundles for the web app(s).")
+    parser.add_argument("--processed-dir", default="data/processed")
+    parser.add_argument("--output-dir", default="apps/web/public/data")
+    parser.add_argument("--next-output-dir", default="apps/next/public/data")
+    args = parser.parse_args()
+
+    base = Path(args.processed_dir)
+    scores = pd.read_parquet(base / "weekly_cluster_scores.parquet")
+    terms = pd.read_parquet(base / "weekly_cluster_discussion_terms.parquet")
+    brands = pd.read_parquet(base / "weekly_cluster_brand_mentions.parquet")
+    posts = pd.read_parquet(base / "brand_post_index.parquet")
+
+    all_weeks = sorted(scores["week_start"].astype(str).unique().tolist(), reverse=True)
+    if not all_weeks:
+        print("No weeks found in weekly_cluster_scores.parquet; nothing to write.")
+        return
+    latest_week = all_weeks[0]
+
+    out_dirs = [Path(args.output_dir), Path(args.next_output_dir)]
+    for out_dir in out_dirs:
+        out_dir.mkdir(parents=True, exist_ok=True)
+
+    for week in all_weeks:
+        bundle = build_week_bundle(week, all_weeks, scores, terms, brands, posts)
+        payload = json.dumps(bundle, ensure_ascii=False, indent=2)
+        for out_dir in out_dirs:
+            (out_dir / f"dashboard-{week}.json").write_text(payload, encoding="utf-8")
+        if week == latest_week:
+            # dashboard.json (no date suffix) is the default the app loads on first paint,
+            # before the user has picked a week from the topbar switcher.
+            for out_dir in out_dirs:
+                (out_dir / "dashboard.json").write_text(payload, encoding="utf-8")
+
+    print(f"Wrote {len(all_weeks)} weekly bundles ({', '.join(all_weeks)}) to {args.output_dir} and {args.next_output_dir}")
 
 
 if __name__ == "__main__":

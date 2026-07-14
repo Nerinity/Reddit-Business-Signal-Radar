@@ -165,8 +165,29 @@ a {
   background: linear-gradient(90deg, var(--cyan), var(--red));
 }
 
-.ghost {
+.topActions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   justify-self: end;
+}
+
+.weekSelect {
+  min-height: 40px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-elevated);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.weekSelect:hover {
+  border-color: var(--border-strong);
+}
+
+.ghost {
   min-height: 40px;
   padding: 0 16px;
   border: 1px solid var(--border);
@@ -257,9 +278,17 @@ h1 {
 }
 
 .stats strong {
+  overflow: hidden;
   font-size: 22px;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.stats strong.compactValue {
+  font-size: 17px;
+  letter-spacing: -0.01em;
 }
 
 .stats span {

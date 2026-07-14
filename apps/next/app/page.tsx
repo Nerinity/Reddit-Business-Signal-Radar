@@ -255,18 +255,30 @@ export default function RadarApp() {
   const [opportunityDrag, setOpportunityDrag] = useState(0);
   const [dashboardCategoryId, setDashboardCategoryId] = useState("all");
   const [sparkleCategoryId, setSparkleCategoryId] = useState("all");
+  const [selectedWeek, setSelectedWeek] = useState("");
 
-  useEffect(() => {
-    fetch("/data/dashboard.json", { cache: "no-store" })
+  function loadWeek(week: string) {
+    const path = week ? `/data/dashboard-${week}.json` : "/data/dashboard.json";
+    fetch(path, { cache: "no-store" })
       .then((response) => response.json())
       .then((bundle: DashboardBundle) => {
         setData(bundle);
+        setSelectedWeek(bundle.meta.latest_week);
         setSelectedClusterId(bundle.clusters[0]?.cluster_id || "");
       })
       .catch((error: unknown) => {
         console.error(error);
       });
+  }
+
+  useEffect(() => {
+    loadWeek("");
   }, []);
+
+  // The switcher only offers the 3 most recent weeks, even if more are available in
+  // data.weeks -- older weeks stay reachable by editing the URL-less dashboard-<week>.json
+  // files directly, but the topbar control is intentionally kept to a short, current list.
+  const recentWeeks = (data?.weeks || []).slice(0, 3);
 
   const clusters = useMemo(() => {
     if (!data) return [];
@@ -397,9 +409,23 @@ export default function RadarApp() {
             </button>
           ))}
         </nav>
-        <button className="ghost" onClick={() => window.print()}>
-          Export
-        </button>
+        <div className="topActions">
+          <select
+            className="weekSelect"
+            value={selectedWeek}
+            onChange={(event) => loadWeek(event.target.value)}
+            aria-label="Analysis week"
+          >
+            {recentWeeks.map((week) => (
+              <option key={week} value={week}>
+                {formatWeekRange(week)}
+              </option>
+            ))}
+          </select>
+          <button className="ghost" onClick={() => window.print()}>
+            Export
+          </button>
+        </div>
       </header>
 
       {view === "home" && <Home data={data} setView={setView} />}
@@ -514,7 +540,7 @@ function Home({ data, setView }: { data: DashboardBundle; setView: (view: View) 
       <h1>Reddit - North America Product Trend Radar</h1>
       <p>Identify emerging product opportunities from real consumer discussions before they appear in marketplace metrics.</p>
       <div className="stats">
-        <Stat label="Analysis Week" value={formatWeekRange(data.meta.latest_week)} />
+        <Stat label="Analysis Week" value={formatWeekRange(data.meta.latest_week)} compactValue />
         <Stat label="Reddit Posts" value={data.meta.post_count.toLocaleString()} />
         <Stat label="Trend Clusters" value={String(data.meta.cluster_count)} />
         <Stat label="Brand Signals" value={data.meta.brand_signal_count.toLocaleString()} />
@@ -536,10 +562,10 @@ function Home({ data, setView }: { data: DashboardBundle; setView: (view: View) 
   );
 }
 
-function Stat({ label, value }: { label: string; value: string }) {
+function Stat({ label, value, compactValue = false }: { label: string; value: string; compactValue?: boolean }) {
   return (
     <div>
-      <strong>{value}</strong>
+      <strong className={compactValue ? "compactValue" : ""}>{value}</strong>
       <span>{label}</span>
     </div>
   );
