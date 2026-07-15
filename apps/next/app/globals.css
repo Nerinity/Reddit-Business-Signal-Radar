@@ -1160,7 +1160,7 @@ h4 {
 
 .mappingGrid {
   display: grid;
-  grid-template-columns: minmax(0, 1.25fr) minmax(360px, 0.75fr);
+  grid-template-columns: minmax(0, 1fr) minmax(420px, 1fr);
   gap: 12px;
   align-items: start;
 }

@@ -931,7 +931,7 @@ function MappingTab({
         </div>
         {selected && (
           <div className="signalDetail">
-            <div className={`signalHero ${selected.kind}`}>
+            <div className={`signalHero signalHero-${selected.kind}`}>
               {selected.kind === "brand" ? <BrandAvatar name={selected.display} logoUrl={selected.logoUrl} size="lg" /> : <i>#</i>}
               <span>
                 <strong>{selected.display}</strong>
