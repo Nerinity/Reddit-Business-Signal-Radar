@@ -55,7 +55,7 @@ export function BrandAvatar({
 
   return (
     <span
-      className={`brandAvatar brandAvatar-${size} ${className}`.trim()}
+      className={`brandAvatar brandAvatar-${size} ${canShowLogo ? "" : "brandAvatar-fallback"} ${className}`.trim()}
       style={{ width: dimension, height: dimension }}
     >
       {canShowLogo ? (

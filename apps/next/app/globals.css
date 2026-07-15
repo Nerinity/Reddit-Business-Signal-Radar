@@ -172,6 +172,36 @@ a {
   justify-self: end;
 }
 
+.langSwitch {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-elevated);
+}
+
+.langSwitch button {
+  min-height: 30px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: calc(var(--radius-sm) - 2px);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.langSwitch button:hover:not(.active) {
+  color: var(--text);
+}
+
+.langSwitch button.active {
+  background: var(--red);
+  color: #ffffff;
+}
+
 .weekSelect {
   min-height: 40px;
   padding: 0 12px;
@@ -324,9 +354,10 @@ h1 {
 }
 
 .routeCards button:hover {
-  border-color: var(--border-strong);
+  border-color: rgba(254, 44, 85, 0.55);
   background: var(--surface-elevated);
   transform: translateY(-2px);
+  box-shadow: 0 0 0 3px rgba(254, 44, 85, 0.16);
 }
 
 .routeCards span {
@@ -346,6 +377,18 @@ h1 {
   color: var(--text-secondary);
   font-size: 14px;
   line-height: 1.5;
+}
+
+.routeCardTag {
+  width: fit-content;
+  padding: 4px 10px;
+  border: 1px solid rgba(254, 44, 85, 0.3);
+  border-radius: 999px;
+  background: rgba(254, 44, 85, 0.1);
+  color: var(--red);
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 600;
 }
 
 .sectionHeader {
@@ -385,13 +428,15 @@ h1 {
 }
 
 .tabs button:hover:not(.active) {
-  border-color: var(--border-strong);
+  border-color: rgba(254, 44, 85, 0.55);
   background: var(--surface-elevated);
+  box-shadow: 0 0 0 3px rgba(254, 44, 85, 0.16);
 }
 
 .tabs button.active {
-  border-color: var(--border-strong);
+  border-color: var(--red);
   background: var(--surface-elevated);
+  box-shadow: 0 0 0 3px rgba(254, 44, 85, 0.2);
 }
 
 .tabs button.active::before {
@@ -497,8 +542,9 @@ h1 {
 .opportunityRow:hover,
 .termList button:hover,
 .sparkleList button:hover {
-  border-color: var(--border-strong);
+  border-color: rgba(254, 44, 85, 0.55);
   background: var(--surface-elevated);
+  box-shadow: 0 0 0 3px rgba(254, 44, 85, 0.16);
 }
 
 .dimensionFilters button {
@@ -823,8 +869,9 @@ h4 {
 }
 
 .productCards div:hover {
-  border-color: var(--border-strong);
+  border-color: rgba(254, 44, 85, 0.55);
   background: var(--surface-elevated);
+  box-shadow: 0 0 0 3px rgba(254, 44, 85, 0.16);
 }
 
 .productCards div:hover .brandAvatar {
@@ -878,6 +925,18 @@ h4 {
   color: #17171c;
   font-weight: 700;
   letter-spacing: 0.01em;
+}
+
+/* No logo available -- fall back to the pink brand accent instead of the plain
+   white/dark plate used for real logo assets, so a missing logo reads as an
+   intentional brand color rather than a blank placeholder. */
+.brandAvatar-fallback {
+  background: linear-gradient(145deg, var(--red), #ff6f91);
+  border: 1px solid rgba(254, 44, 85, 0.5);
+}
+
+.brandAvatar-fallback .brandAvatarInitials {
+  color: #ffffff;
 }
 
 .brandAvatar-sm .brandAvatarInitials {
@@ -1036,10 +1095,16 @@ h4 {
   text-overflow: ellipsis;
   white-space: nowrap;
   pointer-events: none;
+  /* Absolute-value axes (not percentile rank) cluster many points together at the
+     low end, so always-on labels overlap into an unreadable mess. Keep labels hidden
+     until hover/selection instead of thinning them out or repositioning dots. */
+  opacity: 0;
+  transition: opacity var(--transition), color var(--transition), font-weight var(--transition);
 }
 
 .scatterPoint:hover .scatterLabel,
 .scatterPoint button.active + .scatterLabel {
+  opacity: 1;
   color: var(--text);
   font-weight: 700;
 }
@@ -1047,6 +1112,7 @@ h4 {
 .scatterPoint button.active {
   border-color: var(--red);
   background: var(--red);
+  box-shadow: 0 0 0 6px rgba(254, 44, 85, 0.28);
 }
 
 .opportunityLists {
@@ -1054,6 +1120,13 @@ h4 {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
   padding: 14px;
+}
+
+.opportunityListRows {
+  display: grid;
+  gap: 8px;
+  max-height: 640px;
+  overflow: auto;
 }
 
 .opportunityLists h4 {
@@ -1112,13 +1185,15 @@ h4 {
 }
 
 .filters button:hover {
-  border-color: var(--border-strong);
+  border-color: rgba(254, 44, 85, 0.55);
+  box-shadow: 0 0 0 3px rgba(254, 44, 85, 0.16);
 }
 
 .filters button.active {
-  border-color: rgba(254, 44, 85, 0.4);
-  background: rgba(254, 44, 85, 0.12);
+  border-color: var(--red);
+  background: rgba(254, 44, 85, 0.16);
   color: var(--text);
+  box-shadow: 0 0 0 3px rgba(254, 44, 85, 0.2);
 }
 
 .termList {
@@ -1252,6 +1327,8 @@ h4 {
 .sparkleList {
   display: grid;
   gap: 10px;
+  max-height: 780px;
+  overflow: auto;
   padding: 14px;
 }
 
@@ -1319,7 +1396,8 @@ h4 {
 }
 
 .evidenceGrid article:hover {
-  border-color: var(--border-strong);
+  border-color: rgba(254, 44, 85, 0.55);
+  box-shadow: 0 0 0 3px rgba(254, 44, 85, 0.16);
 }
 
 .evidenceGrid div {
@@ -1348,6 +1426,8 @@ h4 {
 .barChart {
   display: grid;
   gap: 8px;
+  max-height: 780px;
+  overflow: auto;
   padding: 14px;
 }
 
@@ -1391,6 +1471,8 @@ h4 {
 .dimensionChart {
   display: grid;
   gap: 8px;
+  max-height: 780px;
+  overflow: auto;
   padding: 14px;
 }
 
@@ -1566,7 +1648,9 @@ h4 {
 }
 
 .keywordViewport {
-  overflow: hidden;
+  max-height: 640px;
+  overflow-x: hidden;
+  overflow-y: auto;
   padding: 14px;
 }
 
