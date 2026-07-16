@@ -21,7 +21,7 @@ import time
 import urllib.parse
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from email.utils import parsedate_to_datetime
 from pathlib import Path
 from typing import Any
@@ -624,7 +624,11 @@ def scrape_reddit_arctic(
             end_date=end_date,
         )
         sub_new = 0
-        before = end_date
+        # Arctic Shift treats a bare date `before` param as midnight UTC of that date, i.e. an
+        # exclusive boundary -- passing end_date verbatim silently drops the entire last day of
+        # the window (every week's Sunday, for weekly-backfill). Push the boundary one day past
+        # end_date so it lands after end_date's 23:59:59, matching _in_window()'s inclusive end.
+        before = (datetime.fromisoformat(end_date).date() + timedelta(days=1)).isoformat()
         status = "success"
         for _ in range(max_pages_per_sort):
             if sub_new >= per_subreddit or len(records) >= safety_cap:

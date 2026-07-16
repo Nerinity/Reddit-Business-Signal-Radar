@@ -37,9 +37,9 @@ safety_cap = 75000
 
 [scrape.weekly_backfill]
 source = "arctic"
-per_subreddit = 500
-max_pages_per_sort = 20
-safety_cap = 250000
+per_subreddit = 2000
+max_pages_per_sort = 40
+safety_cap = 400000
 
 [monitoring]
 min_rows_per_daily_run = 100

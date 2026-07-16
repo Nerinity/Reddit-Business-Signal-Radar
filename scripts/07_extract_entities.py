@@ -89,6 +89,32 @@ PRONOUN_ENTITY_TERMS = {
     "everyone", "everybody", "everything", "no one", "nobody", "nothing",
     "some", "any", "all", "none", "both", "either", "neither", "other", "others",
 }
+# Generic tech acronyms and internet shorthand that regex_allcaps/regex_camel keep matching
+# next to purchase-intent context ("recommend a good CPU", "bought this RAM") -- real
+# purchase context, but for a component *category*, not a brand. These were never registry
+# entries, so brand_denylist.csv (which only prunes bad whitelist/catalog rows) can't touch
+# them; they have to be excluded here, at candidate generation.
+CANDIDATE_NOISE_TERMS = {
+    "ram", "gpu", "cpu", "ssd", "usd", "usb", "usb-c", "dac", "psu", "diy", "wifi", "led",
+    "tldr", "cad", "til", "ips", "sas", "pro", "ups", "iem", "vsf", "usa", "and", "not",
+    "the", "from", "help", "save", "w2c", "ibr", "llm", "imo", "imho", "tbh", "fyi", "asap",
+    "btw", "lol", "omg", "wtf", "ngl", "iirc", "afaik", "faq", "psa", "eli5", "aita",
+}
+POSSESSIVE_LEAD_RE = re.compile(r"^(my|your|his|her|their|our|its|the|a|an|this|that|these|those)\s+")
+# Generic head nouns that show up constantly regardless of topic ("my skin", "a lot", "the
+# camera") and carry no product/topic signal on their own. Only blocked when they're the
+# *entire* remaining phrase after stripping a leading possessive/determiner -- a modifier
+# turns them useful again ("sensitive skin", "daily routine" stay in).
+VAGUE_HEAD_NOUNS = {
+    "skin", "face", "life", "head", "day", "days", "thing", "things", "stuff", "people",
+    "advice", "help", "time", "way", "body", "home", "hair", "camera", "bag", "bags", "pain",
+    "routine", "lot", "bit", "part", "kind", "money", "food", "water", "cat", "dog",
+    "daughter", "son", "kid", "kids", "school", "video", "videos", "job", "work", "week",
+    "month", "year", "years", "guy", "guys", "person", "friend", "family", "house",
+    "phone", "computer", "car", "room", "world", "problem", "problems", "question",
+    "questions", "post", "comment", "comments", "reddit", "sub", "recommendation",
+    "recommendations", "thoughts", "opinion", "opinions",
+}
 
 
 def find_case_insensitive(text: str, phrase: str):
@@ -204,6 +230,15 @@ def useful_phrase(phrase: str, emitted_brand_norms: set[str]) -> bool:
     if norm in emitted_brand_norms:
         return False
     if norm in SENTIMENT_ONLY:
+        return False
+    # Strip one leading possessive/determiner so "my sensitive skin" is judged on "sensitive
+    # skin", not on the pronoun. A single generic head noun left over ("skin", "advice",
+    # "people") is near-universal filler with no product/topic signal; a modifier makes the
+    # same head noun useful again ("sensitive skin", "daily routine"), so only bare single-word
+    # survivors get dropped here.
+    stripped = POSSESSIVE_LEAD_RE.sub("", norm, count=1).strip()
+    stripped_parts = stripped.split()
+    if len(stripped_parts) <= 1 and stripped in VAGUE_HEAD_NOUNS:
         return False
     return True
 
@@ -370,6 +405,8 @@ def main() -> None:
                 raw = m.group(1) if regex is QUOTE_RE else m.group(0)
                 norm = normalize_brand(raw)
                 if not norm or norm in known_brand_norms or len(norm) < 3:
+                    continue
+                if norm in CANDIDATE_NOISE_TERMS:
                     continue
                 if source in WEAK_SINGLE_WORD_SOURCES and " " not in raw.strip():
                     continue
