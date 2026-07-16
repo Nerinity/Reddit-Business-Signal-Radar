@@ -146,6 +146,7 @@ brand_registry.parquet
 brand_alias_lookup.parquet
 brand_source_quality_report.json
 entity_mentions.parquet
+keyword_post_index.parquet
 cluster_assignments_226.parquet
 brand_post_index.parquet
 weekly_brand_metrics.parquet
@@ -163,6 +164,7 @@ Table roles:
 - `brand_registry.parquet` — unified brand registry across both source files; see "Brand sources" above.
 - `brand_alias_lookup.parquet` — canonical alias-matching table (`alias_norm` → `brand_norm`), `source` ∈ {whitelist, catalog, manual_alias}.
 - `entity_mentions.parquet` — post-level extracted brands, product phrases, need states, and non-whitelist candidates. Its `matched_cluster_id`/`matched_cluster_name` is a brand's static registry home cluster, unrelated to what the post is actually about — do not use it as a dashboard cluster filter. `brand_signal_type` (confirmed_whitelist_brand / catalog_known_brand / candidate_non_whitelist_brand) carries the confidence tier per mention.
+- `keyword_post_index.parquet` — canonical `week_start × cluster_id × term_norm × post_key` keyword-to-source-post index produced by `11_build_cluster_entity_metrics.py`. It is the shared source for weekly keyword metrics, cluster word clouds, and exact keyword Evidence; `mention_count_in_post` preserves repeated hits within one post while each post-term pair remains one row.
 - `weekly_cluster_discussion_terms.parquet` — canonical source for "what is this cluster discussing": by-cluster keyword/topic/need-state frequency, always keyed off a post's own `final_cluster_id`. Gated on `cluster_usage_tier` in {strong_match, usable_match} by default (add weak_match with `--include-weak-matches`), not the legacy `assignment_status`. Carries both `cluster_usage_tier_distribution` and the legacy `assignment_status_distribution` per row.
 - `weekly_cluster_brand_mentions.parquet` — canonical source for "which brands show up in this cluster": approved platform brands, known catalog brands, and non-whitelist Reddit candidates, kept as separate `brand_signal_type` values, never merged. Same `cluster_usage_tier` gate as discussion terms, plus its own confidence floor (0.30 default, 0.25 with `--include-weak-matches`). Also carries `cluster_usage_tier_distribution` and `assignment_status_distribution`.
 - `high_precision_cluster_posts.parquet` — `assignment_status = confident` posts only. Useful as spot-check evidence; not the source for cluster-level discussion intelligence, which would starve almost empty under a confident-only gate.
@@ -172,6 +174,20 @@ Table roles:
 - `weekly_trend_terms.parquet` — global trend term view only; not the source for cluster filtering.
 
 The main product contract is that a dashboard can show whether a detected brand is an approved platform brand, a known catalog brand, or an emerging Reddit-only candidate, attach sentiment and cluster context, query back to the original Reddit posts mentioning it, and for any given cluster surface what people are discussing and what they like/dislike.
+
+## Operations team scope
+
+The product requires an operations identity before Home, Explore, or Analytics is shown.
+Build the versioned Team 1 × Team 2 category configuration and Dashboard taxonomy validation
+report with:
+
+```bash
+python3 scripts/build_ops_team_category_mapping.py
+```
+
+The app reads `apps/next/public/data/ops-team-category-mapping.json`. Saved identities are
+validated against the current mapping version on every load, and the resulting category scope
+is applied to clusters, signals, evidence links, rankings, filters, and Home metrics.
 
 ## Product App
 

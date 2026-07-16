@@ -232,6 +232,57 @@ a {
   background: rgba(255, 255, 255, 0.03);
 }
 
+.identityPage {
+  min-height: 100vh;
+  padding: 24px 32px 64px;
+  background: radial-gradient(circle at 50% 10%, rgba(32, 211, 234, 0.1), transparent 36%), var(--bg);
+}
+
+.identityTopbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 1180px;
+  margin: 0 auto;
+}
+
+.identityTopbar strong span { color: var(--cyan); }
+
+.identityCard {
+  width: min(720px, calc(100vw - 40px));
+  margin: 9vh auto 0;
+  padding: 48px;
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  background: rgba(11, 19, 30, 0.94);
+  box-shadow: 0 28px 80px rgba(0, 0, 0, 0.3);
+}
+
+.identityCard h1 { margin: 12px 0; font-size: clamp(34px, 5vw, 52px); text-align: left; }
+.identityCard > p { color: var(--text-secondary); line-height: 1.7; }
+.identityField { display: grid; gap: 10px; margin-top: 28px; }
+.identityField label { font-weight: 700; }
+.identityField select { min-height: 48px; padding: 0 14px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); color: var(--text); }
+.identityField select:disabled { opacity: 0.55; }
+.teamCards { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+.teamCards button { min-height: 52px; padding: 10px 14px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); color: var(--text-secondary); }
+.teamCards button.active { border-color: var(--cyan); background: rgba(32, 211, 234, 0.1); color: var(--text); }
+.categoryAvailability { margin: 18px 0 0; color: var(--cyan) !important; }
+.mappingError { margin: 18px 0 0; color: #f18b82 !important; }
+.identityCta { width: 100%; min-height: 52px; margin-top: 24px; border: 0; border-radius: 10px; background: var(--cyan); color: #051015; font-weight: 800; }
+.identityCta:disabled { cursor: not-allowed; opacity: 0.35; }
+.clearIdentity { display: block; margin: 18px auto 0; border: 0; background: transparent; color: var(--text-secondary); }
+.identityChip { display: grid; gap: 2px; max-width: 300px; padding: 7px 12px; border: 1px solid var(--border); border-radius: 10px; background: transparent; color: var(--text); text-align: left; }
+.identityChip small { color: var(--text-secondary); font-size: 10px; text-transform: uppercase; }
+.identityChip strong { overflow: hidden; font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+.emptyScope { display: grid; place-content: center; gap: 20px; min-height: 100vh; text-align: center; }
+
+@media (max-width: 760px) {
+  .identityPage { padding: 18px 12px 40px; }
+  .identityCard { padding: 28px 20px; }
+  .identityChip { max-width: 180px; }
+}
+
 .hero {
   min-height: 560px;
   display: grid;
@@ -286,7 +337,7 @@ h1 {
 
 .stats {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   width: min(1160px, 100%);
   margin: 8px auto 0;
   overflow: hidden;
@@ -515,6 +566,46 @@ h1 {
   grid-template-columns: 0.9fr 1.35fr;
   gap: 12px;
 }
+
+.analysisViewPanel {
+  overflow: hidden;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  background: var(--surface-elevated);
+  box-shadow: var(--shadow-sm);
+}
+
+.analysisViewPanel .dimensionFilters {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 6px;
+  padding-bottom: 8px;
+}
+
+.analysisViewPanel .dimensionFilters button {
+  min-height: 44px;
+  padding: 10px 12px;
+  text-align: center;
+}
+
+.analysisViewPanel .dimensionFilters button.active {
+  border-color: var(--cyan);
+  background: rgba(37, 211, 197, 0.14);
+  box-shadow: 0 0 0 2px rgba(37, 211, 197, 0.16);
+}
+
+.analysisViewPanel .dimensionFilters button:focus-visible {
+  outline: 2px solid var(--cyan);
+  outline-offset: 2px;
+}
+
+.analysisViewHelper,
+.analysisViewHint {
+  display: block;
+  margin: 0 14px 8px;
+  color: var(--text-secondary);
+}
+
+.analysisViewHint { margin-bottom: 14px; color: var(--muted); }
 
 .dimensionFilters {
   display: grid;
@@ -835,6 +926,40 @@ h4 {
 .wordCloud button:hover {
   color: var(--text);
 }
+
+.signalWordCloud {
+  display: flex;
+  flex-wrap: wrap;
+  align-content: center;
+  align-items: baseline;
+  justify-content: center;
+  gap: 10px 18px;
+  min-height: 260px;
+  margin: 0 18px;
+  padding: 24px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: radial-gradient(circle at center, var(--surface-elevated), var(--surface));
+}
+
+.signalWordCloud button {
+  padding: 2px;
+  border: 0;
+  background: transparent;
+  line-height: 1.05;
+  transition: color 120ms ease, transform 120ms ease;
+}
+
+.signalWordCloud button:hover,
+.signalWordCloud button:focus-visible {
+  color: var(--text) !important;
+  transform: scale(1.05);
+  outline: 1px dashed var(--border-strong);
+  outline-offset: 3px;
+}
+
+.emptyState { color: var(--muted); }
 
 .positive {
   color: var(--positive) !important;
@@ -1753,5 +1878,9 @@ h4 {
   .wide,
   .half {
     grid-column: auto;
+  }
+
+  .analysisViewPanel .dimensionFilters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }

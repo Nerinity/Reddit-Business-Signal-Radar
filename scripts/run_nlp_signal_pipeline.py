@@ -82,6 +82,8 @@ def main() -> None:
     if not args.skip_cluster_entity_metrics:
         weak_args = ["--include-weak-matches"] if args.include_weak_matches else []
         run("11_build_cluster_entity_metrics.py", weak_args)
+        if not exists("data/processed/keyword_post_index.parquet"):
+            raise RuntimeError("Cluster entity metrics stage did not produce keyword_post_index.parquet")
     if not args.skip_cluster_scores:
         weak_args = ["--include-weak-matches"] if args.include_weak_matches else []
         run("12_build_cluster_scores.py", weak_args)

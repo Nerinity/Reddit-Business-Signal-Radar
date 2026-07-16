@@ -183,6 +183,9 @@ def add_entity(rows: list[dict], *, post, text: str, entity_text: str, entity_ty
         idx = text.lower().find(entity_text.lower())
         start = idx
         end = idx + len(entity_text) if idx >= 0 else -1
+    # Boundary-aware matching already happened in the extractor. A literal case-insensitive
+    # count avoids compiling another regex for each of the millions of emitted rows.
+    mention_count_in_post = max(1, text.casefold().count(entity_text.casefold()))
     rows.append({
         "mention_id": post.mention_id,
         "entity_text": entity_text.strip(),
@@ -195,6 +198,7 @@ def add_entity(rows: list[dict], *, post, text: str, entity_text: str, entity_ty
         "brand_norm": brand_norm,
         "confidence": float(confidence),
         "source": source,
+        "mention_count_in_post": mention_count_in_post,
         "context_window": context_window(text, start, end) if start >= 0 else text[:180],
         "matched_cluster_id": cluster_id,
         "matched_cluster_name": cluster_name,

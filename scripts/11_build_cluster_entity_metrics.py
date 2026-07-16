@@ -5,6 +5,7 @@ Table roles (see also README.md "NLP Signal Pipeline"):
 
   cluster_assignments_226.parquet          post-to-cluster assignment, confidence, usage tier
   entity_mentions.parquet                  post-level extracted brands/phrases/need-states/candidates
+  keyword_post_index.parquet               complete keyword-to-Reddit-post evidence index
   weekly_cluster_discussion_terms.parquet  canonical source for by-cluster keyword/topic frequency
   weekly_cluster_brand_mentions.parquet    canonical source for by-cluster brand mention frequency
   high_precision_cluster_posts.parquet     confident-only evidence; NOT the source for cluster mining
@@ -39,6 +40,7 @@ import pandas as pd
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
+from signal_radar.core.post_keys import build_post_id, build_post_key, normalize_reddit_url
 from signal_radar.nlp.text_utils import ensure_parent, google_brand_url, top_counts
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
@@ -49,6 +51,13 @@ TERM_OUTPUT_COLUMNS = [
     "mentions", "unique_posts", "avg_sentiment", "positive_share", "negative_share",
     "sample_post_ids", "sample_titles", "sample_urls", "top_subreddits",
     "avg_assignment_confidence", "cluster_usage_tier_distribution", "assignment_status_distribution",
+    "entity_matched_cluster_id", "entity_matched_cluster_name",
+]
+KEYWORD_POST_INDEX_COLUMNS = [
+    "week_start", "cluster_id", "cluster_name", "term_norm", "term_display", "entity_type",
+    "post_key", "post_id", "url", "subreddit", "published_at", "title", "text_snippet",
+    "context_window", "mention_count_in_post", "sentiment_compound", "sentiment_label",
+    "assignment_confidence", "cluster_usage_tier", "assignment_status",
     "entity_matched_cluster_id", "entity_matched_cluster_name",
 ]
 BRAND_OUTPUT_COLUMNS = [
@@ -105,6 +114,109 @@ def mode_or_blank(series: pd.Series) -> str:
     m = series.dropna().astype(str)
     m = m[m.str.strip() != ""]
     return m.mode().iat[0] if not m.empty else ""
+
+
+def complete_weeks(df: pd.DataFrame, coverage_start: pd.Timestamp, coverage_end: pd.Timestamp) -> set[str]:
+    result = set()
+    for week in df["week_start"].dropna().astype(str).unique():
+        start = pd.Timestamp(week, tz="UTC")
+        if coverage_start <= start and coverage_end >= start + pd.Timedelta(days=7):
+            result.add(week)
+    return result
+
+
+def build_keyword_post_index(term_join: pd.DataFrame, valid_weeks: set[str]) -> pd.DataFrame:
+    if term_join.empty:
+        return pd.DataFrame(columns=KEYWORD_POST_INDEX_COLUMNS)
+    index_source = term_join[term_join["week_start"].astype(str).isin(valid_weeks)].copy()
+    index_source["term_norm"] = index_source["entity_norm"].fillna("").astype(str).str.strip()
+    index_source["term_display"] = index_source["entity_text"].fillna("").astype(str).str.strip()
+    index_source["post_key"] = build_post_key(index_source)
+    index_source["post_id"] = build_post_id(index_source)
+    index_source["url"] = index_source["url"].map(normalize_reddit_url)
+    if "mention_count_in_post" not in index_source.columns:
+        texts = index_source["text_for_display"].fillna("").astype(str)
+        terms = index_source["entity_text"].fillna("").astype(str)
+        index_source["mention_count_in_post"] = [
+            max(1, text.casefold().count(term.casefold()))
+            for text, term in zip(texts, terms)
+        ]
+    index_source["mention_count_in_post"] = pd.to_numeric(
+        index_source["mention_count_in_post"], errors="coerce"
+    ).fillna(1).clip(lower=1).astype("int32")
+    index_source["title"] = index_source.get("title_clean", "").fillna("").astype(str)
+    # text_for_display is already normalized by 05_clean_reddit_text.py. Slice it with
+    # pandas' vectorized string path instead of re-running markup cleanup millions of times.
+    index_source["text_snippet"] = (
+        index_source["text_for_display"].fillna("").astype(str).str.slice(0, 320)
+    )
+    valid = (
+        index_source["term_norm"].ne("")
+        & index_source["post_key"].astype(str).str.strip().ne("")
+        & index_source["cluster_id"].astype(str).str.strip().ne("")
+    )
+    index_source = index_source[valid]
+    if index_source.empty:
+        return pd.DataFrame(columns=KEYWORD_POST_INDEX_COLUMNS)
+
+    business_key = ["week_start", "cluster_id", "term_norm", "post_key"]
+    # Every row sharing this key points to the same source post. Keep one complete evidence
+    # row and aggregate only the one genuinely varying measure. This is equivalent to a
+    # wide groupby but avoids millions of Python-level `mode` callbacks during backfills.
+    mention_counts = index_source.groupby(business_key, dropna=False)["mention_count_in_post"].max()
+    keyword_index = (
+        index_source.sort_values("published_at", ascending=False)
+        .drop_duplicates(business_key)
+        .drop(columns="mention_count_in_post")
+        .merge(mention_counts.rename("mention_count_in_post"), on=business_key, how="left", validate="one_to_one")
+    )
+    keyword_index["cluster_id"] = keyword_index["cluster_id"].astype(str)
+    keyword_index["term_norm"] = keyword_index["term_norm"].astype("string")
+    keyword_index["post_key"] = keyword_index["post_key"].astype("string")
+    return keyword_index[KEYWORD_POST_INDEX_COLUMNS]
+
+
+def aggregate_weekly_terms(keyword_index: pd.DataFrame) -> pd.DataFrame:
+    if keyword_index.empty:
+        return pd.DataFrame(columns=TERM_OUTPUT_COLUMNS)
+    source = keyword_index.copy()
+    source["is_positive"] = pd.to_numeric(source["sentiment_compound"], errors="coerce").fillna(0) >= 0.15
+    source["is_negative"] = pd.to_numeric(source["sentiment_compound"], errors="coerce").fillna(0) <= -0.15
+    keys = ["week_start", "cluster_id", "term_norm"]
+    metrics = source.groupby(keys, dropna=False).agg(
+        mentions=("mention_count_in_post", "sum"),
+        unique_posts=("post_key", "nunique"),
+        avg_sentiment=("sentiment_compound", "mean"),
+        positive_share=("is_positive", "mean"),
+        negative_share=("is_negative", "mean"),
+        avg_assignment_confidence=("assignment_confidence", "mean"),
+    ).reset_index()
+    preview_columns = [
+        *keys, "cluster_name", "entity_type", "term_display", "post_id", "title", "url", "subreddit",
+        "cluster_usage_tier", "assignment_status", "entity_matched_cluster_id", "entity_matched_cluster_name",
+    ]
+    preview = source.sort_values("published_at", ascending=False).drop_duplicates(keys)[preview_columns].copy()
+    preview = preview.rename(columns={"term_display": "term"})
+    for source_column, output_column in (
+        ("post_id", "sample_post_ids"), ("title", "sample_titles"), ("url", "sample_urls")
+    ):
+        preview[output_column] = preview[source_column].map(
+            lambda value: json.dumps([str(value)], ensure_ascii=False) if str(value).strip() else "[]"
+        )
+    preview["top_subreddits"] = preview["subreddit"].map(
+        lambda value: json.dumps({str(value): 1}, ensure_ascii=False) if str(value).strip() else "{}"
+    )
+    preview["cluster_usage_tier_distribution"] = preview["cluster_usage_tier"].map(
+        lambda value: json.dumps({str(value): 1}, ensure_ascii=False) if str(value).strip() else "{}"
+    )
+    preview["assignment_status_distribution"] = preview["assignment_status"].map(
+        lambda value: json.dumps({str(value): 1}, ensure_ascii=False) if str(value).strip() else "{}"
+    )
+    preview = preview.drop(columns=[
+        "post_id", "title", "url", "subreddit", "cluster_usage_tier", "assignment_status"
+    ])
+    metrics = metrics.merge(preview, on=keys, how="left", validate="one_to_one")
+    return metrics[TERM_OUTPUT_COLUMNS]
 
 
 def write_empty(path: str, columns: list[str]) -> None:
@@ -223,6 +335,7 @@ def main() -> None:
     parser.add_argument("--clusters", default="data/processed/cluster_assignments_226.parquet")
     parser.add_argument("--brand-registry", default="data/processed/brand_registry.parquet")
     parser.add_argument("--terms-output", default="data/processed/weekly_cluster_discussion_terms.parquet")
+    parser.add_argument("--keyword-index-output", default="data/processed/keyword_post_index.parquet")
     parser.add_argument("--brands-output", default="data/processed/weekly_cluster_brand_mentions.parquet")
     parser.add_argument("--high-precision-output", default="data/processed/high_precision_cluster_posts.parquet")
     parser.add_argument("--quality-report-output", default="data/processed/cluster_entity_quality_report.json")
@@ -235,6 +348,7 @@ def main() -> None:
 
     if any(not Path(p).exists() for p in (args.posts, args.entities, args.clusters)):
         write_empty(args.terms_output, TERM_OUTPUT_COLUMNS)
+        write_empty(args.keyword_index_output, KEYWORD_POST_INDEX_COLUMNS)
         write_empty(args.brands_output, BRAND_OUTPUT_COLUMNS)
         write_empty(args.high_precision_output, HIGH_PRECISION_COLUMNS)
         ensure_parent(Path(args.quality_report_output))
@@ -249,6 +363,7 @@ def main() -> None:
 
     if posts.empty or entities.empty or clusters.empty:
         write_empty(args.terms_output, TERM_OUTPUT_COLUMNS)
+        write_empty(args.keyword_index_output, KEYWORD_POST_INDEX_COLUMNS)
         write_empty(args.brands_output, BRAND_OUTPUT_COLUMNS)
         write_empty(args.high_precision_output, HIGH_PRECISION_COLUMNS)
         ensure_parent(Path(args.quality_report_output))
@@ -296,6 +411,7 @@ def main() -> None:
     entity_cols = [
         "mention_id", "entity_text", "entity_norm", "entity_type", "in_platform_brand", "brand_signal_type",
         "brand_norm", "brand_display", "google_search_url", "matched_cluster_id", "matched_cluster_name",
+        "context_window", "mention_count_in_post",
     ]
     entity_cols = [c for c in entity_cols if c in entities.columns]
     entities_small = entities[entity_cols].rename(columns={
@@ -314,6 +430,7 @@ def main() -> None:
     entities_small["logo_url"] = entities_small["logo_url"].fillna("").astype(str)
     post_side_cols = [
         "mention_id", "cluster_id", "cluster_name", "week_start", "subreddit", "title_clean", "url",
+        "published_at", "text_for_display",
         "sentiment_compound", "sentiment_label", "assignment_confidence", "assignment_status",
         "cluster_usage_tier",
     ]
@@ -324,30 +441,25 @@ def main() -> None:
     )
     if term_join.empty:
         term_metrics = pd.DataFrame(columns=TERM_OUTPUT_COLUMNS)
+        keyword_index = pd.DataFrame(columns=KEYWORD_POST_INDEX_COLUMNS)
         write_empty(args.terms_output, TERM_OUTPUT_COLUMNS)
+        write_empty(args.keyword_index_output, KEYWORD_POST_INDEX_COLUMNS)
     else:
-        term_join["is_positive"] = term_join["sentiment_label"].eq("positive")
-        term_join["is_negative"] = term_join["sentiment_label"].eq("negative")
-        term_metrics = term_join.groupby(
-            ["week_start", "cluster_id", "cluster_name", "entity_type", "entity_norm"], dropna=False
-        ).agg(
-            term=("entity_text", mode_or_blank),
-            mentions=("mention_id", "count"),
-            unique_posts=("mention_id", "nunique"),
-            avg_sentiment=("sentiment_compound", "mean"),
-            positive_share=("is_positive", "mean"),
-            negative_share=("is_negative", "mean"),
-            sample_post_ids=("mention_id", json_sample),
-            sample_titles=("title_clean", json_sample),
-            sample_urls=("url", json_sample),
-            top_subreddits=("subreddit", top_counts_json),
-            avg_assignment_confidence=("assignment_confidence", "mean"),
-            cluster_usage_tier_distribution=("cluster_usage_tier", status_distribution_json),
-            assignment_status_distribution=("assignment_status", status_distribution_json),
-            entity_matched_cluster_id=("entity_matched_cluster_id", mode_or_blank),
-            entity_matched_cluster_name=("entity_matched_cluster_name", mode_or_blank),
-        ).reset_index().rename(columns={"entity_norm": "term_norm"})
-        term_out = term_metrics[TERM_OUTPUT_COLUMNS]
+        published = pd.to_datetime(base["published_at"], errors="coerce", utc=True)
+        valid_weeks = complete_weeks(term_join, published.min(), published.max())
+        keyword_index = build_keyword_post_index(term_join, valid_weeks)
+        if keyword_index.empty:
+            raise RuntimeError("keyword_post_index is empty after applying complete-week and post-key validation")
+        if keyword_index[["week_start", "cluster_id", "term_norm", "post_key"]].isna().any().any():
+            raise RuntimeError("keyword_post_index contains null values in required identity columns")
+        if keyword_index.duplicated(["week_start", "cluster_id", "term_norm", "post_key"]).any():
+            raise RuntimeError("keyword_post_index violates its week/cluster/term/post business key")
+        ensure_parent(Path(args.keyword_index_output))
+        keyword_index.to_parquet(args.keyword_index_output, index=False)
+        log.info("Wrote %d keyword-post index rows -> %s", len(keyword_index), args.keyword_index_output)
+
+        term_metrics = aggregate_weekly_terms(keyword_index)
+        term_out = term_metrics
         ensure_parent(Path(args.terms_output))
         term_out.to_parquet(args.terms_output, index=False)
         log.info("Wrote %d cluster discussion-term rows -> %s", len(term_out), args.terms_output)

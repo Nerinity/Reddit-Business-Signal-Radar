@@ -18,9 +18,17 @@ type SentimentKey = keyof typeof sentimentTagText;
 
 type ClusterTerm = {
   term: string;
+  term_norm: string;
   entity_type?: string;
   mentions?: number;
+  unique_posts?: number;
   sentiment?: number;
+};
+
+type ClusterCommunity = {
+  subreddit: string;
+  unique_posts: number;
+  discussion_share: number;
 };
 
 type ClusterBrand = {
@@ -47,11 +55,15 @@ type Cluster = {
   momentum_percentile?: number;
   cross_community_percentile?: number;
   current_week_posts: number;
+  keyword_signal_count?: number;
+  brand_signal_count?: number;
   previous_week_posts: number;
   growth_rate: number;
   unique_subreddits: number;
   avg_sentiment?: number;
+  positive_share?: number;
   avg_log_engagement?: number;
+  communities: ClusterCommunity[];
   terms: ClusterTerm[];
   brands: ClusterBrand[];
 };
@@ -63,6 +75,7 @@ type Keyword = {
   cluster_id: string;
   cluster_name: string;
   mentions: number;
+  unique_posts?: number;
   sentiment?: number;
 };
 
@@ -92,6 +105,7 @@ type ClusterBrandSignal = {
 };
 
 type Post = {
+  post_key?: string;
   brand_display?: string;
   brand_norm?: string;
   cluster_id: string;
@@ -104,6 +118,7 @@ type Post = {
   sentiment_label?: string;
   sentiment_compound?: number;
   context_window?: string;
+  matched_display?: string;
 };
 
 type DashboardBundle = {
@@ -113,7 +128,9 @@ type DashboardBundle = {
     post_count: number;
     brand_signal_count: number;
     weekly_post_count: number;
+    weekly_keyword_signal_count: number;
     weekly_brand_signal_count: number;
+    covered_cluster_count: number;
     weekly_unique_brand_count: number;
     verified_brand_count: number;
     known_brand_count: number;
@@ -130,21 +147,116 @@ type DashboardBundle = {
   weeks: string[];
 };
 
-type View = "home" | "explore" | "dashboard";
+type OpsTeam2Option = { ops_team_2: string; identity_key: string; categories: string[] };
+type OpsTeamMapping = { ops_team_1: string; ops_team_2_options: OpsTeam2Option[] };
+type OpsMapping = { version: number; ops_teams: OpsTeamMapping[]; pairs: OpsTeam2Option[] };
+type OpsIdentity = {
+  identityKey: string;
+  opsTeam1: string;
+  opsTeam2: string;
+  categoryNames: string[];
+  mappingVersion: number;
+};
+
+const OPS_IDENTITY_STORAGE_KEY = "reddit-signal-radar-ops-identity";
+
+function normalizeCategoryName(value: string) {
+  return value.normalize("NFKC").trim().replace(/\s+/g, " ").toLocaleLowerCase();
+}
+
+type View = "identity" | "home" | "explore" | "dashboard";
 type ExploreTab = "trend" | "opportunity" | "mapping" | "sparkle" | "evidence";
 
 const scoreOptions = [
   { key: "trend_score" },
   { key: "momentum_score" },
-  { key: "sentiment_score" },
   { key: "cross_community_score" },
+  { key: "sentiment_score" },
   { key: "engagement_score" }
 ] as const;
 
 type ScoreKey = (typeof scoreOptions)[number]["key"];
 
+type EvidenceTarget =
+  | { kind: "brand"; clusterId: string; brandNorm: string; display: string }
+  | { kind: "keyword"; clusterId: string; termNorm: string; display: string };
+
 function fmt(value: number | undefined, digits = 1) {
   return Number(value || 0).toFixed(digits);
+}
+
+function finite(value: number | undefined) {
+  return Number.isFinite(Number(value)) ? Number(value) : 0;
+}
+
+function compareClusters(a: Cluster, b: Cluster, sortBy: ScoreKey) {
+  const nameOrder = a.cluster_name.localeCompare(b.cluster_name);
+  if (sortBy === "momentum_score") {
+    return finite(b.momentum_score) - finite(a.momentum_score)
+      || finite(b.growth_rate) - finite(a.growth_rate)
+      || b.current_week_posts - a.current_week_posts || nameOrder;
+  }
+  if (sortBy === "cross_community_score") {
+    return finite(b.cross_community_score) - finite(a.cross_community_score)
+      || b.unique_subreddits - a.unique_subreddits
+      || b.current_week_posts - a.current_week_posts || nameOrder;
+  }
+  if (sortBy === "sentiment_score") {
+    return finite(b.sentiment_score) - finite(a.sentiment_score)
+      || finite(b.positive_share) - finite(a.positive_share)
+      || b.current_week_posts - a.current_week_posts || nameOrder;
+  }
+  if (sortBy === "engagement_score") {
+    return finite(b.engagement_score) - finite(a.engagement_score)
+      || finite(b.avg_log_engagement) - finite(a.avg_log_engagement)
+      || b.current_week_posts - a.current_week_posts || nameOrder;
+  }
+  return finite(b.trend_score) - finite(a.trend_score)
+    || b.current_week_posts - a.current_week_posts || nameOrder;
+}
+
+function dimensionTag(cluster: Cluster, sortBy: ScoreKey, lang: Lang): { label: string; tone: string } {
+  const zh = lang === "zh";
+  if (sortBy === "trend_score") {
+    if (cluster.trend_score >= 4.2) return { label: zh ? "综合高潜" : "High Potential", tone: "opportunity" };
+    if (cluster.trend_score >= 3.5) return { label: zh ? "值得关注" : "Worth Watching", tone: "engagement" };
+    if (cluster.trend_score >= 2.5) return { label: zh ? "稳定观察" : "Steady Watch", tone: "steady" };
+    return { label: zh ? "风险信号" : "Risk Signal", tone: "risk" };
+  }
+  if (sortBy === "momentum_score") {
+    if (cluster.previous_week_posts === 0 && cluster.current_week_posts >= 5) return { label: zh ? "新兴" : "Emerging", tone: "opportunity" };
+    if (cluster.momentum_score >= 4.5 || finite(cluster.growth_rate) >= 1) return { label: zh ? "爆发增长" : "Exploding", tone: "opportunity" };
+    if (cluster.momentum_score >= 4 || finite(cluster.growth_rate) >= 0.3) return { label: zh ? "快速上升" : "Fast Rising", tone: "engagement" };
+    if (finite(cluster.growth_rate) < 0) return { label: zh ? "降温" : "Cooling", tone: "risk" };
+    return { label: zh ? "平稳" : "Steady", tone: "steady" };
+  }
+  if (sortBy === "cross_community_score") {
+    if (cluster.cross_community_score >= 4.5) return { label: zh ? "广泛扩散" : "Broadly Spreading", tone: "broad" };
+    if (cluster.cross_community_score >= 4) return { label: zh ? "跨社区增长" : "Cross-community Growth", tone: "engagement" };
+    if (cluster.cross_community_score <= 2.5) return { label: zh ? "传播有限" : "Limited Reach", tone: "risk" };
+    return { label: zh ? "垂直集中" : "Vertically Concentrated", tone: "steady" };
+  }
+  if (sortBy === "sentiment_score") {
+    if (cluster.sentiment_score >= 4.5) return { label: zh ? "高度正面" : "Highly Positive", tone: "broad" };
+    if (cluster.sentiment_score >= 4) return { label: zh ? "整体正面" : "Positive Overall", tone: "engagement" };
+    if (cluster.sentiment_score <= 2.5) return { label: zh ? "负面风险" : "Negative Risk", tone: "risk" };
+    return { label: zh ? "中性" : "Neutral", tone: "steady" };
+  }
+  if (cluster.engagement_score >= 4.5) return { label: zh ? "高互动" : "High Engagement", tone: "opportunity" };
+  if (cluster.engagement_score >= 4) return { label: zh ? "持续讨论" : "Sustained Discussion", tone: "engagement" };
+  if (cluster.engagement_score <= 2.5) return { label: zh ? "低互动" : "Low Engagement", tone: "risk" };
+  return { label: zh ? "一般互动" : "Moderate Engagement", tone: "steady" };
+}
+
+function dimensionContext(cluster: Cluster, sortBy: ScoreKey, lang: Lang, t: (key: TKey) => string) {
+  if (sortBy === "momentum_score") {
+    const growth = cluster.previous_week_posts === 0 ? (lang === "zh" ? "首次出现" : "New this week") : `${finite(cluster.growth_rate) >= 0 ? "+" : ""}${Math.round(finite(cluster.growth_rate) * 100)}% WoW`;
+    return `${cluster.current_week_posts} ${t("postsUnit")} · ${growth}`;
+  }
+  if (sortBy === "cross_community_score") return `${cluster.unique_subreddits} ${t("communitiesUnit")}`;
+  if (sortBy === "sentiment_score") return `${Math.round(finite(cluster.positive_share) * 100)}% ${t("positiveUnit")} · ${cluster.current_week_posts} ${t("postsUnit")}`;
+  if (sortBy === "engagement_score") return `${cluster.current_week_posts} ${t("postsUnit")} · ${dimensionTag(cluster, sortBy, lang).label}`;
+  return `${cluster.current_week_posts} ${t("postsUnit")} · ${cluster.unique_subreddits} ${t("communitiesUnit")}`;
 }
 
 // meta.latest_week is just the week's Monday (week_start); show the full Mon-Sun range
@@ -286,7 +398,7 @@ function aggregateTerms(keywords: Keyword[]): ClusterTerm[] {
     grouped.set(key, current);
   });
   return [...grouped.values()]
-    .map((term) => ({ term: term.term, mentions: term.mentions, sentiment: term.weightedSentiment / Math.max(term.mentions, 1) }))
+    .map((term) => ({ term: term.term, term_norm: term.term.toLowerCase(), unique_posts: 0, mentions: term.mentions, sentiment: term.weightedSentiment / Math.max(term.mentions, 1) }))
     .sort((a, b) => Number(b.mentions || 0) - Number(a.mentions || 0));
 }
 
@@ -301,6 +413,10 @@ export default function RadarApp() {
 function RadarAppInner() {
   const { lang, setLang, t } = useLang();
   const [data, setData] = useState<DashboardBundle | null>(null);
+  const [opsMapping, setOpsMapping] = useState<OpsMapping | null>(null);
+  const [identity, setIdentity] = useState<OpsIdentity | null>(null);
+  const [identityResolved, setIdentityResolved] = useState(false);
+  const [identityInvalid, setIdentityInvalid] = useState(false);
   const [view, setView] = useState<View>("home");
   const [tab, setTab] = useState<ExploreTab>("trend");
   const [sortBy, setSortBy] = useState<ScoreKey>("trend_score");
@@ -316,6 +432,10 @@ function RadarAppInner() {
   const [selectedWeek, setSelectedWeek] = useState("");
   const [brandTypeFilter, setBrandTypeFilter] = useState("trusted");
   const [brandSort, setBrandSort] = useState<"priority" | "discussed">("priority");
+  const [evidenceTarget, setEvidenceTarget] = useState<EvidenceTarget | null>(null);
+  const [evidencePosts, setEvidencePosts] = useState<Post[]>([]);
+  const [evidenceLoading, setEvidenceLoading] = useState(false);
+  const [evidenceError, setEvidenceError] = useState("");
 
   function loadWeek(week: string) {
     const path = week ? `/data/dashboard-${week}.json` : "/data/dashboard.json";
@@ -325,6 +445,8 @@ function RadarAppInner() {
         setData(bundle);
         setSelectedWeek(bundle.meta.latest_week);
         setSelectedClusterId(bundle.clusters[0]?.cluster_id || "");
+        setEvidenceTarget(null);
+        setEvidencePosts([]);
       })
       .catch((error: unknown) => {
         console.error(error);
@@ -333,6 +455,48 @@ function RadarAppInner() {
 
   useEffect(() => {
     loadWeek("");
+    fetch("/data/ops-team-category-mapping.json", { cache: "no-store" })
+      .then((response) => {
+        if (!response.ok) throw new Error(`Operations mapping request failed (${response.status})`);
+        return response.json();
+      })
+      .then((mapping: OpsMapping) => {
+        setOpsMapping(mapping);
+        const raw = window.localStorage.getItem(OPS_IDENTITY_STORAGE_KEY);
+        if (raw) {
+          try {
+            const saved = JSON.parse(raw) as { identityKey?: string; mappingVersion?: number };
+            const pair = mapping.ops_teams
+              .flatMap((team) => team.ops_team_2_options.map((option) => ({ team, option })))
+              .find(({ option }) => option.identity_key === saved.identityKey);
+            if (pair && saved.mappingVersion === mapping.version) {
+              setIdentity({
+                identityKey: pair.option.identity_key,
+                opsTeam1: pair.team.ops_team_1,
+                opsTeam2: pair.option.ops_team_2,
+                categoryNames: pair.option.categories,
+                mappingVersion: mapping.version
+              });
+              setView("home");
+            } else {
+              window.localStorage.removeItem(OPS_IDENTITY_STORAGE_KEY);
+              setIdentityInvalid(true);
+              setView("identity");
+            }
+          } catch {
+            window.localStorage.removeItem(OPS_IDENTITY_STORAGE_KEY);
+            setIdentityInvalid(true);
+            setView("identity");
+          }
+        } else {
+          setView("identity");
+        }
+        setIdentityResolved(true);
+      })
+      .catch((error: unknown) => {
+        console.error(error);
+        setIdentityResolved(true);
+      });
   }, []);
 
   // The switcher only offers the 3 most recent weeks, even if more are available in
@@ -340,36 +504,100 @@ function RadarAppInner() {
   // files directly, but the topbar control is intentionally kept to a short, current list.
   const recentWeeks = (data?.weeks || []).slice(0, 3);
 
-  const clusters = useMemo(() => {
-    if (!data) return [];
-    return [...data.clusters].sort((a, b) => Number(b[sortBy] || 0) - Number(a[sortBy] || 0));
-  }, [data, sortBy]);
+  const allowedCategoryNames = useMemo(
+    () => new Set((identity?.categoryNames || []).map(normalizeCategoryName)),
+    [identity]
+  );
+  const filteredClusters = useMemo(() => (data?.clusters || []).filter(
+    (cluster) => allowedCategoryNames.has(normalizeCategoryName(cluster.cluster_name))
+  ), [allowedCategoryNames, data]);
+  const allowedClusterIds = useMemo(
+    () => new Set(filteredClusters.map((cluster) => String(cluster.cluster_id))),
+    [filteredClusters]
+  );
+  const scopedData = useMemo<DashboardBundle | null>(() => {
+    if (!data) return null;
+    const signals = data.cluster_brand_signals.filter((signal) => allowedClusterIds.has(String(signal.cluster_id)));
+    const brands = data.brands.flatMap((brand) => {
+      const rows = signals.filter((signal) => signal.brand_norm === brand.brand_norm);
+      if (!rows.length) return [];
+      const mentions = rows.reduce((sum, row) => sum + Number(row.mentions || 0), 0);
+      const sentimentWeight = rows.reduce((sum, row) => sum + Number(row.avg_sentiment || 0) * Math.max(Number(row.mentions || 0), 1), 0);
+      return [{ ...brand,
+        mentions,
+        unique_posts: rows.reduce((sum, row) => sum + Number(row.unique_posts || 0), 0),
+        cluster_count: new Set(rows.map((row) => row.cluster_id)).size,
+        avg_sentiment: sentimentWeight / Math.max(mentions, 1)
+      }];
+    });
+    const keywords = data.keywords.filter((keyword) => allowedClusterIds.has(String(keyword.cluster_id)));
+    return {
+      ...data,
+      clusters: filteredClusters,
+      keywords,
+      brands,
+      cluster_brand_signals: signals,
+      posts: data.posts.filter((post) => allowedClusterIds.has(String(post.cluster_id))),
+      meta: {
+        ...data.meta,
+        weekly_post_count: filteredClusters.reduce((sum, cluster) => sum + Number(cluster.current_week_posts || 0), 0),
+        weekly_keyword_signal_count: filteredClusters.reduce((sum, cluster) => sum + Number(cluster.keyword_signal_count || 0), 0),
+        weekly_brand_signal_count: filteredClusters.reduce((sum, cluster) => sum + Number(cluster.brand_signal_count || 0), 0),
+        covered_cluster_count: filteredClusters.filter((cluster) => cluster.current_week_posts > 0).length,
+        cluster_count: filteredClusters.length
+      }
+    };
+  }, [allowedClusterIds, data, filteredClusters]);
+
+  const clusters = useMemo(() => [...filteredClusters].sort((a, b) => compareClusters(a, b, sortBy)), [filteredClusters, sortBy]);
 
   const selectedCluster = useMemo(() => {
-    if (!data) return undefined;
-    return data.clusters.find((cluster) => cluster.cluster_id === selectedClusterId) || data.clusters[0];
-  }, [data, selectedClusterId]);
+    if (!filteredClusters.length) return undefined;
+    return filteredClusters.find((cluster) => cluster.cluster_id === selectedClusterId) || filteredClusters[0];
+  }, [filteredClusters, selectedClusterId]);
+
+  useEffect(() => {
+    if (filteredClusters.length && !allowedClusterIds.has(String(selectedClusterId))) {
+      setSelectedClusterId([...filteredClusters].sort((a, b) => compareClusters(a, b, sortBy))[0].cluster_id);
+    }
+  }, [allowedClusterIds, filteredClusters, selectedClusterId, sortBy]);
 
   const signalCards = useMemo(() => {
-    if (!data) return [];
+    if (!scopedData) return [];
     const selectedCategory = categoryFilter.trim().toLowerCase();
     const query = brandQuery.trim().toLowerCase();
-    const keywordItems = data.keywords.map((item) => ({
-        key: `keyword:${item.term.toLowerCase()}`,
+    const keywordGroups = new Map<string, Keyword[]>();
+    scopedData.keywords.forEach((item) => {
+      const key = item.term_norm || item.term.toLocaleLowerCase();
+      keywordGroups.set(key, [...(keywordGroups.get(key) || []), item]);
+    });
+    const keywordItems = [...keywordGroups.entries()].map(([norm, rows]) => {
+      const mentions = rows.reduce((sum, row) => sum + Number(row.mentions || 0), 0);
+      return {
+        key: `keyword:${norm}`,
         kind: "keyword" as const,
-        display: item.term,
-        cluster_id: item.cluster_id,
-        cluster_name: item.cluster_name,
-        mentions: item.mentions,
-        sentiment: item.sentiment || 0,
-        tag: item.entity_type || "keyword",
+        display: rows[0].term,
+        mentions,
+        sentiment: rows.reduce((sum, row) => sum + Number(row.sentiment || 0) * Math.max(Number(row.mentions || 0), 1), 0) / Math.max(mentions, 1),
+        tag: rows[0].entity_type || "keyword",
         url: "",
-        uniquePosts: 0,
-        clusterCount: 1,
-        clusterSignals: [] as ClusterBrandSignal[],
+        uniquePosts: rows.reduce((sum, row) => sum + Number(row.unique_posts || 0), 0),
+        clusterCount: new Set(rows.map((row) => row.cluster_id)).size,
+        clusterSignals: rows.map((row) => ({
+          week_start: scopedData.meta.latest_week,
+          cluster_id: row.cluster_id,
+          cluster_name: row.cluster_name,
+          brand_norm: norm,
+          brand_display: row.term,
+          brand_signal_type: row.entity_type || "keyword",
+          unique_posts: Number(row.unique_posts || 0),
+          mentions: Number(row.mentions || 0),
+          avg_sentiment: row.sentiment
+        })),
         aliases: [] as string[]
-      }));
-    const brandItems = data.brands.map((item) => ({
+      };
+    });
+    const brandItems = scopedData.brands.map((item) => ({
         key: `brand:${item.brand_norm}`,
         kind: "brand" as const,
         display: item.brand_display,
@@ -381,7 +609,7 @@ function RadarAppInner() {
         url: item.google_search_url || googleBrandUrl(item.brand_display),
         logoUrl: item.logo_url || "",
         aliases: item.aliases || [],
-        clusterSignals: data.cluster_brand_signals.filter((signal) => signal.brand_norm === item.brand_norm)
+        clusterSignals: scopedData.cluster_brand_signals.filter((signal) => signal.brand_norm === item.brand_norm)
       }));
     const typeAllowed = (type: string) => brandTypeFilter === "all"
       || (brandTypeFilter === "trusted" && type !== "candidate_non_whitelist_brand")
@@ -395,9 +623,9 @@ function RadarAppInner() {
       ? typePriority(a.tag) - typePriority(b.tag) || b.uniquePosts - a.uniquePosts || b.mentions - a.mentions
       : b.uniquePosts - a.uniquePosts || b.mentions - a.mentions);
     if (onlyBrand) return filteredBrands;
-    return [...filteredBrands, ...keywordItems.filter((item) => !selectedCategory || item.cluster_name.toLowerCase() === selectedCategory)]
+    return [...filteredBrands, ...keywordItems.filter((item) => !selectedCategory || item.clusterSignals.some((signal) => signal.cluster_name.toLocaleLowerCase() === selectedCategory))]
       .sort((a, b) => b.mentions - a.mentions);
-  }, [brandQuery, brandSort, brandTypeFilter, categoryFilter, data, onlyBrand]);
+  }, [brandQuery, brandSort, brandTypeFilter, categoryFilter, scopedData, onlyBrand]);
 
   useEffect(() => {
     if (signalCards.length && !signalCards.some((item) => item.key === selectedSignalKey)) {
@@ -405,15 +633,77 @@ function RadarAppInner() {
     }
   }, [selectedSignalKey, signalCards]);
 
-  if (!data || !selectedCluster) {
+  useEffect(() => {
+    if (tab !== "evidence" || !evidenceTarget || !selectedWeek) return;
+    if (!allowedClusterIds.has(String(evidenceTarget.clusterId))) {
+      setEvidenceError(lang === "zh" ? "当前类目不在你的运营范围内。" : "This category is outside your operations scope.");
+      setEvidencePosts([]);
+      setTab("trend");
+      return;
+    }
+    const controller = new AbortController();
+    setEvidenceLoading(true);
+    setEvidenceError("");
+    setEvidencePosts([]);
+    fetch(`/data/evidence/${selectedWeek}/${evidenceTarget.clusterId}.json`, { cache: "no-store", signal: controller.signal })
+      .then((response) => {
+        if (!response.ok) throw new Error(`Evidence request failed (${response.status})`);
+        return response.json();
+      })
+      .then((payload: { brands?: Record<string, Post[]>; keywords?: Record<string, Post[]> }) => {
+        const rows = evidenceTarget.kind === "brand"
+          ? payload.brands?.[evidenceTarget.brandNorm] || []
+          : payload.keywords?.[evidenceTarget.termNorm] || [];
+        setEvidencePosts(rows);
+      })
+      .catch((error: unknown) => {
+        if (!controller.signal.aborted) setEvidenceError(error instanceof Error ? error.message : String(error));
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setEvidenceLoading(false);
+      });
+    return () => controller.abort();
+  }, [allowedClusterIds, evidenceTarget, lang, selectedWeek, tab]);
+
+  if (!data || !opsMapping || !identityResolved) {
     return <main className="shell loading">{t("loading")}</main>;
   }
+  if (view === "identity" || !identity) {
+    return <IdentitySelection mapping={opsMapping} data={data} current={identity} invalidSavedIdentity={identityInvalid} onSelect={(next) => {
+      window.localStorage.setItem(OPS_IDENTITY_STORAGE_KEY, JSON.stringify({
+        identityKey: next.identityKey,
+        opsTeam1: next.opsTeam1,
+        opsTeam2: next.opsTeam2,
+        mappingVersion: next.mappingVersion
+      }));
+      setIdentity(next);
+      setIdentityInvalid(false);
+      setSelectedClusterId("");
+      setSelectedSignalKey("");
+      setCategoryFilter("");
+      setDashboardCategoryId("all");
+      setSparkleCategoryId("all");
+      setEvidenceTarget(null);
+      setEvidencePosts([]);
+      setTab("trend");
+      setView("home");
+    }} onClear={() => {
+      window.localStorage.removeItem(OPS_IDENTITY_STORAGE_KEY);
+      setIdentity(null);
+    }} />;
+  }
+  if (!scopedData || !selectedCluster) {
+    return <main className="shell loading emptyScope"><p>{t("noTeamSignals")}</p><button className="primaryLink" onClick={() => setView("identity")}>{t("switchIdentity")}</button></main>;
+  }
 
-  const activePosts = clusterPosts(data.posts, selectedCluster.cluster_id);
   const applySortBy = (key: ScoreKey) => {
     setSortBy(key);
-    const topCluster = [...data.clusters].sort((a, b) => Number(b[key] || 0) - Number(a[key] || 0))[0];
+    const topCluster = [...filteredClusters].sort((a, b) => compareClusters(a, b, key))[0];
     if (topCluster) setSelectedClusterId(topCluster.cluster_id);
+  };
+  const openEvidence = (target: EvidenceTarget) => {
+    setEvidenceTarget(target);
+    setTab("evidence");
   };
   const openClusterDetail = (clusterId: string) => {
     setSelectedClusterId(clusterId);
@@ -435,6 +725,10 @@ function RadarAppInner() {
           ))}
         </nav>
         <div className="topActions">
+          <button className="identityChip" onClick={() => setView("identity")} title={t("switchIdentity")}>
+            <small>{t("currentIdentity")}</small>
+            <strong>{identity.opsTeam1} · {identity.opsTeam2}</strong>
+          </button>
           <div className="langSwitch">
             {(["en", "zh"] as Lang[]).map((option) => (
               <button key={option} className={lang === option ? "active" : ""} onClick={() => setLang(option)}>
@@ -460,7 +754,7 @@ function RadarAppInner() {
         </div>
       </header>
 
-      {view === "home" && <Home data={data} setView={setView} />}
+      {view === "home" && <Home data={scopedData} setView={setView} />}
 
       {view === "explore" && (
         <section>
@@ -491,17 +785,16 @@ function RadarAppInner() {
             <TrendTab
               clusters={clusters}
               selectedCluster={selectedCluster}
-              posts={activePosts}
               sortBy={sortBy}
               setSortBy={applySortBy}
               setSelectedClusterId={setSelectedClusterId}
-              setTab={setTab}
+              openEvidence={openEvidence}
             />
           )}
 
           {tab === "opportunity" && (
             <OpportunityTab
-              clusters={data.clusters}
+              clusters={filteredClusters}
               selectedClusterId={selectedCluster.cluster_id}
               zoom={opportunityZoom}
               drag={opportunityDrag}
@@ -513,7 +806,7 @@ function RadarAppInner() {
 
           {tab === "mapping" && (
             <MappingTab
-              clusters={data.clusters}
+              clusters={filteredClusters}
               signalCards={signalCards}
               selectedSignalKey={selectedSignalKey}
               onlyBrand={onlyBrand}
@@ -534,8 +827,8 @@ function RadarAppInner() {
 
           {tab === "sparkle" && (
             <SparkleTab
-              clusters={data.clusters}
-              brands={data.brands}
+              clusters={filteredClusters}
+              brands={scopedData.brands}
               selectedCluster={selectedCluster}
               sparkleCategoryId={sparkleCategoryId}
               setSparkleCategoryId={setSparkleCategoryId}
@@ -549,7 +842,10 @@ function RadarAppInner() {
           {tab === "evidence" && (
             <EvidenceTab
               cluster={selectedCluster}
-              posts={activePosts.length ? activePosts : data.posts.slice(0, 12)}
+              target={evidenceTarget}
+              posts={evidencePosts}
+              loading={evidenceLoading}
+              error={evidenceError}
               setTab={setTab}
             />
           )}
@@ -558,13 +854,86 @@ function RadarAppInner() {
 
       {view === "dashboard" && (
         <Dashboard
-          data={data}
+          data={scopedData}
           selectedCluster={selectedCluster}
           dashboardCategoryId={dashboardCategoryId}
           setDashboardCategoryId={setDashboardCategoryId}
           setSelectedClusterId={setSelectedClusterId}
         />
       )}
+    </main>
+  );
+}
+
+function IdentitySelection({ mapping, data, current, invalidSavedIdentity, onSelect, onClear }: {
+  mapping: OpsMapping;
+  data: DashboardBundle;
+  current: OpsIdentity | null;
+  invalidSavedIdentity: boolean;
+  onSelect: (identity: OpsIdentity) => void;
+  onClear: () => void;
+}) {
+  const { lang, setLang, t } = useLang();
+  const initialTeam = current?.opsTeam1 || "";
+  const [team1, setTeam1] = useState(initialTeam);
+  const [team2, setTeam2] = useState(current?.opsTeam2 || "");
+  const team = mapping.ops_teams.find((item) => item.ops_team_1 === team1);
+  const options = team?.ops_team_2_options || [];
+  const option = options.find((item) => item.ops_team_2 === team2);
+  const dashboardNames = useMemo(() => new Set(data.clusters.map((cluster) => normalizeCategoryName(cluster.cluster_name))), [data.clusters]);
+  const matchedCategories = (option?.categories || []).filter((category) => dashboardNames.has(normalizeCategoryName(category)));
+
+  const chooseTeam1 = (value: string) => {
+    setTeam1(value);
+    const nextOptions = mapping.ops_teams.find((item) => item.ops_team_1 === value)?.ops_team_2_options || [];
+    setTeam2(nextOptions.length === 1 ? nextOptions[0].ops_team_2 : "");
+  };
+  return (
+    <main className="identityPage">
+      <header className="identityTopbar">
+        <strong><span>r/</span> Reddit Business Signal Radar</strong>
+        <div className="langSwitch">
+          {(["en", "zh"] as Lang[]).map((optionLang) => (
+            <button key={optionLang} className={lang === optionLang ? "active" : ""} onClick={() => setLang(optionLang)}>
+              {optionLang === "en" ? "EN" : "中文"}
+            </button>
+          ))}
+        </div>
+      </header>
+      <section className="identityCard">
+        <span className="eyebrow">Reddit Business Signal Radar</span>
+        <h1>{t("identityTitle")}</h1>
+        <p>{t("identityBody")}</p>
+        {invalidSavedIdentity && <p className="mappingError">{t("invalidIdentity")}</p>}
+        <div className="identityField">
+          <label>{t("opsTeam1")}</label>
+          <div className="teamCards">
+            {mapping.ops_teams.map((item) => (
+              <button key={item.ops_team_1} className={team1 === item.ops_team_1 ? "active" : ""} onClick={() => chooseTeam1(item.ops_team_1)}>
+                {item.ops_team_1}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="identityField">
+          <label>{t("opsTeam2")}</label>
+          <select disabled={!team1} value={team2} onChange={(event) => setTeam2(event.target.value)}>
+            <option value="">{team1 ? t("chooseOpsTeam2") : t("chooseOpsTeam1First")}</option>
+            {options.map((item) => <option key={item.identity_key} value={item.ops_team_2}>{item.ops_team_2}</option>)}
+          </select>
+        </div>
+        {option && <p className={matchedCategories.length ? "categoryAvailability" : "mappingError"}>
+          {matchedCategories.length ? `${matchedCategories.length} ${t("categoriesAvailable")}` : t("noMappedCategories")}
+        </p>}
+        <button className="identityCta" disabled={!option || !matchedCategories.length} onClick={() => option && onSelect({
+          identityKey: option.identity_key,
+          opsTeam1: team1,
+          opsTeam2: team2,
+          categoryNames: option.categories,
+          mappingVersion: mapping.version
+        })}>{t("enterDashboard")}</button>
+        {current && <button className="clearIdentity" onClick={onClear}>{t("clearIdentity")}</button>}
+      </section>
     </main>
   );
 }
@@ -579,7 +948,8 @@ function Home({ data, setView }: { data: DashboardBundle; setView: (view: View) 
       <div className="stats">
         <Stat label={t("statAnalysisWeek")} value={formatWeekRange(data.meta.latest_week)} compactValue />
         <Stat label={t("statWeeklyDiscussionPosts")} value={data.meta.weekly_post_count.toLocaleString()} />
-        <Stat label={t("statWeeklyBrandSignals")} value={data.meta.weekly_brand_signal_count.toLocaleString()} />
+        <Stat label={t("statWeeklyKeywordBrandSignals")} value={`${data.meta.weekly_keyword_signal_count.toLocaleString()} ${t("keywordsUnit")} · ${data.meta.weekly_brand_signal_count.toLocaleString()} ${t("brandsUnit")}`} compactValue />
+        <Stat label={t("statCoveredClusters")} value={data.meta.covered_cluster_count.toLocaleString()} />
       </div>
       <div className="routeCards">
         <button onClick={() => setView("explore")}>
@@ -621,19 +991,17 @@ function SectionHeader({ kicker, title, body }: { kicker: string; title: string;
 function TrendTab({
   clusters,
   selectedCluster,
-  posts,
   sortBy,
   setSortBy,
   setSelectedClusterId,
-  setTab
+  openEvidence
 }: {
   clusters: Cluster[];
   selectedCluster: Cluster;
-  posts: Post[];
   sortBy: ScoreKey;
   setSortBy: (key: ScoreKey) => void;
   setSelectedClusterId: (id: string) => void;
-  setTab: (tab: ExploreTab) => void;
+  openEvidence: (target: EvidenceTarget) => void;
 }) {
   const { lang, t } = useLang();
   const [brandLimit, setBrandLimit] = useState(20);
@@ -643,19 +1011,20 @@ function TrendTab({
   );
   return (
     <div className="trendGrid">
-      <article className="panel wide">
+      <article className="analysisViewPanel wide">
         <div className="panelHeader">
-          <span>{t("dimPanelKicker")}</span>
-          <h3>{t("dimPanelTitle")}</h3>
+          <span>{t("analysisView")}</span>
+          <h3>{dimensionLabel(lang, sortBy)}</h3>
         </div>
         <div className="dimensionFilters">
           {scoreOptions.map((option) => (
-            <button key={option.key} className={sortBy === option.key ? "active" : ""} onClick={() => setSortBy(option.key)}>
+            <button key={option.key} aria-pressed={sortBy === option.key} className={sortBy === option.key ? "active" : ""} onClick={() => setSortBy(option.key)}>
               <strong>{dimensionLabel(lang, option.key)}</strong>
-              <small>{dimensionHelper(lang, option.key)}</small>
             </button>
           ))}
         </div>
+        <p className="analysisViewHelper">{dimensionHelper(lang, sortBy)}</p>
+        <small className="analysisViewHint">{t("analysisViewHint")}</small>
       </article>
       <article className="panel">
         <div className="panelHeader">
@@ -674,9 +1043,9 @@ function TrendTab({
               <span>
                 <strong>{cluster.cluster_name}</strong>
                 <small>
-                  {cluster.current_week_posts} {t("postsUnit")} · {cluster.unique_subreddits} {t("subsUnit")} · {t("sortedBy")} {dimensionLabel(lang, sortBy)}
+                  {dimensionContext(cluster, sortBy, lang, t)}
                 </small>
-                <TagPill tag={momentumTag(cluster)} />
+                <span className={`tag tag-${dimensionTag(cluster, sortBy, lang).tone}`}>{dimensionTag(cluster, sortBy, lang).label}</span>
               </span>
             </button>
           ))}
@@ -688,33 +1057,26 @@ function TrendTab({
           <h3>{selectedCluster.cluster_name}</h3>
         </div>
         <div className="starStack">
-          {scoreOptions.map((option) => (
-            <div key={option.key}>
-              <span>{dimensionLabel(lang, option.key)}</span>
-              {option.key === "sentiment_score" ? sentimentValue(selectedCluster.avg_sentiment, lang, t) : starRating(Number(selectedCluster[option.key]))}
-            </div>
+          <div><span>{dimensionLabel(lang, "trend_score")}</span>{starRating(selectedCluster.trend_score)}</div>
+          {(["momentum_score", "sentiment_score", "cross_community_score", "engagement_score"] as ScoreKey[]).map((key) => (
+            <div key={key}><span>{dimensionLabel(lang, key)}</span><strong>{dimensionTag(selectedCluster, key, lang).label}</strong></div>
           ))}
         </div>
         <h4>{t("activeSources")}</h4>
         <div className="sourceGrid">
-          {subredditSources(posts).map((source) => (
+          {(selectedCluster.communities || []).map((source) => (
             <a key={source.subreddit} href={`https://www.reddit.com/r/${source.subreddit}`} target="_blank" rel="noreferrer">
               <b>r/{source.subreddit}</b>
-              <small>{source.posts} {t("postsUnit")}</small>
+              <small>{source.unique_posts} {t("postsUnit")} · {Math.round(source.discussion_share * 100)}% {t("categoryDiscussionShare")}</small>
             </a>
           ))}
+          {!selectedCluster.communities?.length && <p className="emptyState">{t("noCommunityData")}</p>}
         </div>
         <h4>{t("topicLandscape")}</h4>
-        <div className="wordCloud">
-          {selectedCluster.terms.map((term) => (
-            <button key={term.term} className={sentimentClass(term.sentiment)}>
-              {term.term}
-            </button>
-          ))}
-        </div>
+        <SignalWordCloud cluster={selectedCluster} openEvidence={openEvidence} />
         <h4>{t("relatedBrandsKeywords")}</h4>
         <div className="productCards">
-          {[...clusterBrands.slice(0, brandLimit).map((item) => ({ type: "brand", id: item.brand_norm, name: item.brand_display, signalType: item.brand_signal_type, tag: brandTypeLabel(item.brand_signal_type, lang), uniquePosts: item.unique_posts || 0, mentions: item.mentions || 0, url: item.google_search_url || googleBrandUrl(item.brand_display), logoUrl: item.logo_url || "" })), ...selectedCluster.terms.map((item) => ({ type: "keyword", id: item.term, name: item.term, signalType: "", tag: item.entity_type || "keyword", uniquePosts: 0, mentions: item.mentions || 0, url: "", logoUrl: "" }))].map((item) => (
+          {[...clusterBrands.slice(0, brandLimit).map((item) => ({ type: "brand" as const, id: item.brand_norm, name: item.brand_display, signalType: item.brand_signal_type, tag: brandTypeLabel(item.brand_signal_type, lang), uniquePosts: item.unique_posts || 0, mentions: item.mentions || 0, url: item.google_search_url || googleBrandUrl(item.brand_display), logoUrl: item.logo_url || "" })), ...selectedCluster.terms.slice(0, 30).map((item) => ({ type: "keyword" as const, id: item.term_norm, name: item.term, signalType: "", tag: item.entity_type || "keyword", uniquePosts: item.unique_posts || 0, mentions: item.mentions || 0, url: "", logoUrl: "" }))].map((item) => (
             <div key={`${item.type}-${item.id}`}>
               {item.type === "brand" ? <BrandAvatar name={item.name} logoUrl={item.logoUrl} size="md" /> : <i className="keywordAvatar">#</i>}
               <span className="productCardText">
@@ -729,7 +1091,9 @@ function TrendTab({
                     {t("learnMoreBrand")}
                   </a>
                 )}
-                <button onClick={() => setTab("evidence")}>{t("evidenceBtn")}</button>
+                <button onClick={() => item.type === "brand"
+                  ? openEvidence({ kind: "brand", clusterId: selectedCluster.cluster_id, brandNorm: item.id, display: item.name })
+                  : openEvidence({ kind: "keyword", clusterId: selectedCluster.cluster_id, termNorm: item.id, display: item.name })}>{t("evidenceBtn")}</button>
               </span>
             </div>
           ))}
@@ -740,15 +1104,45 @@ function TrendTab({
   );
 }
 
-function subredditSources(posts: Post[]) {
-  const sources = new Map<string, { subreddit: string; posts: number }>();
-  posts.forEach((post) => {
-    const subreddit = post.subreddit || "unknown";
-    const current = sources.get(subreddit) || { subreddit, posts: 0 };
-    current.posts += 1;
-    sources.set(subreddit, current);
-  });
-  return [...sources.values()].sort((a, b) => b.posts - a.posts).slice(0, 5);
+function SignalWordCloud({ cluster, openEvidence }: { cluster: Cluster; openEvidence: (target: EvidenceTarget) => void }) {
+  const { lang, t } = useLang();
+  const words = useMemo(() => {
+    const brands = [...cluster.brands]
+      .filter((item) => Number(item.unique_posts || 0) >= 2)
+      .sort((a, b) => Number(b.unique_posts || 0) - Number(a.unique_posts || 0) || Number(b.mentions || 0) - Number(a.mentions || 0))
+      .slice(0, 20)
+      .map((item) => ({ kind: "brand" as const, id: item.brand_norm, display: item.brand_display, uniquePosts: Number(item.unique_posts || 0), mentions: Number(item.mentions || 0), sentiment: Number(item.sentiment || 0), type: brandTypeLabel(item.brand_signal_type, lang) }));
+    const keywords = [...cluster.terms]
+      .filter((item) => Number(item.unique_posts || 0) >= 2)
+      .sort((a, b) => Number(b.unique_posts || 0) - Number(a.unique_posts || 0) || Number(b.mentions || 0) - Number(a.mentions || 0))
+      .slice(0, 30)
+      .map((item) => ({ kind: "keyword" as const, id: item.term_norm, display: item.term, uniquePosts: Number(item.unique_posts || 0), mentions: Number(item.mentions || 0), sentiment: Number(item.sentiment || 0), type: item.entity_type || "keyword" }));
+    return [...brands, ...keywords].sort((a, b) => b.uniquePosts - a.uniquePosts || b.mentions - a.mentions || a.id.localeCompare(b.id));
+  }, [cluster.brands, cluster.terms, lang]);
+  const minFrequency = Math.min(...words.map((word) => word.uniquePosts), 1);
+  const maxFrequency = Math.max(...words.map((word) => word.uniquePosts), 1);
+  const sizeFor = (frequency: number) => {
+    const range = Math.max(Math.sqrt(maxFrequency) - Math.sqrt(minFrequency), 1);
+    return 16 + ((Math.sqrt(frequency) - Math.sqrt(minFrequency)) / range) * 22;
+  };
+  const colorFor = (sentiment: number) => sentiment >= 0.15 ? "#167458" : sentiment <= -0.08 ? "#b5483f" : "#48627a";
+  return (
+    <div className="signalWordCloud">
+      {words.map((word) => (
+        <button
+          key={`${word.kind}:${word.id}`}
+          style={{ fontSize: `${sizeFor(word.uniquePosts)}px`, color: colorFor(word.sentiment), fontWeight: word.kind === "brand" ? 800 : 550 }}
+          title={`${word.display}\n${word.type}\n${word.uniquePosts} ${t("discussionPosts")}\n${word.mentions} ${t("mentionsUnit")}\n${sentimentTag(lang, sentimentClass(word.sentiment) as SentimentKey)}`}
+          onClick={() => word.kind === "brand"
+            ? openEvidence({ kind: "brand", clusterId: cluster.cluster_id, brandNorm: word.id, display: word.display })
+            : openEvidence({ kind: "keyword", clusterId: cluster.cluster_id, termNorm: word.id, display: word.display })}
+        >
+          {word.display}
+        </button>
+      ))}
+      {!words.length && <p className="emptyState">{t("noSignalData")}</p>}
+    </div>
+  );
 }
 
 function OpportunityTab({
@@ -1134,7 +1528,7 @@ function SparkleTab({
         </div>
         <h4>{t("freshKeywords")}</h4>
         <div className="chips">
-          {selectedCluster.terms.map((term) => (
+          {selectedCluster.terms.slice(0, 8).map((term) => (
             <span key={term.term}>{term.term}</span>
           ))}
         </div>
@@ -1143,28 +1537,31 @@ function SparkleTab({
   );
 }
 
-function EvidenceTab({ cluster, posts, setTab }: { cluster: Cluster; posts: Post[]; setTab: (tab: ExploreTab) => void }) {
+function EvidenceTab({ cluster, target, posts, loading, error, setTab }: { cluster: Cluster; target: EvidenceTarget | null; posts: Post[]; loading: boolean; error: string; setTab: (tab: ExploreTab) => void }) {
   const { t } = useLang();
   return (
     <article className="panel">
       <div className="panelHeader splitHeader">
         <span>{t("evidenceKicker")}</span>
-        <h3>{cluster.cluster_name} · {t("evidenceTitleSuffix")}</h3>
+        <h3>{cluster.cluster_name}<br />{target ? `${target.display} · ${t("evidenceTitleSuffix")}` : t("evidenceTitleSuffix")}</h3>
         <button className="ghost" onClick={() => setTab("trend")}>
           {t("backToCategory")}
         </button>
       </div>
       <div className="evidenceGrid">
-        {posts.map((post, index) => (
-          <article key={`${post.url || post.title}-${index}`}>
+        {loading && <p className="emptyState">{t("evidenceLoading")}</p>}
+        {error && <p className="emptyState">{error}</p>}
+        {!loading && !error && !posts.length && <p className="emptyState">{t("noSignalEvidence")}</p>}
+        {posts.map((post) => (
+          <article key={post.post_key || post.url || post.title}>
             <div>
               <strong>{post.title}</strong>
-              <span>r/{post.subreddit || t("fallbackUnknown")}</span>
+              <span>r/{post.subreddit || t("fallbackUnknown")} · {post.published_at || ""}</span>
             </div>
             <p>{post.context_window || post.text_snippet}</p>
             <div>
               <span>
-                {post.brand_display || t("fallbackReddit")} · {post.sentiment_label || "neutral"}
+                {post.matched_display || target?.display || t("fallbackReddit")} · {post.sentiment_label || "neutral"}
               </span>
               <a href={post.url || "#"} target="_blank" rel="noreferrer">
                 {t("openReddit")}

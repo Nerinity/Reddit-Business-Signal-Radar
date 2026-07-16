@@ -6,24 +6,24 @@ export type Lang = "en" | "zh";
 
 export const dimensionText = {
   trend_score: {
-    en: { label: "Overall", helper: "Combined priority for opportunity ranking." },
-    zh: { label: "综合", helper: "用于机会排序的综合优先级。" }
+    en: { label: "Overall Trend", helper: "Overall opportunity ranking across growth, reach, sentiment, and engagement." },
+    zh: { label: "综合趋势", helper: "综合讨论增长、扩散、情绪与参与度判断本周优先机会。" }
   },
   momentum_score: {
-    en: { label: "Momentum", helper: "How quickly discussion is rising." },
-    zh: { label: "热度", helper: "讨论量上升的速度。" }
+    en: { label: "Discussion Surge", helper: "Categories with the fastest week-over-week discussion growth." },
+    zh: { label: "讨论激增", helper: "识别讨论量相比上一自然周增长最快的类目。" }
   },
   sentiment_score: {
-    en: { label: "Sentiment", helper: "Consumer language positivity or negativity." },
-    zh: { label: "情感", helper: "消费者语言的正负面倾向。" }
+    en: { label: "Positive Sentiment", helper: "Categories receiving the most positive consumer sentiment." },
+    zh: { label: "情绪正面", helper: "识别消费者讨论整体态度更积极的类目。" }
   },
   cross_community_score: {
-    en: { label: "Reach", helper: "How broadly the signal spreads across communities." },
-    zh: { label: "覆盖面", helper: "信号在各社区间的传播广度。" }
+    en: { label: "Broad Reach", helper: "Categories spreading broadly across multiple communities." },
+    zh: { label: "讨论高扩", helper: "识别讨论正在多个不同社区中广泛扩散的类目。" }
   },
   engagement_score: {
-    en: { label: "Engagement", helper: "Attention from comments and reactions." },
-    zh: { label: "互动度", helper: "评论与回应带来的关注度。" }
+    en: { label: "High Engagement", helper: "Categories generating stronger comments, reactions, and engagement." },
+    zh: { label: "参与度高", helper: "识别更容易引发评论、互动和持续讨论的类目。" }
   }
 } as const;
 
@@ -50,6 +50,21 @@ const dict = {
   weekAria: { en: "Analysis week", zh: "分析周" },
   exportBtn: { en: "Export", zh: "导出" },
   loading: { en: "Loading Reddit Product Trend Radar...", zh: "正在加载 Reddit 产品趋势雷达..." },
+  identityTitle: { en: "Choose Your Operations Team", zh: "选择你的运营身份" },
+  identityBody: { en: "Select your Level 1 and Level 2 operations teams to view signals for the categories you manage.", zh: "选择所属一级与二级运营团队，进入后将只展示与你负责行业相关的类目信号。" },
+  opsTeam1: { en: "Ops Team 1", zh: "一级运营团队" },
+  opsTeam2: { en: "Ops Team 2", zh: "二级运营团队" },
+  chooseOpsTeam1First: { en: "Select Ops Team 1 first", zh: "请先选择一级运营团队" },
+  chooseOpsTeam2: { en: "Select Ops Team 2", zh: "请选择二级运营团队" },
+  enterDashboard: { en: "Enter My Industry Dashboard", zh: "进入我的行业看板" },
+  noMappedCategories: { en: "No categories are currently mapped to this team. Please check the mapping configuration.", zh: "当前团队暂未配置可查看类目，请检查映射配置。" },
+  currentIdentity: { en: "Current Team", zh: "当前身份" },
+  switchIdentity: { en: "Switch Team", zh: "切换身份" },
+  clearIdentity: { en: "Clear saved identity", zh: "清除已保存身份" },
+  categoriesAvailable: { en: "categories available", zh: "个类目可查看" },
+  invalidIdentity: { en: "Your saved team configuration is no longer valid. Please select again.", zh: "身份配置已失效，请重新选择。" },
+  outOfScopeCategory: { en: "This category is outside your operations scope.", zh: "当前类目不在你的运营范围内。" },
+  noTeamSignals: { en: "No category signals are available for the selected operations team.", zh: "当前运营团队暂无可展示的类目信号。" },
 
   heroEyebrow: { en: "AI powered real consumer signals", zh: "AI 驱动的真实消费者信号" },
   heroTitle: { en: "Reddit - North America Product Trend Radar", zh: "Reddit - 北美消费趋势雷达" },
@@ -63,6 +78,10 @@ const dict = {
   statBrandSignals: { en: "Brand Signals", zh: "品牌信号数" },
   statWeeklyDiscussionPosts: { en: "Weekly Discussion Posts", zh: "当周讨论帖子数" },
   statWeeklyBrandSignals: { en: "Weekly Brand Signals", zh: "当周品牌信号" },
+  statWeeklyKeywordBrandSignals: { en: "Weekly Keyword / Brand Signals", zh: "当周关键词 / 品牌信号" },
+  statCoveredClusters: { en: "Covered Clusters", zh: "讨论覆盖类目数" },
+  keywordsUnit: { en: "keywords", zh: "个关键词" },
+  brandsUnit: { en: "brands", zh: "个品牌" },
   statAvgTrendScore: { en: "Avg Trend Score", zh: "平均趋势分" },
 
   exploreCardKicker: { en: "Interactive Product", zh: "互动产品" },
@@ -100,6 +119,13 @@ const dict = {
 
   dimPanelKicker: { en: "Signal Dimensions", zh: "信号维度" },
   dimPanelTitle: { en: "Rank by score dimension", zh: "按评分维度排序" },
+  analysisView: { en: "Analysis View", zh: "当前分析视角" },
+  analysisViewHint: { en: "Switching views re-ranks categories and opens the top result.", zh: "切换视角将重新排序类目，并自动打开本维度第一名。" },
+  communitiesUnit: { en: "communities", zh: "个社区" },
+  positiveUnit: { en: "positive", zh: "正面" },
+  categoryDiscussionShare: { en: "of category discussions", zh: "占该类目讨论" },
+  noCommunityData: { en: "No community data is available for this category.", zh: "当前类目暂无社区分布数据。" },
+  noSignalData: { en: "No qualifying brand or keyword signals are available.", zh: "当前类目暂无符合条件的品牌或关键词信号。" },
   rankKicker: { en: "Ranking", zh: "排名" },
   rankTitle: { en: "Trend Categories", zh: "趋势品类" },
   postsUnit: { en: "posts", zh: "篇帖子" },
@@ -169,6 +195,8 @@ const dict = {
   openReddit: { en: "Open Reddit", zh: "打开 Reddit" },
   fallbackReddit: { en: "Reddit", zh: "Reddit" },
   fallbackUnknown: { en: "unknown", zh: "未知" },
+  evidenceLoading: { en: "Loading source evidence...", zh: "正在加载原帖证据…" },
+  noSignalEvidence: { en: "No source evidence is available for this signal.", zh: "当前信号暂无可用原帖证据。" },
 
   vizKicker: { en: "Visualization Board", zh: "可视化看板" },
   vizTitle: { en: "Analytics Dashboard", zh: "分析看板" },
