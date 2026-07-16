@@ -3,7 +3,10 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
+import unicodedata
 from pathlib import Path
+from urllib.parse import quote_plus
 
 import pandas as pd
 
@@ -39,10 +42,99 @@ def safe_int(value, default=0):
         return default
 
 
+BRAND_TYPE_PRIORITY = {
+    "confirmed_whitelist_brand": 0,
+    "catalog_known_brand": 1,
+    "candidate_non_whitelist_brand": 2,
+}
+
+
+def normalize_brand(value) -> str:
+    """Create a stable fallback ID when legacy candidate rows have no brand_norm."""
+    text = "" if pd.isna(value) else unicodedata.normalize("NFKC", str(value))
+    text = re.sub(r"[^\w\s-]+", " ", text.casefold())
+    return re.sub(r"[\s_-]+", " ", text).strip()
+
+
+def canonical_brand_display(value) -> str:
+    text = "" if pd.isna(value) else unicodedata.normalize("NFKC", str(value)).strip()
+    return re.sub(r"[^\w)&+'®™]+$", "", text).strip() or text
+
+
+def prepare_brand_rows(brands: pd.DataFrame) -> pd.DataFrame:
+    prepared = brands.copy()
+    prepared["brand_norm"] = prepared.apply(
+        lambda row: normalize_brand(row.get("brand_norm") or row.get("brand_display") or row.get("candidate_text")),
+        axis=1,
+    )
+    prepared["brand_display"] = prepared.apply(
+        lambda row: str(row.get("brand_display") or row.get("candidate_text") or row["brand_norm"]).strip(),
+        axis=1,
+    )
+    prepared = prepared[prepared["brand_norm"].ne("")].copy()
+    prepared["brand_type_priority"] = prepared["brand_signal_type"].map(BRAND_TYPE_PRIORITY).fillna(3)
+    return prepared
+
+
+def prepare_week_posts(posts: pd.DataFrame, week: str) -> pd.DataFrame:
+    start = pd.Timestamp(week, tz="UTC")
+    end = start + pd.Timedelta(days=7)
+    published = pd.to_datetime(posts["published_at"], errors="coerce", utc=True)
+    result = posts[(published >= start) & (published < end)].copy()
+    result["brand_norm"] = result["brand_norm"].map(normalize_brand)
+    result["cluster_id"] = result["final_cluster_id"].astype(str)
+    result["post_key"] = result.get("mention_id", pd.Series(index=result.index, dtype=object)).fillna("")
+    missing = result["post_key"].astype(str).str.strip().eq("")
+    result.loc[missing, "post_key"] = result.loc[missing, "url"].fillna("").astype(str)
+    return result[result["brand_norm"].ne("") & result["post_key"].astype(str).str.strip().ne("")]
+
+
 def build_week_bundle(week: str, all_weeks: list[str], scores: pd.DataFrame, terms: pd.DataFrame,
-                       brands: pd.DataFrame, posts: pd.DataFrame) -> dict:
+                       brands: pd.DataFrame, posts: pd.DataFrame, discussion_posts: pd.DataFrame) -> dict:
     latest = scores[scores["week_start"].astype(str).eq(week)].copy()
     top_scores = latest.sort_values(["trend_score", "current_week_posts"], ascending=[False, False]).head(40)
+
+    week_brands = brands[brands["week_start"].astype(str).eq(week)].copy()
+    week_posts = prepare_week_posts(posts, week)
+
+    # Canonical metadata is selected once per brand_norm. Trusted catalog names win;
+    # within a type, the most-discussed spelling becomes the display name.
+    canonical = (
+        week_brands.sort_values(
+            ["brand_norm", "brand_type_priority", "unique_posts", "mentions"],
+            ascending=[True, True, False, False],
+        )
+        .drop_duplicates("brand_norm")
+        .set_index("brand_norm")
+    )
+    valid_brand_norms = set(canonical.index)
+    indexed_posts = week_posts[week_posts["brand_norm"].isin(valid_brand_norms)].copy()
+    post_counts = indexed_posts.groupby("brand_norm")["post_key"].nunique().to_dict()
+    cluster_post_counts = (
+        indexed_posts.groupby(["cluster_id", "brand_norm"])["post_key"].nunique().to_dict()
+    )
+
+    cluster_signal_rows = []
+    for (cid, norm), rows in week_brands.groupby([week_brands["cluster_id"].astype(str), "brand_norm"], sort=False):
+        meta_row = canonical.loc[norm]
+        weights = rows["mentions"].clip(lower=1)
+        cluster_signal_rows.append({
+            "week_start": week,
+            "cluster_id": cid,
+            "cluster_name": str(rows.iloc[0]["cluster_name"]),
+            "brand_norm": norm,
+        "brand_display": canonical_brand_display(meta_row.brand_display),
+            "brand_signal_type": str(meta_row.brand_signal_type),
+            "unique_posts": safe_int(cluster_post_counts.get((cid, norm), rows["unique_posts"].max())),
+            "mentions": safe_int(rows["mentions"].sum()),
+            "avg_sentiment": safe_float((rows["avg_sentiment"] * weights).sum() / weights.sum()),
+            "positive_share": safe_float((rows["positive_share"] * weights).sum() / weights.sum()),
+        })
+    cluster_signal_rows.sort(key=lambda r: (-r["unique_posts"], -r["mentions"], r["brand_norm"]))
+
+    signals_by_cluster: dict[str, list[dict]] = {}
+    for signal in cluster_signal_rows:
+        signals_by_cluster.setdefault(signal["cluster_id"], []).append(signal)
 
     cluster_cards = []
     for row in top_scores.itertuples(index=False):
@@ -51,10 +143,7 @@ def build_week_bundle(week: str, all_weeks: list[str], scores: pd.DataFrame, ter
             (terms["week_start"].astype(str) == week)
             & (terms["cluster_id"].astype(str) == cid)
         ].sort_values("mentions", ascending=False).head(8)
-        cluster_brands = brands[
-            (brands["week_start"].astype(str) == week)
-            & (brands["cluster_id"].astype(str) == cid)
-        ].sort_values("mentions", ascending=False).head(6)
+        cluster_brands = signals_by_cluster.get(cid, [])
         cluster_cards.append({
             "week_start": week,
             "cluster_id": cid,
@@ -92,18 +181,16 @@ def build_week_bundle(week: str, all_weeks: list[str], scores: pd.DataFrame, ter
             ],
             "brands": [
                 {
-                    "brand_display": str(b.brand_display or b.candidate_text),
-                    "brand_signal_type": str(b.brand_signal_type),
-                    "mentions": safe_int(b.mentions),
-                    "sentiment": safe_float(b.avg_sentiment),
-                    "google_search_url": str(getattr(b, "google_search_url", "")),
-                    # No real logo source is wired up yet -- brand cards fall back to an
-                    # initials placeholder. getattr keeps this forward-compatible: once a
-                    # logo_url column exists upstream, it starts flowing through with no
-                    # further bundle-builder changes needed.
-                    "logo_url": str(getattr(b, "logo_url", "") or ""),
+                    "brand_norm": b["brand_norm"],
+                    "brand_display": b["brand_display"],
+                    "brand_signal_type": b["brand_signal_type"],
+                    "unique_posts": b["unique_posts"],
+                    "mentions": b["mentions"],
+                    "sentiment": b["avg_sentiment"],
+                    "google_search_url": str(canonical.loc[b["brand_norm"]].get("google_search_url", "")),
+                    "logo_url": str(canonical.loc[b["brand_norm"]].get("logo_url", "") or ""),
                 }
-                for b in cluster_brands.itertuples(index=False)
+                for b in cluster_brands
             ],
         })
 
@@ -125,41 +212,37 @@ def build_week_bundle(week: str, all_weeks: list[str], scores: pd.DataFrame, ter
         for r in top_terms.itertuples(index=False)
     ]
 
-    brand_rows = (
-        brands[brands["week_start"].astype(str).eq(week)]
-        .sort_values(["mentions", "unique_posts"], ascending=[False, False])
-        .head(80)
-    )
-    brand_signals = [
-        {
-            "brand_display": str(r.brand_display or r.candidate_text),
-            "brand_norm": str(r.brand_norm),
-            "brand_signal_type": str(r.brand_signal_type),
-            "cluster_id": str(r.cluster_id),
-            "cluster_name": str(r.cluster_name),
-            "mentions": safe_int(r.mentions),
-            "unique_posts": safe_int(r.unique_posts),
-            "avg_sentiment": safe_float(r.avg_sentiment),
-            "positive_share": safe_float(r.positive_share),
-            "google_search_url": str(r.google_search_url),
-            "logo_url": str(getattr(r, "logo_url", "") or ""),
-        }
-        for r in brand_rows.itertuples(index=False)
-    ]
+    brand_signals = []
+    for norm, rows in week_brands.groupby("brand_norm", sort=False):
+        meta_row = canonical.loc[norm]
+        mentions = safe_int(rows["mentions"].sum())
+        weights = rows["mentions"].clip(lower=1)
+        avg_sentiment = safe_float((rows["avg_sentiment"] * weights).sum() / weights.sum())
+        aliases = sorted({str(value).strip() for value in rows["brand_display"] if str(value).strip()})
+        brand_signals.append({
+            "brand_norm": str(norm),
+            "brand_display": canonical_brand_display(meta_row.brand_display),
+            "aliases": aliases,
+            "brand_signal_type": str(meta_row.brand_signal_type),
+            "unique_posts": safe_int(post_counts.get(norm, rows["unique_posts"].max())),
+            "mentions": mentions,
+            "cluster_count": int(rows["cluster_id"].astype(str).nunique()),
+            "avg_sentiment": avg_sentiment,
+            "positive_share": safe_float((rows["positive_share"] * weights).sum() / weights.sum()),
+            "google_search_url": str(meta_row.get("google_search_url", "") or f"https://www.google.com/search?q={quote_plus(str(meta_row.brand_display) + ' brand')}"),
+            "logo_url": str(meta_row.get("logo_url", "") or ""),
+        })
+    brand_signals.sort(key=lambda r: (-r["unique_posts"], -r["mentions"], r["brand_norm"]))
 
     # Evidence stream is scoped to this week's own date range (week_start inclusive,
     # +7 days exclusive) so switching weeks actually shows different source posts
     # instead of the same always-most-recent 120 rows regardless of which week is selected.
-    week_start_dt = pd.Timestamp(week, tz="UTC")
-    week_end_dt = week_start_dt + pd.Timedelta(days=7)
-    published = pd.to_datetime(posts["published_at"], errors="coerce", utc=True)
-    week_posts = posts[(published >= week_start_dt) & (published < week_end_dt)]
     post_rows = week_posts.sort_values("published_at", ascending=False).head(120)
     post_index = [
         {
             "brand_display": str(r.brand_display),
             "brand_norm": str(r.brand_norm),
-            "cluster_id": str(r.final_cluster_id),
+            "cluster_id": str(r.cluster_id),
             "cluster_name": str(r.final_cluster_name),
             "title": str(r.title),
             "text_snippet": str(r.text_snippet),
@@ -173,11 +256,27 @@ def build_week_bundle(week: str, all_weeks: list[str], scores: pd.DataFrame, ter
         for r in post_rows.itertuples(index=False)
     ]
 
+    discussion_start = pd.Timestamp(week, tz="UTC")
+    discussion_end = discussion_start + pd.Timedelta(days=7)
+    discussion_published = pd.to_datetime(discussion_posts["published_at"], errors="coerce", utc=True)
+    current_discussions = discussion_posts[(discussion_published >= discussion_start) & (discussion_published < discussion_end)].copy()
+    discussion_key = current_discussions["mention_id"].fillna("").astype(str)
+    missing_discussion_key = discussion_key.str.strip().eq("")
+    discussion_key.loc[missing_discussion_key] = current_discussions.loc[missing_discussion_key, "url"].fillna("").astype(str)
+    weekly_post_count = int(discussion_key[discussion_key.str.strip().ne("")].nunique())
+
     meta = {
         "latest_week": week,
         "cluster_count": int(latest["cluster_id"].nunique()) if len(latest) else 0,
-        "post_count": int(latest["current_week_posts"].sum()) if len(latest) else 0,
-        "brand_signal_count": int(len(brands[brands["week_start"].astype(str).eq(week)])),
+        "weekly_post_count": weekly_post_count,
+        "weekly_brand_signal_count": int(week_brands[["cluster_id", "brand_norm"]].drop_duplicates().shape[0]),
+        "weekly_unique_brand_count": int(week_brands["brand_norm"].nunique()),
+        "verified_brand_count": int((pd.Series([b["brand_signal_type"] for b in brand_signals]) == "confirmed_whitelist_brand").sum()),
+        "known_brand_count": int((pd.Series([b["brand_signal_type"] for b in brand_signals]) == "catalog_known_brand").sum()),
+        "candidate_brand_count": int((pd.Series([b["brand_signal_type"] for b in brand_signals]) == "candidate_non_whitelist_brand").sum()),
+        # Legacy aliases retained for the static web client during migration.
+        "post_count": weekly_post_count,
+        "brand_signal_count": int(week_brands[["cluster_id", "brand_norm"]].drop_duplicates().shape[0]),
         "term_signal_count": int(len(terms[terms["week_start"].astype(str).eq(week)])),
         "avg_trend_score": round(float(latest["trend_score"].mean()), 2) if len(latest) else 0,
         "max_trend_score": round(float(latest["trend_score"].max()), 2) if len(latest) else 0,
@@ -199,6 +298,7 @@ def build_week_bundle(week: str, all_weeks: list[str], scores: pd.DataFrame, ter
         "clusters": cluster_cards,
         "keywords": keyword_map,
         "brands": brand_signals,
+        "cluster_brand_signals": cluster_signal_rows,
         "posts": post_index,
         "trend_distribution": [
             {"band": str(k), "count": int(v)}
@@ -218,8 +318,9 @@ def main() -> None:
     base = Path(args.processed_dir)
     scores = pd.read_parquet(base / "weekly_cluster_scores.parquet")
     terms = pd.read_parquet(base / "weekly_cluster_discussion_terms.parquet")
-    brands = pd.read_parquet(base / "weekly_cluster_brand_mentions.parquet")
+    brands = prepare_brand_rows(pd.read_parquet(base / "weekly_cluster_brand_mentions.parquet"))
     posts = pd.read_parquet(base / "brand_post_index.parquet")
+    discussion_posts = pd.read_parquet(base / "clean_reddit_posts.parquet")
 
     # A week whose Mon-Sun span isn't fully covered by the raw collection yet (the
     # trailing edge of whatever the crawler has ingested so far) shows up here with a
@@ -242,7 +343,7 @@ def main() -> None:
         out_dir.mkdir(parents=True, exist_ok=True)
 
     for week in all_weeks:
-        bundle = build_week_bundle(week, all_weeks, scores, terms, brands, posts)
+        bundle = build_week_bundle(week, all_weeks, scores, terms, brands, posts, discussion_posts)
         payload = json.dumps(bundle, ensure_ascii=False, indent=2)
         for out_dir in out_dirs:
             (out_dir / f"dashboard-{week}.json").write_text(payload, encoding="utf-8")
