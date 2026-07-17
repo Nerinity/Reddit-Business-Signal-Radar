@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { BrandAvatar } from "./components/BrandAvatar";
+import { CategoryAvatar } from "./components/CategoryAvatar";
 import {
   LangProvider,
   useLang,
@@ -46,6 +47,7 @@ type Cluster = {
   week_start: string;
   cluster_id: string;
   cluster_name: string;
+  illustration_url?: string;
   trend_score: number;
   trend_score_100: number;
   momentum_score: number;
@@ -121,6 +123,35 @@ type Post = {
   matched_display?: string;
 };
 
+type SparkleCluster = {
+  cluster_id: string;
+  cluster_name: string;
+  current_week_posts: number;
+  unique_subreddits: number;
+};
+
+type SparkleSignal = {
+  kind: "brand" | "keyword";
+  cluster_id: string;
+  cluster_name: string;
+  signal_norm: string;
+  display: string;
+  source_type: string;
+  ui_tag: "verified_brand" | "brand_keyword";
+  unique_posts: number;
+  mentions: number;
+  avg_sentiment: number;
+  logo_url?: string;
+};
+
+type SparkleData = {
+  status: "ready" | "insufficient_comparison_weeks";
+  current_week: string;
+  comparison_weeks: string[];
+  newly_active_clusters: SparkleCluster[];
+  new_signals: SparkleSignal[];
+};
+
 type DashboardBundle = {
   meta: {
     latest_week: string;
@@ -143,8 +174,19 @@ type DashboardBundle = {
   keywords: Keyword[];
   brands: Brand[];
   cluster_brand_signals: ClusterBrandSignal[];
+  sparkle: SparkleData;
   posts: Post[];
   weeks: string[];
+};
+
+type DashboardWireBundle = Omit<DashboardBundle, "keywords"> & {
+  keywords?: Keyword[];
+  keywords_url?: string;
+};
+
+type KeywordBundle = {
+  week_start: string;
+  keywords: Keyword[];
 };
 
 type OpsTeam2Option = { ops_team_2: string; identity_key: string; categories: string[] };
@@ -159,6 +201,7 @@ type OpsIdentity = {
 };
 
 const OPS_IDENTITY_STORAGE_KEY = "reddit-signal-radar-ops-identity";
+const ALL_IDENTITY_KEY = "__all__::__all__";
 
 function normalizeCategoryName(value: string) {
   return value.normalize("NFKC").trim().replace(/\s+/g, " ").toLocaleLowerCase();
@@ -348,15 +391,6 @@ function dimensionRawValue(cluster: Cluster, key: ScoreKey, lang: Lang, t: (key:
   return <span className="rawValue">{fmt(cluster.trend_score, 1)}</span>;
 }
 
-function clusterInitials(name: string) {
-  return name
-    .split(/\s|&/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase())
-    .join("");
-}
-
 function googleBrandUrl(name: string) {
   return `https://www.google.com/search?q=${encodeURIComponent(`${name} brand`)}`;
 }
@@ -440,8 +474,22 @@ function RadarAppInner() {
   function loadWeek(week: string) {
     const path = week ? `/data/dashboard-${week}.json` : "/data/dashboard.json";
     fetch(path, { cache: "no-store" })
-      .then((response) => response.json())
-      .then((bundle: DashboardBundle) => {
+      .then((response) => {
+        if (!response.ok) throw new Error(`Dashboard request failed (${response.status})`);
+        return response.json() as Promise<DashboardWireBundle>;
+      })
+      .then(async (wireBundle): Promise<DashboardBundle> => {
+        if (wireBundle.keywords) return wireBundle as DashboardBundle;
+        if (!wireBundle.keywords_url) throw new Error("Dashboard bundle is missing keywords_url");
+        const response = await fetch(wireBundle.keywords_url, { cache: "no-store" });
+        if (!response.ok) throw new Error(`Keywords request failed (${response.status})`);
+        const keywordBundle = (await response.json()) as KeywordBundle;
+        if (keywordBundle.week_start !== wireBundle.meta.latest_week) {
+          throw new Error("Dashboard and keyword bundles are for different weeks");
+        }
+        return { ...wireBundle, keywords: keywordBundle.keywords };
+      })
+      .then((bundle) => {
         setData(bundle);
         setSelectedWeek(bundle.meta.latest_week);
         setSelectedClusterId(bundle.clusters[0]?.cluster_id || "");
@@ -469,7 +517,16 @@ function RadarAppInner() {
             const pair = mapping.ops_teams
               .flatMap((team) => team.ops_team_2_options.map((option) => ({ team, option })))
               .find(({ option }) => option.identity_key === saved.identityKey);
-            if (pair && saved.mappingVersion === mapping.version) {
+            if (saved.identityKey === ALL_IDENTITY_KEY && saved.mappingVersion === mapping.version) {
+              setIdentity({
+                identityKey: ALL_IDENTITY_KEY,
+                opsTeam1: "All Teams",
+                opsTeam2: "All Categories",
+                categoryNames: [],
+                mappingVersion: mapping.version
+              });
+              setView("home");
+            } else if (pair && saved.mappingVersion === mapping.version) {
               setIdentity({
                 identityKey: pair.option.identity_key,
                 opsTeam1: pair.team.ops_team_1,
@@ -504,17 +561,19 @@ function RadarAppInner() {
   // files directly, but the topbar control is intentionally kept to a short, current list.
   const recentWeeks = (data?.weeks || []).slice(0, 3);
 
-  const allowedCategoryNames = useMemo(
-    () => new Set((identity?.categoryNames || []).map(normalizeCategoryName)),
-    [identity]
-  );
+  const allowedClusterIds = useMemo(() => {
+    if (!data || !identity) return new Set<string>();
+    if (identity.identityKey === ALL_IDENTITY_KEY) {
+      return new Set(data.clusters.map((cluster) => String(cluster.cluster_id)));
+    }
+    const categoryNames = new Set(identity.categoryNames.map(normalizeCategoryName));
+    return new Set(data.clusters
+      .filter((cluster) => categoryNames.has(normalizeCategoryName(cluster.cluster_name)))
+      .map((cluster) => String(cluster.cluster_id)));
+  }, [data, identity]);
   const filteredClusters = useMemo(() => (data?.clusters || []).filter(
-    (cluster) => allowedCategoryNames.has(normalizeCategoryName(cluster.cluster_name))
-  ), [allowedCategoryNames, data]);
-  const allowedClusterIds = useMemo(
-    () => new Set(filteredClusters.map((cluster) => String(cluster.cluster_id))),
-    [filteredClusters]
-  );
+    (cluster) => allowedClusterIds.has(String(cluster.cluster_id))
+  ), [allowedClusterIds, data]);
   const scopedData = useMemo<DashboardBundle | null>(() => {
     if (!data) return null;
     const signals = data.cluster_brand_signals.filter((signal) => allowedClusterIds.has(String(signal.cluster_id)));
@@ -537,6 +596,15 @@ function RadarAppInner() {
       keywords,
       brands,
       cluster_brand_signals: signals,
+      sparkle: {
+        ...data.sparkle,
+        newly_active_clusters: data.sparkle.newly_active_clusters.filter(
+          (cluster) => allowedClusterIds.has(String(cluster.cluster_id))
+        ),
+        new_signals: data.sparkle.new_signals.filter(
+          (signal) => allowedClusterIds.has(String(signal.cluster_id))
+        )
+      },
       posts: data.posts.filter((post) => allowedClusterIds.has(String(post.cluster_id))),
       meta: {
         ...data.meta,
@@ -727,7 +795,9 @@ function RadarAppInner() {
         <div className="topActions">
           <button className="identityChip" onClick={() => setView("identity")} title={t("switchIdentity")}>
             <small>{t("currentIdentity")}</small>
-            <strong>{identity.opsTeam1} · {identity.opsTeam2}</strong>
+            <strong>{identity.identityKey === ALL_IDENTITY_KEY
+              ? `${t("allTeams")} · ${t("allCategoriesIdentity")}`
+              : `${identity.opsTeam1} · ${identity.opsTeam2}`}</strong>
           </button>
           <div className="langSwitch">
             {(["en", "zh"] as Lang[]).map((option) => (
@@ -827,11 +897,7 @@ function RadarAppInner() {
 
           {tab === "sparkle" && (
             <SparkleTab
-              clusters={filteredClusters}
-              brands={scopedData.brands}
-              selectedCluster={selectedCluster}
-              sparkleCategoryId={sparkleCategoryId}
-              setSparkleCategoryId={setSparkleCategoryId}
+              sparkle={scopedData.sparkle}
               setSelectedClusterId={setSelectedClusterId}
               setSelectedSignalKey={setSelectedSignalKey}
               setOnlyBrand={setOnlyBrand}
@@ -874,9 +940,10 @@ function IdentitySelection({ mapping, data, current, invalidSavedIdentity, onSel
   onClear: () => void;
 }) {
   const { lang, setLang, t } = useLang();
-  const initialTeam = current?.opsTeam1 || "";
+  const [allSelected, setAllSelected] = useState(current?.identityKey === ALL_IDENTITY_KEY);
+  const initialTeam = current?.identityKey === ALL_IDENTITY_KEY ? "" : current?.opsTeam1 || "";
   const [team1, setTeam1] = useState(initialTeam);
-  const [team2, setTeam2] = useState(current?.opsTeam2 || "");
+  const [team2, setTeam2] = useState(current?.identityKey === ALL_IDENTITY_KEY ? "" : current?.opsTeam2 || "");
   const team = mapping.ops_teams.find((item) => item.ops_team_1 === team1);
   const options = team?.ops_team_2_options || [];
   const option = options.find((item) => item.ops_team_2 === team2);
@@ -884,6 +951,7 @@ function IdentitySelection({ mapping, data, current, invalidSavedIdentity, onSel
   const matchedCategories = (option?.categories || []).filter((category) => dashboardNames.has(normalizeCategoryName(category)));
 
   const chooseTeam1 = (value: string) => {
+    setAllSelected(false);
     setTeam1(value);
     const nextOptions = mapping.ops_teams.find((item) => item.ops_team_1 === value)?.ops_team_2_options || [];
     setTeam2(nextOptions.length === 1 ? nextOptions[0].ops_team_2 : "");
@@ -905,6 +973,15 @@ function IdentitySelection({ mapping, data, current, invalidSavedIdentity, onSel
         <h1>{t("identityTitle")}</h1>
         <p>{t("identityBody")}</p>
         {invalidSavedIdentity && <p className="mappingError">{t("invalidIdentity")}</p>}
+        <button className={`allIdentityCard ${allSelected ? "active" : ""}`} onClick={() => {
+          setAllSelected(true);
+          setTeam1("");
+          setTeam2("");
+        }}>
+          <strong>{t("allView")}</strong>
+          <span>{t("allViewDescription")}</span>
+        </button>
+        <div className="identityDivider"><span>{t("orChooseIndustry")}</span></div>
         <div className="identityField">
           <label>{t("opsTeam1")}</label>
           <div className="teamCards">
@@ -917,21 +994,22 @@ function IdentitySelection({ mapping, data, current, invalidSavedIdentity, onSel
         </div>
         <div className="identityField">
           <label>{t("opsTeam2")}</label>
-          <select disabled={!team1} value={team2} onChange={(event) => setTeam2(event.target.value)}>
+          <select disabled={!team1} value={team2} onChange={(event) => { setAllSelected(false); setTeam2(event.target.value); }}>
             <option value="">{team1 ? t("chooseOpsTeam2") : t("chooseOpsTeam1First")}</option>
             {options.map((item) => <option key={item.identity_key} value={item.ops_team_2}>{item.ops_team_2}</option>)}
           </select>
         </div>
         {option && <p className={matchedCategories.length ? "categoryAvailability" : "mappingError"}>
-          {matchedCategories.length ? `${matchedCategories.length} ${t("categoriesAvailable")}` : t("noMappedCategories")}
+          {matchedCategories.length ? `${t("youWillView")} ${matchedCategories.length} ${t("categoriesAvailable")}` : t("noMappedCategories")}
         </p>}
-        <button className="identityCta" disabled={!option || !matchedCategories.length} onClick={() => option && onSelect({
-          identityKey: option.identity_key,
-          opsTeam1: team1,
-          opsTeam2: team2,
-          categoryNames: option.categories,
-          mappingVersion: mapping.version
-        })}>{t("enterDashboard")}</button>
+        {allSelected && <p className="categoryAvailability">{t("youWillViewAll")} {data.clusters.length} {t("validCategories")}</p>}
+        <button className="identityCta" disabled={!allSelected && (!option || !matchedCategories.length)} onClick={() => {
+          if (allSelected) {
+            onSelect({ identityKey: ALL_IDENTITY_KEY, opsTeam1: "All Teams", opsTeam2: "All Categories", categoryNames: [], mappingVersion: mapping.version });
+          } else if (option) {
+            onSelect({ identityKey: option.identity_key, opsTeam1: team1, opsTeam2: team2, categoryNames: option.categories, mappingVersion: mapping.version });
+          }
+        }}>{t("enterSignalDashboard")}</button>
         {current && <button className="clearIdentity" onClick={onClear}>{t("clearIdentity")}</button>}
       </section>
     </main>
@@ -1039,7 +1117,7 @@ function TrendTab({
               onClick={() => setSelectedClusterId(cluster.cluster_id)}
             >
               <b>#{index + 1}</b>
-              <i>{clusterInitials(cluster.cluster_name)}</i>
+              <CategoryAvatar name={cluster.cluster_name} illustrationUrl={cluster.illustration_url} />
               <span>
                 <strong>{cluster.cluster_name}</strong>
                 <small>
@@ -1167,12 +1245,30 @@ function OpportunityTab({
   const maxSubreddits = Math.max(...clusters.map((cluster) => cluster.unique_subreddits), 1);
   const maxTrend = Math.max(...clusters.map((cluster) => cluster.trend_score), 1);
   const dragOffset = (drag / 100) * (zoom - 1) * 100;
-  const broad = [...clusters].sort(
-    (a, b) => b.momentum_score + b.cross_community_score - (a.momentum_score + a.cross_community_score)
-  );
-  const niche = [...clusters].sort(
-    (a, b) => b.momentum_score - b.cross_community_score - (a.momentum_score - a.cross_community_score)
-  );
+  const hasPercentiles = (cluster: Cluster) => Number.isFinite(Number(cluster.momentum_percentile))
+    && Number.isFinite(Number(cluster.cross_community_percentile));
+  const momentumRank = (cluster: Cluster) => hasPercentiles(cluster) ? Number(cluster.momentum_percentile) : cluster.momentum_score / 5;
+  const reachRank = (cluster: Cluster) => hasPercentiles(cluster) ? Number(cluster.cross_community_percentile) : cluster.cross_community_score / 5;
+  const broad = [...clusters]
+    .filter((cluster) => hasPercentiles(cluster)
+      ? momentumRank(cluster) >= 0.7 && reachRank(cluster) >= 0.7
+      : cluster.momentum_score >= 4 && cluster.cross_community_score >= 4)
+    .sort((a, b) => b.trend_score - a.trend_score
+      || momentumRank(b) - momentumRank(a)
+      || reachRank(b) - reachRank(a)
+      || b.current_week_posts - a.current_week_posts
+      || a.cluster_name.localeCompare(b.cluster_name))
+    .slice(0, 5);
+  const niche = [...clusters]
+    .filter((cluster) => hasPercentiles(cluster)
+      ? momentumRank(cluster) >= 0.7 && reachRank(cluster) < 0.5
+      : cluster.momentum_score >= 4 && cluster.cross_community_score < 3)
+    .sort((a, b) => momentumRank(b) - momentumRank(a)
+      || b.current_week_posts - a.current_week_posts
+      || b.trend_score - a.trend_score
+      || a.unique_subreddits - b.unique_subreddits
+      || a.cluster_name.localeCompare(b.cluster_name))
+    .slice(0, 5);
   return (
     <div className="singleColumn">
       <article className="panel">
@@ -1235,15 +1331,17 @@ function OpportunityList({ title, rows, openClusterDetail }: { title: string; ro
     <div className="opportunityListColumn">
       <h4>{title}</h4>
       <div className="opportunityListRows">
+        {!rows.length && <p className="emptyState">{t("noOpportunityCategories")}</p>}
         {rows.map((cluster, index) => (
           <button key={cluster.cluster_id} className="opportunityRow" onClick={() => openClusterDetail(cluster.cluster_id)}>
             <b>#{index + 1}</b>
             <span>
               <strong>{cluster.cluster_name}</strong>
               <small>
-                {cluster.current_week_posts} {t("postsUnit")} · {cluster.unique_subreddits} {t("subredditsUnit")}
+                {cluster.current_week_posts} {t("postsUnit")} · {cluster.previous_week_posts === 0
+                  ? t("newTag")
+                  : `${cluster.growth_rate >= 0 ? "+" : ""}${Math.round(cluster.growth_rate * 100)}% WoW`} · {cluster.unique_subreddits} {t("subredditsUnit")}
               </small>
-              <TagPill tag={momentumTag(cluster)} />
             </span>
             <em>›</em>
           </button>
@@ -1402,66 +1500,37 @@ function MappingTab({
 }
 
 function SparkleTab({
-  clusters,
-  brands,
-  selectedCluster,
-  sparkleCategoryId,
-  setSparkleCategoryId,
+  sparkle,
   setSelectedClusterId,
   setSelectedSignalKey,
   setOnlyBrand,
   setTab
 }: {
-  clusters: Cluster[];
-  brands: Brand[];
-  selectedCluster: Cluster;
-  sparkleCategoryId: string;
-  setSparkleCategoryId: (id: string) => void;
+  sparkle: SparkleData;
   setSelectedClusterId: (id: string) => void;
   setSelectedSignalKey: (key: string) => void;
   setOnlyBrand: (value: boolean) => void;
   setTab: (tab: ExploreTab) => void;
 }) {
-  const { lang, t } = useLang();
-  const fresh = clusters
-    .filter((cluster) => cluster.previous_week_posts === 0)
-    .filter((cluster) => sparkleCategoryId === "all" || cluster.cluster_id === sparkleCategoryId)
-    .sort((a, b) => b.current_week_posts - a.current_week_posts);
-  const newBrands = [...brands]
-    .filter((brand) => sparkleCategoryId === "all" || selectedCluster.brands.some((item) => item.brand_norm === brand.brand_norm))
-    .sort((a, b) => Number(b.unique_posts || 0) - Number(a.unique_posts || 0) || Number(b.mentions || 0) - Number(a.mentions || 0));
+  const { t } = useLang();
+  const [visibleSignals, setVisibleSignals] = useState(40);
+  useEffect(() => setVisibleSignals(40), [sparkle.current_week]);
+  if (sparkle.status === "insufficient_comparison_weeks") {
+    return <article className="panel"><p className="emptyState">{t("sparkleInsufficientWeeks")}</p></article>;
+  }
   return (
-    <div className="mappingGrid">
-      <article className="panel wide filterPanel">
-        <label>
-          {t("categoryFilter")}
-          <select
-            value={sparkleCategoryId}
-            onChange={(event) => {
-              setSparkleCategoryId(event.target.value);
-              if (event.target.value !== "all") setSelectedClusterId(event.target.value);
-            }}
-          >
-            <option value="all">{t("overallAllCategories")}</option>
-            {[...clusters]
-              .sort((a, b) => a.cluster_name.localeCompare(b.cluster_name))
-              .map((cluster) => (
-                <option key={cluster.cluster_id} value={cluster.cluster_id}>
-                  {cluster.cluster_name}
-                </option>
-              ))}
-          </select>
-        </label>
-      </article>
+    <div className="singleColumn sparklePage">
+      <p className="sparkleDefinition">{t("sparkleDefinition")}</p>
+      <div className="mappingGrid">
       <article className="panel">
         <div className="panelHeader">
           <span>{t("freshKicker")}</span>
-          <h3>{t("freshTitle")}</h3>
+          <h3>{t("newActiveCategories")}</h3>
+          <p>{t("newActiveCategoriesHelp")}</p>
         </div>
-        <div className="sparkleList">
-          <div className="sparkleGroup">
-            <h4>{t("newCategories")}</h4>
-            {fresh.map((cluster) => (
+        <div className="sparkleList"><div className="sparkleGroup">
+            {!sparkle.newly_active_clusters.length && <p className="emptyState">{t("noNewSparkleItems")}</p>}
+            {sparkle.newly_active_clusters.map((cluster) => (
               <button
                 key={cluster.cluster_id}
                 onClick={() => {
@@ -1479,60 +1548,41 @@ function SparkleTab({
                 <em>›</em>
               </button>
             ))}
-          </div>
-          <div className="sparkleGroup">
-            <h4>{t("newBrandSignals")}</h4>
-            {newBrands.map((brand) => (
+        </div></div>
+      </article>
+      <article className="panel">
+        <div className="panelHeader">
+          <span>{t("freshKicker")}</span>
+          <h3>{t("newlyDetectedSignals")}</h3>
+          <p>{t("newlyDetectedSignalsHelp")}</p>
+        </div>
+        <div className="sparkleList"><div className="sparkleGroup">
+            {!sparkle.new_signals.length && <p className="emptyState">{t("noNewSparkleItems")}</p>}
+            {sparkle.new_signals.slice(0, visibleSignals).map((signal) => (
               <button
-                key={brand.brand_norm}
+                key={`${signal.kind}:${signal.cluster_id}:${signal.signal_norm}`}
                 onClick={() => {
-                  if (sparkleCategoryId !== "all") setSelectedClusterId(sparkleCategoryId);
-                  setSelectedSignalKey(`brand:${brand.brand_norm}`);
-                  setOnlyBrand(true);
+                  setSelectedClusterId(signal.cluster_id);
+                  setSelectedSignalKey(`${signal.kind}:${signal.signal_norm}`);
+                  setOnlyBrand(signal.kind === "brand");
                   setTab("mapping");
                 }}
               >
-                <BrandAvatar name={brand.brand_display} logoUrl={brand.logo_url} size="md" />
+                {signal.kind === "brand"
+                  ? <BrandAvatar name={signal.display} logoUrl={signal.logo_url} size="md" />
+                  : <i className="keywordAvatar">#</i>}
                 <span>
-                  <strong>{brand.brand_display}</strong>
-                  <small>{brand.mentions} {t("mentionsUnit")} · {brandTag(brand.brand_signal_type)}</small>
+                  <strong>{signal.display}</strong>
+                  <small>{signal.cluster_name} · {signal.unique_posts} {t("postsUnit")} · {signal.mentions} {t("mentionsUnit")}</small>
+                  <span className="brandTypeBadge">{signal.ui_tag === "verified_brand" ? t("verifiedBrandTag") : t("brandKeywordTag")}</span>
                 </span>
                 <em>›</em>
               </button>
             ))}
-          </div>
-        </div>
+            {sparkle.new_signals.length > visibleSignals && <button className="loadMore" onClick={() => setVisibleSignals((value) => value + 40)}>{t("loadMore")}</button>}
+        </div></div>
       </article>
-      <article className="panel">
-        <div className="panelHeader">
-          <span>{t("selectedSignalKicker")}</span>
-          <h3>{selectedCluster.cluster_name}</h3>
-        </div>
-        <div className="starStack">
-          <div>
-            <span>{t("firstWeekPosts")}</span>
-            <strong>{selectedCluster.current_week_posts}</strong>
-          </div>
-          <div>
-            <span>{t("statSentiment")}</span>
-            {sentimentValue(selectedCluster.avg_sentiment, lang, t)}
-          </div>
-          <div>
-            <span>{t("spike")}</span>
-            <strong>{spikeValue(selectedCluster, t)}</strong>
-          </div>
-          <div>
-            <span>{t("subreddits")}</span>
-            <strong>{selectedCluster.unique_subreddits}</strong>
-          </div>
-        </div>
-        <h4>{t("freshKeywords")}</h4>
-        <div className="chips">
-          {selectedCluster.terms.slice(0, 8).map((term) => (
-            <span key={term.term}>{term.term}</span>
-          ))}
-        </div>
-      </article>
+      </div>
     </div>
   );
 }

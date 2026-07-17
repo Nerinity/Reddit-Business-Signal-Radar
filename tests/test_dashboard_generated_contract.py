@@ -11,7 +11,12 @@ DATA_DIR = REPO_ROOT / "apps" / "next" / "public" / "data"
 
 @pytest.fixture(scope="module")
 def dashboard():
-    return json.loads((DATA_DIR / "dashboard.json").read_text(encoding="utf-8"))
+    bundle = json.loads((DATA_DIR / "dashboard.json").read_text(encoding="utf-8"))
+    keywords_path = DATA_DIR / Path(bundle["keywords_url"]).name
+    keywords_bundle = json.loads(keywords_path.read_text(encoding="utf-8"))
+    assert keywords_bundle["week_start"] == bundle["meta"]["latest_week"]
+    bundle["keywords"] = keywords_bundle["keywords"]
+    return bundle
 
 
 def test_home_signal_counts_are_deduplicated(dashboard):
@@ -30,9 +35,15 @@ def test_all_cluster_brand_targets_exist(dashboard):
     assert len(dashboard["clusters"]) == dashboard["meta"]["cluster_count"]
 
 
+def test_all_clusters_have_local_illustration_assets(dashboard):
+    for cluster in dashboard["clusters"]:
+        url = cluster["illustration_url"]
+        assert url.startswith("/assets/category-illustrations/")
+        assert (REPO_ROOT / "apps" / "next" / "public" / url.removeprefix("/")).exists()
+
+
 def test_cluster_terms_and_communities_use_complete_contract(dashboard):
-    assert max(len(cluster["terms"]) for cluster in dashboard["clusters"]) == 8
-    assert all(len(cluster["terms"]) <= 8 for cluster in dashboard["clusters"])
+    assert max(len(cluster["terms"]) for cluster in dashboard["clusters"]) > 8
     for cluster in dashboard["clusters"]:
         for term in cluster["terms"]:
             assert term["term_norm"]
@@ -78,3 +89,13 @@ def test_keyword_evidence_is_the_full_index_slice(dashboard):
     )
     expected = index.groupby("term_norm")["post_key"].nunique().to_dict()
     assert {term: len(posts) for term, posts in evidence.items()} == expected
+
+
+def test_top_level_keywords_are_not_truncated(dashboard):
+    assert len(dashboard["keywords"]) == dashboard["meta"]["weekly_keyword_signal_count"]
+
+
+def test_keywords_are_split_from_dashboard_bundle(dashboard):
+    raw = json.loads((DATA_DIR / "dashboard.json").read_text(encoding="utf-8"))
+    assert "keywords" not in raw
+    assert raw["keywords_url"] == f'/data/keywords-{dashboard["meta"]["latest_week"]}.json'

@@ -41,6 +41,10 @@ BRAND_TYPE_PRIORITY = {
     "catalog_known_brand": 1,
     "candidate_non_whitelist_brand": 2,
 }
+MIN_NEW_CLUSTER_POSTS = 5
+MIN_NEW_CLUSTER_COMMUNITIES = 2
+MIN_NEW_BRAND_POSTS = 2
+MIN_NEW_KEYWORD_POSTS = 3
 
 
 def normalize_brand(value) -> str:
@@ -53,6 +57,11 @@ def normalize_brand(value) -> str:
 def canonical_brand_display(value) -> str:
     text = "" if pd.isna(value) else unicodedata.normalize("NFKC", str(value)).strip()
     return re.sub(r"[^\w)&+'®™]+$", "", text).strip() or text
+
+
+def normalize_category_name(value) -> str:
+    text = "" if pd.isna(value) else unicodedata.normalize("NFKC", str(value)).strip().casefold()
+    return re.sub(r"\s+", " ", text)
 
 
 def prepare_brand_rows(brands: pd.DataFrame) -> pd.DataFrame:
@@ -82,8 +91,128 @@ def prepare_week_posts(posts: pd.DataFrame, week: str) -> pd.DataFrame:
     return result[result["brand_norm"].ne("") & result["post_key"].astype(str).str.strip().ne("") & valid_cluster]
 
 
+def build_sparkle_data(week: str, all_weeks: list[str], scores: pd.DataFrame,
+                       terms: pd.DataFrame, brands: pd.DataFrame) -> dict:
+    """Return signals absent in both prior complete weeks and present above this week's gates."""
+    try:
+        week_index = all_weeks.index(week)
+    except ValueError:
+        week_index = -1
+    comparison_weeks = all_weeks[week_index + 1:week_index + 3] if week_index >= 0 else []
+    if len(comparison_weeks) != 2:
+        return {
+            "status": "insufficient_comparison_weeks",
+            "current_week": week,
+            "comparison_weeks": [],
+            "newly_active_clusters": [],
+            "new_signals": [],
+        }
+
+    previous_1, previous_2 = comparison_weeks
+    current_scores = scores[scores["week_start"].astype(str).eq(week)].copy()
+    previous_score_sets = []
+    for previous_week in (previous_1, previous_2):
+        previous_rows = scores[scores["week_start"].astype(str).eq(previous_week)]
+        previous_score_sets.append(set(
+            previous_rows.loc[previous_rows["current_week_posts"].fillna(0).gt(0), "cluster_id"].astype(str)
+        ))
+    eligible_clusters = current_scores[
+        current_scores["current_week_posts"].fillna(0).ge(MIN_NEW_CLUSTER_POSTS)
+        & current_scores["unique_subreddits_current_week"].fillna(0).ge(MIN_NEW_CLUSTER_COMMUNITIES)
+    ].copy()
+    new_cluster_ids = (
+        set(eligible_clusters["cluster_id"].astype(str))
+        - previous_score_sets[0]
+        - previous_score_sets[1]
+    )
+    newly_active_clusters = [
+        {
+            "cluster_id": str(row.cluster_id),
+            "cluster_name": str(row.cluster_name),
+            "current_week_posts": safe_int(row.current_week_posts),
+            "unique_subreddits": safe_int(row.unique_subreddits_current_week),
+        }
+        for row in eligible_clusters[eligible_clusters["cluster_id"].astype(str).isin(new_cluster_ids)]
+        .sort_values(["current_week_posts", "unique_subreddits_current_week", "cluster_name"], ascending=[False, False, True])
+        .itertuples(index=False)
+    ]
+
+    def pairs_for(frame: pd.DataFrame, value_column: str, target_week: str) -> set[tuple[str, str]]:
+        rows = frame[frame["week_start"].astype(str).eq(target_week)]
+        return set(zip(rows["cluster_id"].astype(str), rows[value_column].fillna("").astype(str)))
+
+    current_brands = brands[
+        brands["week_start"].astype(str).eq(week)
+        & brands["unique_posts"].fillna(0).ge(MIN_NEW_BRAND_POSTS)
+    ].copy()
+    new_brand_pairs = (
+        pairs_for(current_brands, "brand_norm", week)
+        - pairs_for(brands, "brand_norm", previous_1)
+        - pairs_for(brands, "brand_norm", previous_2)
+    )
+    brand_signals = []
+    for row in current_brands.itertuples(index=False):
+        pair = (str(row.cluster_id), str(row.brand_norm))
+        if pair not in new_brand_pairs:
+            continue
+        source_type = str(row.brand_signal_type)
+        brand_signals.append({
+            "kind": "brand",
+            "cluster_id": pair[0],
+            "cluster_name": str(row.cluster_name),
+            "signal_norm": pair[1],
+            "display": canonical_brand_display(row.brand_display),
+            "source_type": source_type,
+            "ui_tag": "verified_brand" if source_type == "confirmed_whitelist_brand" else "brand_keyword",
+            "unique_posts": safe_int(row.unique_posts),
+            "mentions": safe_int(row.mentions),
+            "avg_sentiment": safe_float(row.avg_sentiment),
+            "logo_url": str(getattr(row, "logo_url", "") or ""),
+        })
+
+    current_terms = terms[
+        terms["week_start"].astype(str).eq(week)
+        & terms["term_norm"].fillna("").astype(str).str.strip().ne("")
+        & terms["unique_posts"].fillna(0).ge(MIN_NEW_KEYWORD_POSTS)
+    ].copy()
+    new_keyword_pairs = (
+        pairs_for(current_terms, "term_norm", week)
+        - pairs_for(terms, "term_norm", previous_1)
+        - pairs_for(terms, "term_norm", previous_2)
+    )
+    keyword_signals = [
+        {
+            "kind": "keyword",
+            "cluster_id": str(row.cluster_id),
+            "cluster_name": str(row.cluster_name),
+            "signal_norm": str(row.term_norm),
+            "display": str(row.term),
+            "source_type": str(row.entity_type),
+            "ui_tag": "brand_keyword",
+            "unique_posts": safe_int(row.unique_posts),
+            "mentions": safe_int(row.mentions),
+            "avg_sentiment": safe_float(row.avg_sentiment),
+        }
+        for row in current_terms.itertuples(index=False)
+        if (str(row.cluster_id), str(row.term_norm)) in new_keyword_pairs
+    ]
+    new_signals = sorted(
+        [*brand_signals, *keyword_signals],
+        key=lambda row: (-row["unique_posts"], -row["mentions"], row["cluster_name"], row["display"]),
+    )
+    return {
+        "status": "ready",
+        "current_week": week,
+        "comparison_weeks": comparison_weeks,
+        "newly_active_clusters": newly_active_clusters,
+        "new_signals": new_signals,
+    }
+
+
 def build_week_bundle(week: str, all_weeks: list[str], scores: pd.DataFrame, terms: pd.DataFrame,
-                       brands: pd.DataFrame, posts: pd.DataFrame, discussion_posts: pd.DataFrame) -> dict:
+                       brands: pd.DataFrame, posts: pd.DataFrame, discussion_posts: pd.DataFrame,
+                       category_illustrations: dict[str, str] | None = None) -> dict:
+    category_illustrations = category_illustrations or {}
     latest = scores[scores["week_start"].astype(str).eq(week)].copy()
     sorted_scores = latest.sort_values(["trend_score", "current_week_posts"], ascending=[False, False])
 
@@ -173,12 +302,13 @@ def build_week_bundle(week: str, all_weeks: list[str], scores: pd.DataFrame, ter
             & (week_terms["unique_posts"].fillna(0).astype(float) >= 2)
         ].sort_values(
             ["unique_posts", "mentions", "term_norm"], ascending=[False, False, True]
-        ).head(8)
+        )
         cluster_brands = signals_by_cluster.get(cid, [])
         cluster_cards.append({
             "week_start": week,
             "cluster_id": cid,
             "cluster_name": str(row.cluster_name),
+            "illustration_url": category_illustrations.get(normalize_category_name(row.cluster_name), ""),
             "trend_score": safe_float(row.trend_score),
             "trend_score_100": safe_float(row.trend_score_100),
             "momentum_score": safe_float(row.momentum_score),
@@ -234,10 +364,9 @@ def build_week_bundle(week: str, all_weeks: list[str], scores: pd.DataFrame, ter
             ],
         })
 
-    top_terms = (
-        week_terms
-        .sort_values("mentions", ascending=False)
-        .head(120)
+    all_terms = week_terms.sort_values(
+        ["unique_posts", "mentions", "cluster_id", "term_norm"],
+        ascending=[False, False, True, True],
     )
     keyword_map = [
         {
@@ -250,7 +379,7 @@ def build_week_bundle(week: str, all_weeks: list[str], scores: pd.DataFrame, ter
             "mentions": safe_int(r.mentions),
             "sentiment": safe_float(r.avg_sentiment),
         }
-        for r in top_terms.itertuples(index=False)
+        for r in all_terms.itertuples(index=False)
     ]
 
     brand_signals = []
@@ -340,6 +469,7 @@ def build_week_bundle(week: str, all_weeks: list[str], scores: pd.DataFrame, ter
         "keywords": keyword_map,
         "brands": brand_signals,
         "cluster_brand_signals": cluster_signal_rows,
+        "sparkle": build_sparkle_data(week, all_weeks, scores, terms, brands),
         "posts": post_index,
         "trend_distribution": [
             {"band": str(k), "count": int(v)}
@@ -421,7 +551,16 @@ def main() -> None:
     parser.add_argument("--processed-dir", default="data/processed")
     parser.add_argument("--output-dir", default="apps/web/public/data")
     parser.add_argument("--next-output-dir", default="apps/next/public/data")
+    parser.add_argument("--category-illustrations", default="configs/taxonomy/category_illustrations.json")
     args = parser.parse_args()
+
+    illustration_path = Path(args.category_illustrations)
+    raw_illustrations = json.loads(illustration_path.read_text(encoding="utf-8")) if illustration_path.exists() else {}
+    category_illustrations = {
+        normalize_category_name(category): str(url).strip()
+        for category, url in raw_illustrations.items()
+        if str(url).strip()
+    }
 
     base = Path(args.processed_dir)
     scores = pd.read_parquet(base / "weekly_cluster_scores.parquet")
@@ -448,6 +587,7 @@ def main() -> None:
     # as "the data broke" rather than "this week is still in progress."
     MIN_WEEK_CLUSTER_COUNT = 20
     cluster_counts = scores.groupby(scores["week_start"].astype(str))["cluster_id"].nunique()
+    term_counts = terms.groupby(terms["week_start"].astype(str))["term_norm"].count()
     published_coverage = pd.to_datetime(discussion_posts["published_at"], errors="coerce", utc=True)
     coverage_start = published_coverage.min()
     coverage_end = published_coverage.max()
@@ -455,6 +595,7 @@ def main() -> None:
         (
             week for week, count in cluster_counts.items()
             if count >= MIN_WEEK_CLUSTER_COUNT
+            and term_counts.get(week, 0) > 0
             and coverage_start <= pd.Timestamp(week, tz="UTC")
             and coverage_end >= pd.Timestamp(week, tz="UTC") + pd.Timedelta(days=7)
         ),
@@ -471,6 +612,9 @@ def main() -> None:
         for dashboard_file in out_dir.glob("dashboard-*.json"):
             if dashboard_file.stem.removeprefix("dashboard-") not in all_weeks:
                 dashboard_file.unlink()
+        for keywords_file in out_dir.glob("keywords-*.json"):
+            if keywords_file.stem.removeprefix("keywords-") not in all_weeks:
+                keywords_file.unlink()
         evidence_root = out_dir / "evidence"
         if evidence_root.exists():
             for week_dir in evidence_root.iterdir():
@@ -478,11 +622,21 @@ def main() -> None:
                     shutil.rmtree(week_dir)
 
     for week in all_weeks:
-        bundle = build_week_bundle(week, all_weeks, scores, terms, brands, posts, discussion_posts)
+        bundle = build_week_bundle(
+            week, all_weeks, scores, terms, brands, posts, discussion_posts, category_illustrations
+        )
         evidence_payloads = build_week_evidence(week, brands, posts, keyword_post_index)
+        keywords = bundle.pop("keywords")
+        bundle["keywords_url"] = f"/data/keywords-{week}.json"
         payload = json.dumps(bundle, ensure_ascii=False, indent=2)
+        keywords_payload = json.dumps(
+            {"week_start": week, "keywords": keywords},
+            ensure_ascii=False,
+            separators=(",", ":"),
+        )
         for out_dir in out_dirs:
             (out_dir / f"dashboard-{week}.json").write_text(payload, encoding="utf-8")
+            (out_dir / f"keywords-{week}.json").write_text(keywords_payload, encoding="utf-8")
             evidence_dir = out_dir / "evidence" / week
             evidence_dir.mkdir(parents=True, exist_ok=True)
             for cluster_id, evidence in evidence_payloads.items():
