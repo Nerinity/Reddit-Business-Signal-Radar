@@ -552,6 +552,8 @@ def main() -> None:
     parser.add_argument("--output-dir", default="apps/web/public/data")
     parser.add_argument("--next-output-dir", default="apps/next/public/data")
     parser.add_argument("--category-illustrations", default="configs/taxonomy/category_illustrations.json")
+    parser.add_argument("--weeks-limit", type=int, default=None,
+                         help="Only build the N most recent eligible weeks (default: all).")
     args = parser.parse_args()
 
     illustration_path = Path(args.category_illustrations)
@@ -604,6 +606,8 @@ def main() -> None:
     if not all_weeks:
         print("No weeks with enough clusters in weekly_cluster_scores.parquet; nothing to write.")
         return
+    if args.weeks_limit:
+        all_weeks = all_weeks[:args.weeks_limit]
     latest_week = all_weeks[0]
 
     out_dirs = [Path(args.output_dir), Path(args.next_output_dir)]

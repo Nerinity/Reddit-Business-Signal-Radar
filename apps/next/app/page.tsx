@@ -1,8 +1,28 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import {
+  ArrowRight,
+  Building2,
+  Calendar,
+  ChevronDown,
+  Compass,
+  Download,
+  ExternalLink,
+  FileText,
+  Gauge,
+  Home as HomeIcon,
+  MessagesSquare,
+  Search,
+  Tag,
+  TrendingDown,
+  TrendingUp,
+  Users
+} from "lucide-react";
 import { BrandAvatar } from "./components/BrandAvatar";
 import { CategoryAvatar } from "./components/CategoryAvatar";
+import { HorizontalScroller } from "./components/HorizontalScroller";
+import { TikTokRadarChart, type RadarMetric, type RadarMetricKey } from "./components/TikTokRadarChart";
 import {
   LangProvider,
   useLang,
@@ -302,6 +322,20 @@ function dimensionContext(cluster: Cluster, sortBy: ScoreKey, lang: Lang, t: (ke
   return `${cluster.current_week_posts} ${t("postsUnit")} · ${cluster.unique_subreddits} ${t("communitiesUnit")}`;
 }
 
+// Builds the 5-axis radar input from the cluster's existing scores -- no new metrics,
+// no recomputation. Business tag/helper text reuse the same dimensionTag()/
+// dimensionHelper() the rest of the product already shows, so the radar's read of a
+// dimension always matches the ranking lists and dashboard.
+function radarMetricsForCluster(cluster: Cluster, lang: Lang, t: (key: TKey) => string): RadarMetric[] {
+  return scoreOptions.map((option) => ({
+    key: option.key as RadarMetricKey,
+    value: finite(cluster[option.key]),
+    label: dimensionLabel(lang, option.key),
+    businessTag: dimensionTag(cluster, option.key, lang).label,
+    helper: dimensionHelper(lang, option.key)
+  }));
+}
+
 // meta.latest_week is just the week's Monday (week_start); show the full Mon-Sun range
 // instead of a single date so "Analysis Week" actually reads as a week, not a day.
 function formatWeekRange(weekStart: string): string {
@@ -314,20 +348,6 @@ function formatWeekRange(weekStart: string): string {
   const startLabel = start.toLocaleDateString("en-US", dayOpts);
   const endLabel = end.toLocaleDateString("en-US", { ...dayOpts, year: "numeric" });
   return `${startLabel} – ${endLabel}`;
-}
-
-function starRating(value: number | undefined, className = "") {
-  const score = Math.max(0, Math.min(5, Number(value || 0)));
-  const full = Math.round(score);
-  return (
-    <span className={`stars ${className}`} title={`${fmt(score, 1)} out of 5`}>
-      {Array.from({ length: 5 }, (_, index) => (
-        <span key={index} className={index < full ? "on" : ""}>
-          {index < full ? "★" : "☆"}
-        </span>
-      ))}
-    </span>
-  );
 }
 
 function brandTag(type?: string) {
@@ -819,7 +839,7 @@ function RadarAppInner() {
             ))}
           </select>
           <button className="ghost" onClick={() => window.print()}>
-            {t("exportBtn")}
+            <Download size={14} /> {t("exportBtn")}
           </button>
         </div>
       </header>
@@ -833,7 +853,8 @@ function RadarAppInner() {
             title={t("exploreSectionTitle")}
             body={t("exploreSectionBody")}
           />
-          <div className="tabs">
+          <HorizontalScroller ariaLabel={t("exploreSectionTitle")} className="tabsScroller" showArrows={false}>
+          <div className="tabs" role="tablist">
             {[
               ["trend", t("tabTrend")],
               ["opportunity", t("tabOpportunity")],
@@ -842,6 +863,8 @@ function RadarAppInner() {
             ].map(([key, label], index) => (
               <button
                 key={key}
+                role="tab"
+                aria-selected={tab === key}
                 className={tab === key ? "active" : ""}
                 onClick={() => setTab(key as ExploreTab)}
               >
@@ -850,6 +873,7 @@ function RadarAppInner() {
               </button>
             ))}
           </div>
+          </HorizontalScroller>
 
           {tab === "trend" && (
             <TrendTab
@@ -1017,17 +1041,31 @@ function IdentitySelection({ mapping, data, current, invalidSavedIdentity, onSel
 }
 
 function Home({ data, setView }: { data: DashboardBundle; setView: (view: View) => void }) {
-  const { t } = useLang();
+  const { lang, t } = useLang();
+  const topCluster = [...data.clusters].sort((a, b) => compareClusters(a, b, "trend_score"))[0];
+  const capabilities = [
+    { Icon: Compass, text: t("capability1") },
+    { Icon: Users, text: t("capability2") },
+    { Icon: MessagesSquare, text: t("capability3") }
+  ];
   return (
     <section className="hero">
       <div className="eyebrow">{t("heroEyebrow")}</div>
       <h1>{t("heroTitle")}</h1>
       <p>{t("heroBody")}</p>
+      <div className="capabilityRow">
+        {capabilities.map(({ Icon, text }) => (
+          <div key={text} className="capabilityItem">
+            <Icon size={18} />
+            <span>{text}</span>
+          </div>
+        ))}
+      </div>
       <div className="stats">
-        <Stat label={t("statAnalysisWeek")} value={formatWeekRange(data.meta.latest_week)} compactValue />
-        <Stat label={t("statWeeklyDiscussionPosts")} value={data.meta.weekly_post_count.toLocaleString()} />
-        <Stat label={t("statWeeklyKeywordBrandSignals")} value={`${data.meta.weekly_keyword_signal_count.toLocaleString()} ${t("keywordsUnit")} · ${data.meta.weekly_brand_signal_count.toLocaleString()} ${t("brandsUnit")}`} compactValue />
-        <Stat label={t("statCoveredClusters")} value={data.meta.covered_cluster_count.toLocaleString()} />
+        <Stat icon={Calendar} label={t("statAnalysisWeek")} value={formatWeekRange(data.meta.latest_week)} compactValue />
+        <Stat icon={MessagesSquare} label={t("statWeeklyDiscussionPosts")} value={data.meta.weekly_post_count.toLocaleString()} />
+        <Stat icon={Tag} label={t("statWeeklyKeywordBrandSignals")} value={`${data.meta.weekly_keyword_signal_count.toLocaleString()} ${t("keywordsUnit")} · ${data.meta.weekly_brand_signal_count.toLocaleString()} ${t("brandsUnit")}`} compactValue />
+        <Stat icon={Gauge} label={t("statCoveredClusters")} value={data.meta.covered_cluster_count.toLocaleString()} />
       </div>
       <div className="routeCards">
         <button onClick={() => setView("explore")}>
@@ -1043,15 +1081,36 @@ function Home({ data, setView }: { data: DashboardBundle; setView: (view: View) 
           <em className="routeCardTag">{t("dashboardCardTag")}</em>
         </button>
       </div>
+      {topCluster && (
+        <article className="panel topClusterPanel">
+          <div className="panelHeader">
+            <span>{t("topClusterKicker")}</span>
+            <h3>{topCluster.cluster_name}</h3>
+          </div>
+          <div className="radarDetailRow">
+            <TikTokRadarChart
+              metrics={radarMetricsForCluster(topCluster, lang, t)}
+              centerValue={fmt(topCluster.trend_score_100 ?? topCluster.trend_score * 20, 0)}
+              centerLabel={dimensionLabel(lang, "trend_score")}
+            />
+            <div className="radarSideStats">
+              <Stat label={t("statWeeklyDiscussionPosts")} value={topCluster.current_week_posts.toLocaleString()} />
+              <Stat label={t("communitiesUnit")} value={topCluster.unique_subreddits.toLocaleString()} />
+              <Stat label={t("positiveUnit")} value={`${Math.round(finite(topCluster.positive_share) * 100)}%`} />
+              <Stat label={t("statTag")} value={dimensionTag(topCluster, "trend_score", lang).label} />
+            </div>
+          </div>
+        </article>
+      )}
     </section>
   );
 }
 
-function Stat({ label, value, compactValue = false }: { label: string; value: string; compactValue?: boolean }) {
+function Stat({ label, value, compactValue = false, icon: Icon }: { label: string; value: string; compactValue?: boolean; icon?: typeof Gauge }) {
   return (
     <div>
       <strong className={compactValue ? "compactValue" : ""}>{value}</strong>
-      <span>{label}</span>
+      <span>{Icon && <Icon size={12} />} {label}</span>
     </div>
   );
 }
@@ -1082,11 +1141,8 @@ function TrendTab({
   openEvidence: (target: EvidenceTarget) => void;
 }) {
   const { lang, t } = useLang();
-  const [brandLimit, setBrandLimit] = useState(20);
-  useEffect(() => setBrandLimit(20), [selectedCluster.cluster_id]);
-  const clusterBrands = [...selectedCluster.brands].sort(
-    (a, b) => Number(b.unique_posts || 0) - Number(a.unique_posts || 0) || Number(b.mentions || 0) - Number(a.mentions || 0)
-  );
+  const rankIndex = clusters.findIndex((cluster) => cluster.cluster_id === selectedCluster.cluster_id);
+  const radarMetrics = radarMetricsForCluster(selectedCluster, lang, t);
   return (
     <div className="trendGrid">
       <article className="analysisViewPanel wide">
@@ -1094,17 +1150,19 @@ function TrendTab({
           <span>{t("analysisView")}</span>
           <h3>{dimensionLabel(lang, sortBy)}</h3>
         </div>
-        <div className="dimensionFilters">
-          {scoreOptions.map((option) => (
-            <button key={option.key} aria-pressed={sortBy === option.key} className={sortBy === option.key ? "active" : ""} onClick={() => setSortBy(option.key)}>
-              <strong>{dimensionLabel(lang, option.key)}</strong>
-            </button>
-          ))}
-        </div>
+        <HorizontalScroller ariaLabel={t("analysisView")} className="dimensionFiltersScroller" showArrows={false}>
+          <div className="dimensionFilters">
+            {scoreOptions.map((option) => (
+              <button key={option.key} aria-pressed={sortBy === option.key} className={sortBy === option.key ? "active" : ""} onClick={() => setSortBy(option.key)}>
+                <strong>{dimensionLabel(lang, option.key)}</strong>
+              </button>
+            ))}
+          </div>
+        </HorizontalScroller>
         <p className="analysisViewHelper">{dimensionHelper(lang, sortBy)}</p>
         <small className="analysisViewHint">{t("analysisViewHint")}</small>
       </article>
-      <article className="panel">
+      <article className="panel scrollPanel">
         <div className="panelHeader">
           <span>{t("rankKicker")}</span>
           <h3>{t("rankTitle")}</h3>
@@ -1113,8 +1171,12 @@ function TrendTab({
           {clusters.map((cluster, index) => (
             <button
               key={cluster.cluster_id}
+              data-active={selectedCluster.cluster_id === cluster.cluster_id || undefined}
               className={selectedCluster.cluster_id === cluster.cluster_id ? "active" : ""}
-              onClick={() => setSelectedClusterId(cluster.cluster_id)}
+              onClick={(event) => {
+                setSelectedClusterId(cluster.cluster_id);
+                (event.currentTarget as HTMLElement).scrollIntoView({ block: "nearest", behavior: "smooth" });
+              }}
             >
               <b>#{index + 1}</b>
               <CategoryAvatar name={cluster.cluster_name} illustrationUrl={cluster.illustration_url} />
@@ -1129,96 +1191,107 @@ function TrendTab({
           ))}
         </div>
       </article>
-      <article className="panel">
+      <article className="panel stickyPanel">
         <div className="panelHeader">
           <span>{t("detailKicker")}</span>
           <h3>{selectedCluster.cluster_name}</h3>
         </div>
-        <div className="starStack">
-          <div><span>{dimensionLabel(lang, "trend_score")}</span>{starRating(selectedCluster.trend_score)}</div>
-          {(["momentum_score", "sentiment_score", "cross_community_score", "engagement_score"] as ScoreKey[]).map((key) => (
-            <div key={key}><span>{dimensionLabel(lang, key)}</span><strong>{dimensionTag(selectedCluster, key, lang).label}</strong></div>
-          ))}
+        <div className="radarDetailRow">
+          <TikTokRadarChart
+            metrics={radarMetrics}
+            centerValue={fmt(selectedCluster.trend_score_100 ?? selectedCluster.trend_score * 20, 0)}
+            centerLabel={dimensionLabel(lang, "trend_score")}
+          />
+          <div className="radarSideStats">
+            {rankIndex >= 0 && <Stat label={t("rankKicker")} value={`#${rankIndex + 1}`} />}
+            <Stat label={t("statWeeklyDiscussionPosts")} value={selectedCluster.current_week_posts.toLocaleString()} />
+            <Stat label={t("communitiesUnit")} value={selectedCluster.unique_subreddits.toLocaleString()} />
+            <Stat label={t("positiveUnit")} value={`${Math.round(finite(selectedCluster.positive_share) * 100)}%`} />
+          </div>
         </div>
         <h4>{t("activeSources")}</h4>
-        <div className="sourceGrid">
-          {(selectedCluster.communities || []).map((source) => (
-            <a key={source.subreddit} href={`https://www.reddit.com/r/${source.subreddit}`} target="_blank" rel="noreferrer">
-              <b>r/{source.subreddit}</b>
-              <small>{source.unique_posts} {t("postsUnit")} · {Math.round(source.discussion_share * 100)}% {t("categoryDiscussionShare")}</small>
-            </a>
-          ))}
-          {!selectedCluster.communities?.length && <p className="emptyState">{t("noCommunityData")}</p>}
-        </div>
-        <h4>{t("topicLandscape")}</h4>
-        <SignalWordCloud cluster={selectedCluster} openEvidence={openEvidence} />
-        <h4>{t("relatedBrandsKeywords")}</h4>
-        <div className="productCards">
-          {[...clusterBrands.slice(0, brandLimit).map((item) => ({ type: "brand" as const, id: item.brand_norm, name: item.brand_display, signalType: item.brand_signal_type, tag: brandTypeLabel(item.brand_signal_type, lang), uniquePosts: item.unique_posts || 0, mentions: item.mentions || 0, url: item.google_search_url || googleBrandUrl(item.brand_display), logoUrl: item.logo_url || "" })), ...selectedCluster.terms.slice(0, 30).map((item) => ({ type: "keyword" as const, id: item.term_norm, name: item.term, signalType: "", tag: item.entity_type || "keyword", uniquePosts: item.unique_posts || 0, mentions: item.mentions || 0, url: "", logoUrl: "" }))].map((item) => (
-            <div key={`${item.type}-${item.id}`}>
-              {item.type === "brand" ? <BrandAvatar name={item.name} logoUrl={item.logoUrl} size="md" /> : <i className="keywordAvatar">#</i>}
-              <span className="productCardText">
-                <b>{item.name}</b>
-                <small>
-                  <span className={`brandTypeBadge ${brandTypeClass(item.signalType)}`}>{item.tag}</span> · {item.type === "brand" ? `${item.uniquePosts} ${t("postsUnit")} · ` : ""}{item.mentions} {t("mentionsUnit")}
-                </small>
-              </span>
-              <span className="productCardActions">
-                {item.type === "brand" && (
-                  <a href={item.url} target="_blank" rel="noreferrer">
-                    {t("learnMoreBrand")}
-                  </a>
-                )}
-                <button onClick={() => item.type === "brand"
-                  ? openEvidence({ kind: "brand", clusterId: selectedCluster.cluster_id, brandNorm: item.id, display: item.name })
-                  : openEvidence({ kind: "keyword", clusterId: selectedCluster.cluster_id, termNorm: item.id, display: item.name })}>{t("evidenceBtn")}</button>
-              </span>
-            </div>
-          ))}
-          {clusterBrands.length > brandLimit && <button className="loadMore" onClick={() => setBrandLimit((value) => value + 20)}>{t("loadMore")}</button>}
-        </div>
+        <HorizontalScroller ariaLabel={t("activeCommunitiesRegion")} className="communityRailScroller">
+          <div className="communityRail">
+            {(selectedCluster.communities || []).map((source) => (
+              <a key={source.subreddit} className="communityCard" href={`https://www.reddit.com/r/${source.subreddit}`} target="_blank" rel="noreferrer">
+                <b>r/{source.subreddit}</b>
+                <small>{source.unique_posts} {t("postsUnit")} · {Math.round(source.discussion_share * 100)}% {t("categoryDiscussionShare")}</small>
+              </a>
+            ))}
+            {!selectedCluster.communities?.length && <p className="emptyState">{t("noCommunityData")}</p>}
+          </div>
+        </HorizontalScroller>
+        <RelatedSignalsPanel cluster={selectedCluster} openEvidence={openEvidence} />
       </article>
     </div>
   );
 }
 
-function SignalWordCloud({ cluster, openEvidence }: { cluster: Cluster; openEvidence: (target: EvidenceTarget) => void }) {
+function RelatedSignalsPanel({ cluster, openEvidence }: { cluster: Cluster; openEvidence: (target: EvidenceTarget) => void }) {
   const { lang, t } = useLang();
-  const words = useMemo(() => {
-    const brands = [...cluster.brands]
-      .filter((item) => Number(item.unique_posts || 0) >= 2)
-      .sort((a, b) => Number(b.unique_posts || 0) - Number(a.unique_posts || 0) || Number(b.mentions || 0) - Number(a.mentions || 0))
-      .slice(0, 20)
-      .map((item) => ({ kind: "brand" as const, id: item.brand_norm, display: item.brand_display, uniquePosts: Number(item.unique_posts || 0), mentions: Number(item.mentions || 0), sentiment: Number(item.sentiment || 0), type: brandTypeLabel(item.brand_signal_type, lang) }));
-    const keywords = [...cluster.terms]
-      .filter((item) => Number(item.unique_posts || 0) >= 2)
-      .sort((a, b) => Number(b.unique_posts || 0) - Number(a.unique_posts || 0) || Number(b.mentions || 0) - Number(a.mentions || 0))
-      .slice(0, 30)
-      .map((item) => ({ kind: "keyword" as const, id: item.term_norm, display: item.term, uniquePosts: Number(item.unique_posts || 0), mentions: Number(item.mentions || 0), sentiment: Number(item.sentiment || 0), type: item.entity_type || "keyword" }));
-    return [...brands, ...keywords].sort((a, b) => b.uniquePosts - a.uniquePosts || b.mentions - a.mentions || a.id.localeCompare(b.id));
-  }, [cluster.brands, cluster.terms, lang]);
-  const minFrequency = Math.min(...words.map((word) => word.uniquePosts), 1);
-  const maxFrequency = Math.max(...words.map((word) => word.uniquePosts), 1);
-  const sizeFor = (frequency: number) => {
-    const range = Math.max(Math.sqrt(maxFrequency) - Math.sqrt(minFrequency), 1);
-    return 16 + ((Math.sqrt(frequency) - Math.sqrt(minFrequency)) / range) * 22;
-  };
-  const colorFor = (sentiment: number) => sentiment >= 0.15 ? "#167458" : sentiment <= -0.08 ? "#b5483f" : "#48627a";
+  const [activeTab, setActiveTab] = useState<"brand" | "keyword">("brand");
+  const [visibleCount, setVisibleCount] = useState(20);
+  useEffect(() => setVisibleCount(20), [activeTab, cluster.cluster_id]);
+  const clusterBrands = useMemo(() => [...cluster.brands].sort(
+    (a, b) => Number(b.unique_posts || 0) - Number(a.unique_posts || 0) || Number(b.mentions || 0) - Number(a.mentions || 0)
+  ), [cluster.brands]);
+  const clusterKeywords = useMemo(() => [...cluster.terms].sort(
+    (a, b) => Number(b.unique_posts || 0) - Number(a.unique_posts || 0) || Number(b.mentions || 0) - Number(a.mentions || 0)
+  ), [cluster.terms]);
+  const rows = activeTab === "brand" ? clusterBrands : clusterKeywords;
   return (
-    <div className="signalWordCloud">
-      {words.map((word) => (
-        <button
-          key={`${word.kind}:${word.id}`}
-          style={{ fontSize: `${sizeFor(word.uniquePosts)}px`, color: colorFor(word.sentiment), fontWeight: word.kind === "brand" ? 800 : 550 }}
-          title={`${word.display}\n${word.type}\n${word.uniquePosts} ${t("discussionPosts")}\n${word.mentions} ${t("mentionsUnit")}\n${sentimentTag(lang, sentimentClass(word.sentiment) as SentimentKey)}`}
-          onClick={() => word.kind === "brand"
-            ? openEvidence({ kind: "brand", clusterId: cluster.cluster_id, brandNorm: word.id, display: word.display })
-            : openEvidence({ kind: "keyword", clusterId: cluster.cluster_id, termNorm: word.id, display: word.display })}
-        >
-          {word.display}
+    <div className="relatedSignals">
+      <div className="relatedSignalsTabs" role="tablist" aria-label={t("relatedBrandsKeywords")}>
+        <button role="tab" aria-selected={activeTab === "brand"} className={activeTab === "brand" ? "active" : ""} onClick={() => setActiveTab("brand")}>
+          {t("brandsTabLabel")} <em>{clusterBrands.length}</em>
         </button>
-      ))}
-      {!words.length && <p className="emptyState">{t("noSignalData")}</p>}
+        <button role="tab" aria-selected={activeTab === "keyword"} className={activeTab === "keyword" ? "active" : ""} onClick={() => setActiveTab("keyword")}>
+          {t("keywordsTabLabel")} <em>{clusterKeywords.length}</em>
+        </button>
+      </div>
+      <div className="signalRows">
+        {!rows.length && <p className="emptyState">{t("noSignalData")}</p>}
+        {rows.slice(0, visibleCount).map((item) => {
+          const isBrand = activeTab === "brand";
+          const brandItem = item as ClusterBrand;
+          const keywordItem = item as ClusterTerm;
+          const id = isBrand ? brandItem.brand_norm : keywordItem.term_norm;
+          const name = isBrand ? brandItem.brand_display : keywordItem.term;
+          const tagLabel = isBrand ? brandTypeLabel(brandItem.brand_signal_type, lang) : (keywordItem.entity_type || "keyword");
+          const tagClass = isBrand ? brandTypeClass(brandItem.brand_signal_type) : "known";
+          return (
+            <button
+              key={id}
+              className="signalRow"
+              onClick={() => openEvidence(isBrand
+                ? { kind: "brand", clusterId: cluster.cluster_id, brandNorm: id, display: name }
+                : { kind: "keyword", clusterId: cluster.cluster_id, termNorm: id, display: name })}
+            >
+              {isBrand ? <BrandAvatar name={name} logoUrl={brandItem.logo_url || ""} size="md" /> : <i className="keywordAvatar">#</i>}
+              <span className="signalRowText">
+                <b>{name}</b>
+                <small>
+                  <span className={`brandTypeBadge ${tagClass}`}>{tagLabel}</span> · {isBrand ? `${brandItem.unique_posts || 0} ${t("postsUnit")} · ` : ""}{item.mentions || 0} {t("mentionsUnit")}
+                </small>
+              </span>
+              {isBrand && brandItem.google_search_url && (
+                <a
+                  className="signalRowExternal"
+                  href={brandItem.google_search_url || googleBrandUrl(name)}
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label={t("learnMoreBrand")}
+                  onClick={(event) => event.stopPropagation()}
+                >
+                  <ExternalLink size={14} />
+                </a>
+              )}
+              <ArrowRight size={16} className="signalRowArrow" aria-label={t("viewEvidenceLabel")} />
+            </button>
+          );
+        })}
+        {rows.length > visibleCount && <button className="loadMore" onClick={() => setVisibleCount((value) => value + 20)}>{t("loadMore")}</button>}
+      </div>
     </div>
   );
 }
@@ -1343,7 +1416,7 @@ function OpportunityList({ title, rows, openClusterDetail }: { title: string; ro
                   : `${cluster.growth_rate >= 0 ? "+" : ""}${Math.round(cluster.growth_rate * 100)}% WoW`} · {cluster.unique_subreddits} {t("subredditsUnit")}
               </small>
             </span>
-            <em>›</em>
+            <ArrowRight size={16} className="rowArrow" />
           </button>
         ))}
       </div>
@@ -1489,7 +1562,7 @@ function MappingTab({
             </div>
             {selected.kind === "brand" && (
               <a className="primaryLink" href={selected.url} target="_blank" rel="noreferrer">
-                {t("learnMoreBrand")}
+                {t("learnMoreBrand")} <ExternalLink size={12} />
               </a>
             )}
           </div>
@@ -1545,7 +1618,7 @@ function SparkleTab({
                     {cluster.current_week_posts} {t("postsUnit")} · {cluster.unique_subreddits} {t("subredditsUnit")}
                   </small>
                 </span>
-                <em>›</em>
+                <ArrowRight size={16} className="rowArrow" />
               </button>
             ))}
         </div></div>
@@ -1576,7 +1649,7 @@ function SparkleTab({
                   <small>{signal.cluster_name} · {signal.unique_posts} {t("postsUnit")} · {signal.mentions} {t("mentionsUnit")}</small>
                   <span className="brandTypeBadge">{signal.ui_tag === "verified_brand" ? t("verifiedBrandTag") : t("brandKeywordTag")}</span>
                 </span>
-                <em>›</em>
+                <ArrowRight size={16} className="rowArrow" />
               </button>
             ))}
             {sparkle.new_signals.length > visibleSignals && <button className="loadMore" onClick={() => setVisibleSignals((value) => value + 40)}>{t("loadMore")}</button>}
@@ -1614,7 +1687,7 @@ function EvidenceTab({ cluster, target, posts, loading, error, setTab }: { clust
                 {post.matched_display || target?.display || t("fallbackReddit")} · {post.sentiment_label || "neutral"}
               </span>
               <a href={post.url || "#"} target="_blank" rel="noreferrer">
-                {t("openReddit")}
+                {t("openReddit")} <ExternalLink size={12} />
               </a>
             </div>
           </article>
@@ -1642,7 +1715,12 @@ function Dashboard({
     ? undefined
     : data.clusters.find((cluster) => cluster.cluster_id === dashboardCategoryId) || selectedCluster;
   const rawRows = dashboardCluster ? clusterPosts(data.posts, dashboardCluster.cluster_id) : data.posts;
-  const dashboardTerms = dashboardCluster ? dashboardCluster.terms : aggregateTerms(data.keywords);
+  // Word cloud / sentiment chart have no browsing value past a few hundred terms -- the
+  // long tail is orders of magnitude smaller than the head. Cap at 400 by mentions rather
+  // than rendering every unique term (300k+ across the full keyword set) as a DOM node.
+  const dashboardTerms = [...(dashboardCluster ? dashboardCluster.terms : aggregateTerms(data.keywords))]
+    .sort((a, b) => Number(b.mentions || 0) - Number(a.mentions || 0))
+    .slice(0, 400);
   const maxTrend = Math.max(...data.clusters.map((cluster) => cluster.trend_score), 1);
   return (
     <section>
@@ -1719,19 +1797,6 @@ function Dashboard({
             </select>
           </label>
         </article>
-        <article className="panel wide">
-          <div className="panelHeader">
-            <span>{t("topicKicker")}</span>
-            <h3>{t("wordCloudTitle")}</h3>
-          </div>
-          <div className="wordCloud dashboard">
-            {dashboardTerms.map((term) => (
-              <button key={term.term} className={sentimentClass(term.sentiment)}>
-                {term.term}
-              </button>
-            ))}
-          </div>
-        </article>
         <article className="panel half">
           <div className="panelHeader">
             <span>{t("weeklyTrendKicker")}</span>
@@ -1753,6 +1818,10 @@ function Dashboard({
 
 function RawTable({ rows }: { rows: Post[] }) {
   const { t } = useLang();
+  // This is a raw-evidence sample viewed through a 300px scroll window, not a full data
+  // export -- capping avoids rendering hundreds of thousands of DOM rows (the full "all
+  // categories" post-brand index) for a view only ever browsed a handful of rows at a time.
+  const visibleRows = rows.slice(0, 500);
   return (
     <div className="rawTable">
       <div className="rawHead">
@@ -1763,7 +1832,7 @@ function RawTable({ rows }: { rows: Post[] }) {
         <span>{t("rawHeadUrl")}</span>
       </div>
       <div className="rawBody">
-        {rows.map((post, index) => (
+        {visibleRows.map((post, index) => (
           <div key={`${post.url || post.title}-${index}`} className="rawRow">
             <span>{post.brand_display || t("fallbackReddit")}</span>
             <span>
@@ -1774,7 +1843,7 @@ function RawTable({ rows }: { rows: Post[] }) {
             <span className={post.sentiment_label || "neutral"}>{post.sentiment_label || "neutral"}</span>
             <span>
               <a href={post.url || "#"} target="_blank" rel="noreferrer">
-                {t("open")}
+                {t("open")} <ExternalLink size={12} />
               </a>
             </span>
           </div>
@@ -1824,7 +1893,7 @@ function DailyChart({ posts }: { posts: Post[] }) {
 
 function KeywordSentiment({ terms, zoom }: { terms: ClusterTerm[]; zoom: number }) {
   const { lang } = useLang();
-  const maxMentions = Math.max(...terms.map((term) => term.mentions || 0), 1);
+  const maxMentions = terms.reduce((max, term) => Math.max(max, term.mentions || 0), 1);
   return (
     <div className="keywordViewport">
       <div className="keywordRows" style={{ width: `${zoom * 100}%` }}>

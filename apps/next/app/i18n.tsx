@@ -93,6 +93,11 @@ const dict = {
   brandsUnit: { en: "brands", zh: "个品牌" },
   statAvgTrendScore: { en: "Avg Trend Score", zh: "平均趋势分" },
 
+  capability1: { en: "Spot rising and high-momentum categories", zh: "发现热度和增长类目" },
+  capability2: { en: "Review brands, keywords, and sentiment", zh: "查看品牌、关键词与情绪" },
+  capability3: { en: "Drill into the original Reddit discussion", zh: "下钻到原始 Reddit 讨论" },
+  topClusterKicker: { en: "This Week's Top Signal", zh: "本周头号信号" },
+
   exploreCardKicker: { en: "Interactive Product", zh: "互动产品" },
   exploreCardTitle: { en: "Explore Trends", zh: "探索趋势" },
   exploreCardBody: {
@@ -145,6 +150,10 @@ const dict = {
   activeSources: { en: "Active sources", zh: "活跃来源" },
   topicLandscape: { en: "Topic landscape", zh: "话题概览" },
   relatedBrandsKeywords: { en: "Related brands & keywords", zh: "相关品牌与关键词" },
+  brandsTabLabel: { en: "Brands", zh: "品牌" },
+  keywordsTabLabel: { en: "Keywords", zh: "关键词" },
+  viewEvidenceLabel: { en: "View evidence", zh: "查看依据" },
+  activeCommunitiesRegion: { en: "Active communities, scroll for more", zh: "活跃社区，可滚动查看更多" },
   learnMoreBrand: { en: "Learn more about the brand", zh: "了解更多品牌信息" },
   evidenceBtn: { en: "Evidence", zh: "查看依据" },
 
