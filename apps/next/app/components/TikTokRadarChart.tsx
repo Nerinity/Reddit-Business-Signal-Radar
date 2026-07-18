@@ -1,6 +1,5 @@
 "use client";
 
-import { Gauge, MessagesSquare, Smile, TrendingUp, Users } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
 import { useLang } from "../i18n";
 
@@ -12,14 +11,6 @@ export type RadarMetric = {
   label: string;
   businessTag: string;
   helper: string;
-};
-
-const ICONS: Record<RadarMetricKey, typeof Gauge> = {
-  trend_score: Gauge,
-  momentum_score: TrendingUp,
-  cross_community_score: Users,
-  sentiment_score: Smile,
-  engagement_score: MessagesSquare
 };
 
 const SIZE = 100; // svg viewBox units
@@ -125,9 +116,8 @@ export function TikTokRadarChart({
         </desc>
         <defs>
           <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="var(--tiktok-pink)" stopOpacity="0.55" />
-            <stop offset="55%" stopColor="var(--tiktok-purple)" stopOpacity="0.45" />
-            <stop offset="100%" stopColor="var(--tiktok-cyan)" stopOpacity="0.5" />
+            <stop offset="0%" stopColor="var(--radar-fill-start)" />
+            <stop offset="100%" stopColor="var(--radar-fill-end)" />
           </linearGradient>
         </defs>
 
@@ -176,8 +166,10 @@ export function TikTokRadarChart({
 
       <div className="radarLabels">
         {metrics.map((metric, index) => {
-          const labelPoint = pointAt(index, 1.32);
-          const Icon = ICONS[metric.key];
+          // Labels sit close to the axis tips (text-only, no icon badge) -- the business
+          // conclusion (metric.businessTag) only shows in the hover/focus tooltip below,
+          // not as permanent on-chart decoration.
+          const labelPoint = pointAt(index, 1.14);
           return (
             <button
               key={metric.key}
@@ -190,9 +182,7 @@ export function TikTokRadarChart({
               onBlur={() => setActiveIndex((current) => (current === index ? null : current))}
               onClick={() => setActiveIndex((current) => (current === index ? null : index))}
             >
-              <Icon size={14} />
               <em>{metric.label}</em>
-              <b>{metric.businessTag}</b>
             </button>
           );
         })}

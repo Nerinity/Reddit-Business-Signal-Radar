@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import gc
 import logging
 import sys
 from pathlib import Path
@@ -40,17 +41,9 @@ def spacy_process(texts: list[str]):
         return None
 
 
-def main() -> None:
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--input", default="data/processed/clean_reddit_posts.parquet")
-    parser.add_argument("--output", default="data/processed/reddit_tokens.parquet")
-    parser.add_argument("--sample", type=int, default=0)
-    args = parser.parse_args()
-
-    df = pd.read_parquet(args.input)
-    if args.sample:
-        df = df.head(args.sample).copy()
-    texts = df["text_for_tokenization"].fillna("").astype(str).tolist()
+def process_chunk(chunk_df: pd.DataFrame) -> pd.DataFrame:
+    texts = chunk_df["text_for_tokenization"].fillna("").astype(str).tolist()
+    mention_ids = chunk_df["mention_id"].tolist()
     docs = spacy_process(texts)
     rows = []
     for i, text in enumerate(texts):
@@ -68,7 +61,7 @@ def main() -> None:
         no_stop = [t for t in toks if t not in STOPWORDS or t in PROTECTED]
         lem_no_stop = [t for t in lemmas if t not in STOPWORDS or t in PROTECTED]
         rows.append({
-            "mention_id": df.iloc[i]["mention_id"],
+            "mention_id": mention_ids[i],
             "tokens": json_list(toks),
             "lemmas": json_list(lemmas),
             "tokens_no_stopwords": json_list(no_stop),
@@ -77,10 +70,51 @@ def main() -> None:
             "bigrams": json_list(ngrams(no_stop, 2)[:120]),
             "trigrams": json_list(ngrams(no_stop, 3)[:120]),
         })
-    out = pd.DataFrame(rows)
-    ensure_parent(Path(args.output))
-    out.to_parquet(args.output, index=False)
-    log.info("Wrote tokens for %d posts", len(out))
+    return pd.DataFrame(rows)
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--input", default="data/processed/clean_reddit_posts.parquet")
+    parser.add_argument("--output", default="data/processed/reddit_tokens.parquet")
+    parser.add_argument("--sample", type=int, default=0)
+    # spaCy docs + row dicts for the *entire* input held in memory at once was OOM-killing
+    # this step on large runs (500k+ posts). Process and flush to disk in chunks instead so
+    # peak memory stays bounded to one chunk's worth of spaCy Docs, not the whole dataset.
+    parser.add_argument("--chunk-size", type=int, default=60_000)
+    args = parser.parse_args()
+
+    df = pd.read_parquet(args.input)
+    if args.sample:
+        df = df.head(args.sample).copy()
+    total = len(df)
+
+    out_path = Path(args.output)
+    ensure_parent(out_path)
+    parts_dir = out_path.parent / f"{out_path.stem}_parts_tmp"
+    parts_dir.mkdir(parents=True, exist_ok=True)
+    part_paths: list[Path] = []
+    try:
+        for start in range(0, total, args.chunk_size):
+            end = min(start + args.chunk_size, total)
+            chunk_out = process_chunk(df.iloc[start:end])
+            part_path = parts_dir / f"part_{start:08d}.parquet"
+            chunk_out.to_parquet(part_path, index=False)
+            part_paths.append(part_path)
+            log.info("Processed %d/%d posts (chunk %s-%s)", end, total, start, end)
+            del chunk_out
+            gc.collect()
+
+        combined = pd.concat([pd.read_parquet(p) for p in part_paths], ignore_index=True) if part_paths else pd.DataFrame()
+        combined.to_parquet(out_path, index=False)
+        log.info("Wrote tokens for %d posts", len(combined))
+    finally:
+        for p in part_paths:
+            p.unlink(missing_ok=True)
+        try:
+            parts_dir.rmdir()
+        except OSError:
+            pass
 
 
 if __name__ == "__main__":

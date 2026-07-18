@@ -1,23 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
-export type BrandAvatarSize = "sm" | "md" | "lg";
+export type BrandAvatarSize = "sm" | "md" | "lg" | "xl";
 
 const SIZE_PX: Record<BrandAvatarSize, number> = {
   sm: 36,
   md: 44,
-  lg: 58
+  lg: 58,
+  xl: 104
 };
-
-function initials(name: string) {
-  return name
-    .split(/\s|&/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase())
-    .join("");
-}
 
 function isValidLogoUrl(url?: string): url is string {
   if (!url || !url.trim()) return false;
@@ -41,17 +33,21 @@ function isValidLogoUrl(url?: string): url is string {
 export function BrandAvatar({
   name,
   logoUrl,
+  signalType,
   size = "md",
   className = ""
 }: {
   name: string;
   logoUrl?: string;
+  signalType?: string;
   size?: BrandAvatarSize;
   className?: string;
 }) {
   const [imageFailed, setImageFailed] = useState(false);
-  const canShowLogo = isValidLogoUrl(logoUrl) && !imageFailed;
+  const canShowLogo = Boolean(signalType) && isValidLogoUrl(logoUrl) && !imageFailed;
   const dimension = SIZE_PX[size];
+
+  useEffect(() => setImageFailed(false), [logoUrl, signalType]);
 
   return (
     <span
@@ -61,9 +57,12 @@ export function BrandAvatar({
       {canShowLogo ? (
         <img src={logoUrl} alt={`${name} logo`} loading="lazy" onError={() => setImageFailed(true)} />
       ) : (
-        <span className="brandAvatarInitials" aria-label={name}>
-          {initials(name) || "•"}
-        </span>
+        <img
+          className="brandAvatarFallbackImage"
+          src="/assets/reddit-signal-avatar.png"
+          alt={`${name} Reddit fallback`}
+          loading="lazy"
+        />
       )}
     </span>
   );

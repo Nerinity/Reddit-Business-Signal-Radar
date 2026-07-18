@@ -99,3 +99,20 @@ def test_keywords_are_split_from_dashboard_bundle(dashboard):
     raw = json.loads((DATA_DIR / "dashboard.json").read_text(encoding="utf-8"))
     assert "keywords" not in raw
     assert raw["keywords_url"] == f'/data/keywords-{dashboard["meta"]["latest_week"]}.json'
+
+
+def test_logo_map_only_targets_recognized_brands(dashboard):
+    logo_bundle = json.loads((DATA_DIR / "brand-logos.json").read_text(encoding="utf-8"))
+    logos = logo_bundle["logos"]
+    assert logo_bundle["logo_count"] == len(logos)
+    assert len(logos) <= logo_bundle["recognized_brand_count"]
+    assert all(url.startswith(("http://", "https://")) for url in logos.values())
+
+    current_brand_norms = {brand["brand_norm"] for brand in dashboard["brands"]}
+    assert logos.keys() & current_brand_norms
+
+
+def test_reddit_fallback_avatar_asset_exists():
+    fallback = REPO_ROOT / "apps" / "next" / "public" / "assets" / "reddit-signal-avatar.png"
+    assert fallback.exists()
+    assert fallback.stat().st_size > 0

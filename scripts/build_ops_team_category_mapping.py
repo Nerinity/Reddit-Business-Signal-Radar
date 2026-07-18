@@ -16,6 +16,10 @@ ROOT = Path(__file__).resolve().parents[1]
 TEAM_1_COLUMN = "1级运营团队｜ops team 1"
 TEAM_2_COLUMN = "2级运营团队｜ops team 2"
 CATEGORY_COLUMN = "2级类目名称｜lvl2 category name"
+CSV_TEAM_2_COLUMN = "ops_team_2"
+CSV_TEAM_1_COLUMN = "ops_team_1"
+CSV_CATEGORY_COLUMN = "second_category_name"
+LOCAL_MERCHANTS_TEAM = "Local Merchants"
 log = logging.getLogger("ops_team_category_mapping")
 
 
@@ -83,13 +87,48 @@ def build_mapping(frame: pd.DataFrame, *, generated_at: str | None = None) -> tu
         "duplicate_row_count": duplicate_rows,
     }
     payload = {
-        "version": 1,
+        "version": 4,
         "generated_at": generated_at or datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z"),
         "ops_teams": ops_teams,
         "pairs": pairs,
         "quality": quality,
     }
     return payload, quality
+
+
+def read_mapping_source(path: Path) -> pd.DataFrame:
+    if path.suffix.casefold() != ".csv":
+        return pd.read_excel(path)
+
+    # CSV exports have a blank first row. Two supported contracts exist:
+    # 1) ops_team_1 + category: each top-level team is a complete identity, so use
+    #    the same value for the UI's single automatically-selected level-2 option.
+    # 2) ops_team_2 + category: the rows are Local Merchants subteam mappings.
+    frame = pd.read_csv(path, skiprows=1)
+    if CSV_TEAM_1_COLUMN in frame.columns:
+        return pd.DataFrame({
+            TEAM_1_COLUMN: frame[CSV_TEAM_1_COLUMN],
+            TEAM_2_COLUMN: frame[CSV_TEAM_1_COLUMN],
+            CATEGORY_COLUMN: frame[CSV_CATEGORY_COLUMN],
+        })
+    if CSV_TEAM_2_COLUMN not in frame.columns:
+        raise ValueError(
+            f"Mapping CSV must contain either {CSV_TEAM_1_COLUMN!r} or {CSV_TEAM_2_COLUMN!r}"
+        )
+    return pd.DataFrame({
+        TEAM_1_COLUMN: LOCAL_MERCHANTS_TEAM,
+        TEAM_2_COLUMN: frame[CSV_TEAM_2_COLUMN],
+        CATEGORY_COLUMN: frame[CSV_CATEGORY_COLUMN],
+    })
+
+
+def combine_identity_sources(team_1_path: Path, local_team_2_path: Path) -> pd.DataFrame:
+    team_1 = read_mapping_source(team_1_path)
+    # Local Merchants is represented by its seven detailed level-2 identities.
+    # POP and Full-Service each retain their same-name single level-2 identity.
+    team_1 = team_1[team_1[TEAM_1_COLUMN].ne(LOCAL_MERCHANTS_TEAM)].copy()
+    local_team_2 = read_mapping_source(local_team_2_path)
+    return pd.concat([team_1, local_team_2], ignore_index=True)
 
 
 def validate_against_dashboard(payload: dict, dashboard_path: Path) -> dict:
@@ -124,7 +163,8 @@ def validate_against_dashboard(payload: dict, dashboard_path: Path) -> dict:
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--input", default="行业vs类目 - 映射关系.xlsx")
+    parser.add_argument("--input", default="data/raw/ops_team_category_mapping.csv")
+    parser.add_argument("--local-merchants-input", default="data/raw/ops_team_2_category_mapping.csv")
     parser.add_argument("--next-output", default="apps/next/public/data/ops-team-category-mapping.json")
     parser.add_argument("--web-output", default="apps/web/public/data/ops-team-category-mapping.json")
     parser.add_argument("--dashboard", default="apps/next/public/data/dashboard.json")
@@ -133,13 +173,12 @@ def main() -> None:
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
 
     input_path = Path(args.input)
-    if not input_path.exists() and args.input == "行业vs类目 - 映射关系.xlsx":
-        workspace_copy = ROOT.parent / "outputs" / "category-illustrations" / "行业vs类目-含插画URL.xlsx"
-        if workspace_copy.exists():
-            input_path = workspace_copy
     if not input_path.exists():
         raise FileNotFoundError(f"Operations mapping workbook not found: {input_path}")
-    payload, quality = build_mapping(pd.read_excel(input_path))
+    local_merchants_path = Path(args.local_merchants_input)
+    if not local_merchants_path.exists():
+        raise FileNotFoundError(f"Local Merchants mapping workbook not found: {local_merchants_path}")
+    payload, quality = build_mapping(combine_identity_sources(input_path, local_merchants_path))
     for output in (Path(args.next_output), Path(args.web_output)):
         output.parent.mkdir(parents=True, exist_ok=True)
         output.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")

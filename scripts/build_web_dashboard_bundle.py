@@ -46,6 +46,88 @@ MIN_NEW_CLUSTER_COMMUNITIES = 2
 MIN_NEW_BRAND_POSTS = 2
 MIN_NEW_KEYWORD_POSTS = 3
 
+# Minimum quality gate for Sparkle's "new keyword" surface. Diagnosed against the
+# 2026-07-07 week: of 2467 candidate new-keyword rows, entity_type=="unknown_candidate"
+# is an unclassified catch-all (33 rows here were noise), and the single biggest offender
+# was the literal string "link comments" (75 rows) -- Reddit's own "link | comments" UI
+# chrome getting scraped as post content, not a product term. ~42% of remaining candidates
+# were bare sentence fragments ("my sister", "the collar", "a bunch") -- rejected via the
+# short-stopword-lead heuristic below. Only entity types that represent an actual product/
+# topic term are eligible; "brand" and "unknown_candidate" are excluded here (brands are
+# already surfaced separately via brand_signals, and unknown_candidate is pipeline slang
+# for "not yet classified").
+SPARKLE_KEYWORD_ALLOWED_TYPES = {
+    "product_phrase", "category_keyword", "need_state", "ingredient_material", "retailer_channel",
+}
+SPARKLE_KEYWORD_STOPLIST = {
+    "link comments", "read more", "see more", "click here", "view all", "this post", "this comment",
+}
+SPARKLE_KEYWORD_STOP_LEAD = {
+    "a", "an", "the", "my", "our", "your", "his", "her", "their", "this", "that", "these", "those", "it", "its",
+}
+
+
+def sparkle_keyword_quality_reason(term_norm: str, entity_type: str) -> str:
+    """Returns 'ok' if term_norm passes the Sparkle new-keyword quality gate, else the
+    rejection reason. Order matters -- checked cheapest/most-specific first."""
+    text = str(term_norm or "").strip()
+    if entity_type not in SPARKLE_KEYWORD_ALLOWED_TYPES:
+        return "bad_entity_type"
+    if len(text) < 3:
+        return "too_short"
+    if re.match(r"^\d+$", text):
+        return "all_digits"
+    if re.match(r"^[^\w\s]+$", text):
+        return "all_punct"
+    if text in SPARKLE_KEYWORD_STOPLIST:
+        return "stoplist"
+    if re.match(r"^(u|r)/", text):
+        return "username_or_subreddit"
+    if re.search(r"http|www\.|\.com\b", text):
+        return "url"
+    tokens = text.split()
+    if tokens and tokens[0] in SPARKLE_KEYWORD_STOP_LEAD and len(tokens) <= 3:
+        return "sentence_fragment"
+    return "ok"
+
+
+# "Verified Brands" is meant to answer "which shopping brands are people discussing" --
+# not "which internet companies got mentioned in passing." A curated denylist of
+# well-known payment/search/social/marketplace/service names keeps those out of the
+# shopping bucket regardless of how confidently the crawler whitelisted them; anything
+# not on this list defaults to "shopping". Keys are normalize_brand() output (lowercase,
+# punctuation stripped) so matching is exact and dependency-free.
+BRAND_DOMAIN_OVERRIDES = {
+    # payment
+    "paypal": "payment", "venmo": "payment", "apple pay": "payment", "google pay": "payment",
+    "cash app": "payment", "stripe": "payment", "zelle": "payment", "klarna": "payment",
+    "afterpay": "payment", "affirm": "payment", "square": "payment",
+    # search
+    "google": "search", "bing": "search", "yahoo": "search", "duckduckgo": "search",
+    # social
+    "tiktok": "social", "instagram": "social", "facebook": "social", "meta": "social",
+    "twitter": "social", "x": "social", "snapchat": "social", "pinterest": "social",
+    "reddit": "social", "linkedin": "social", "youtube": "social", "discord": "social",
+    "whatsapp": "social", "telegram": "social", "wechat": "social", "threads": "social",
+    # marketplace / platform
+    "amazon": "platform", "ebay": "platform", "etsy": "platform", "walmart": "platform",
+    "alibaba": "platform", "aliexpress": "platform", "shopify": "platform", "temu": "platform",
+    "wish": "platform", "craigslist": "platform", "poshmark": "platform", "depop": "platform",
+    "mercari": "platform", "facebook marketplace": "platform",
+    # service
+    "uber": "service", "lyft": "service", "doordash": "service", "grubhub": "service",
+    "airbnb": "service", "netflix": "service", "spotify": "service", "zoom": "service",
+    "slack": "service", "dropbox": "service", "uber eats": "service", "postmates": "service",
+    "instacart": "service", "grab": "service",
+    # Deliberately NOT denylisted: Apple, Microsoft, Sony, Samsung, etc. -- these
+    # manufacture physical products people genuinely shop for (iPhone, Surface, PS5),
+    # so blanket-excluding the parent company name would hide real shopping signal.
+}
+
+
+def brand_domain_for(brand_norm: str) -> str:
+    return BRAND_DOMAIN_OVERRIDES.get(str(brand_norm or "").strip(), "shopping")
+
 
 def normalize_brand(value) -> str:
     """Create a stable fallback ID when legacy candidate rows have no brand_norm."""
@@ -180,6 +262,9 @@ def build_sparkle_data(week: str, all_weeks: list[str], scores: pd.DataFrame,
         - pairs_for(terms, "term_norm", previous_1)
         - pairs_for(terms, "term_norm", previous_2)
     )
+    # A term_norm already carried as a brand signal this week takes priority as a brand --
+    # it should not also show up as a "new keyword" (same underlying entity, two labels).
+    current_brand_norms = set(brands.loc[brands["week_start"].astype(str).eq(week), "brand_norm"].astype(str))
     keyword_signals = [
         {
             "kind": "keyword",
@@ -195,6 +280,9 @@ def build_sparkle_data(week: str, all_weeks: list[str], scores: pd.DataFrame,
         }
         for row in current_terms.itertuples(index=False)
         if (str(row.cluster_id), str(row.term_norm)) in new_keyword_pairs
+        and str(row.term_norm) not in current_brand_norms
+        and str(row.term).strip()
+        and sparkle_keyword_quality_reason(row.term_norm, row.entity_type) == "ok"
     ]
     new_signals = sorted(
         [*brand_signals, *keyword_signals],
@@ -354,6 +442,7 @@ def build_week_bundle(week: str, all_weeks: list[str], scores: pd.DataFrame, ter
                     "brand_norm": b["brand_norm"],
                     "brand_display": b["brand_display"],
                     "brand_signal_type": b["brand_signal_type"],
+                    "brand_domain": brand_domain_for(b["brand_norm"]),
                     "unique_posts": b["unique_posts"],
                     "mentions": b["mentions"],
                     "sentiment": b["avg_sentiment"],
@@ -394,6 +483,7 @@ def build_week_bundle(week: str, all_weeks: list[str], scores: pd.DataFrame, ter
             "brand_display": canonical_brand_display(meta_row.brand_display),
             "aliases": aliases,
             "brand_signal_type": str(meta_row.brand_signal_type),
+            "brand_domain": brand_domain_for(norm),
             "unique_posts": safe_int(post_counts.get(norm, rows["unique_posts"].max())),
             "mentions": mentions,
             "cluster_count": int(rows["cluster_id"].astype(str).nunique()),
