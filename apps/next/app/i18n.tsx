@@ -45,8 +45,8 @@ export const sentimentTagText = {
 const dict = {
   brandName: { en: "Reddit Product Trend Radar", zh: "Reddit 产品趋势雷达" },
   navHome: { en: "Home", zh: "首页" },
-  navExplore: { en: "Explore", zh: "互动探索" },
-  navAnalytics: { en: "Analytics", zh: "分析看板" },
+  navCategorySignals: { en: "Product Category Signals", zh: "商品聚类信号" },
+  navBrandDiscovery: { en: "Brand / Keyword Discovery", zh: "品牌 / 关键词挖掘" },
   weekAria: { en: "Analysis week", zh: "分析周" },
   exportBtn: { en: "Export", zh: "导出" },
   loading: { en: "Loading Reddit Product Trend Radar...", zh: "正在加载 Reddit 产品趋势雷达..." },
@@ -76,10 +76,10 @@ const dict = {
   noTeamSignals: { en: "No category signals are available for the selected operations team.", zh: "当前运营团队暂无可展示的类目信号。" },
 
   heroEyebrow: { en: "AI powered real consumer signals", zh: "AI 驱动的真实消费者信号" },
-  heroTitle: { en: "Reddit - North America Product Trend Radar", zh: "Reddit - 北美消费趋势雷达" },
+  heroTitle: { en: "Discover Product and Brand Opportunities from Reddit", zh: "从 Reddit 讨论中发现商品与品牌机会" },
   heroBody: {
-    en: "Identify emerging product opportunities from real consumer discussions before they appear in marketplace metrics.",
-    zh: "在市场数据体现之前，从真实的消费者讨论中发现新兴的产品机会。"
+    en: "Explore high-interest product categories, brands, and keyword signals discussed on Reddit this week, including discussion volume, sentiment, community reach, and supporting posts.",
+    zh: "查看本周 Reddit 上热度较高的商品类目、品牌和关键词信号，了解讨论声量、情绪和社区扩散情况，并下钻到相关原帖。"
   },
   statAnalysisWeek: { en: "Analysis Week", zh: "分析周期" },
   statRedditPosts: { en: "Reddit Posts", zh: "Reddit 帖子数" },
@@ -98,30 +98,24 @@ const dict = {
   capability3: { en: "Drill into the original Reddit discussion", zh: "下钻到原始 Reddit 讨论" },
   topClusterKicker: { en: "This Week's Top Signal", zh: "本周头号信号" },
 
-  exploreCardKicker: { en: "Interactive Product", zh: "互动产品" },
-  exploreCardTitle: { en: "Explore Trends", zh: "探索趋势" },
-  exploreCardBody: {
-    en: "Find categories, keywords, brands, and evidence worth reviewing this week.",
-    zh: "查看本周值得关注的品类、关键词、品牌与原始依据。"
+  homeCardCategoryKicker: { en: "Product Categories", zh: "商品聚类" },
+  homeCardCategoryTitle: { en: "Explore Product Category Signals", zh: "查看商品聚类信号" },
+  homeCardCategoryBody: {
+    en: "Review category rankings, trend dimensions, community discussions, and opportunity signals.",
+    zh: "查看本周商品类目排名、趋势维度、社区讨论和机会分布。"
   },
-  dashboardCardKicker: { en: "Analytics", zh: "分析" },
-  dashboardCardTitle: { en: "Analytics Dashboard", zh: "分析看板" },
-  dashboardCardBody: {
-    en: "Validate scores, rankings, raw data, weekly movement, and keyword sentiment.",
-    zh: "核对评分、排名、原始数据、每周变化与关键词情感。"
+  homeCardBrandKicker: { en: "Brands & Keywords", zh: "品牌与关键词" },
+  homeCardBrandTitle: { en: "Discover Brand / Keyword Signals", zh: "挖掘品牌 / 关键词信息" },
+  homeCardBrandBody: {
+    en: "Compare discussion volume and sentiment, and explore brand profiles and supporting Reddit posts.",
+    zh: "比较品牌和关键词的讨论声量与情绪，并查看品牌详情和 Reddit 原帖。"
   },
-
-  exploreSectionKicker: { en: "Interactive Product", zh: "互动产品" },
-  exploreSectionTitle: { en: "Explore Signals", zh: "探索信号" },
-  exploreSectionBody: {
-    en: "Interactive exploration layer for categories, opportunities, keywords, brands, and evidence.",
-    zh: "用于品类、机会、关键词、品牌与依据的互动探索层。"
-  },
-  tabWord: { en: "Tab", zh: "标签" },
-  tabTrend: { en: "Trend Categories", zh: "趋势品类" },
-  tabOpportunity: { en: "Opportunity Discovery", zh: "机会发现" },
-  tabMapping: { en: "Keyword / Brand Detail", zh: "关键词 / 品牌详情" },
-  tabSparkle: { en: "New & Emerging", zh: "新兴信号" },
+  worthWatchingKicker: { en: "This Week", zh: "本周" },
+  worthWatchingTitle: { en: "Worth Watching This Week", zh: "本周需要关注" },
+  topClustersTitle: { en: "Top Product Categories", zh: "重点商品聚类" },
+  topBrandsTitle: { en: "Top Brand Signals This Week", zh: "本周品牌热点" },
+  noBrandSignalsHomeMsg: { en: "No brand signals are available for the current view.", zh: "当前身份下暂无可展示的品牌热点。" },
+  noTopClustersHomeMsg: { en: "No category signals are available for the current view.", zh: "当前身份下暂无可展示的重点类目。" },
 
   dimPanelKicker: { en: "Signal Dimensions", zh: "信号维度" },
   dimPanelTitle: { en: "Rank by score dimension", zh: "按评分维度排序" },
@@ -146,8 +140,8 @@ const dict = {
   brandsKeywordsTabLabel: { en: "Brands / Keywords", zh: "品牌 / 关键词" },
   searchVerifiedBrandsPlaceholder: { en: "Search verified brands", zh: "搜索白名单品牌" },
   searchBrandsKeywordsPlaceholder: { en: "Search brands or keywords", zh: "搜索品牌或关键词" },
-  noVerifiedBrandsMsg: { en: "No verified brand signals are available for this category.", zh: "当前类目下暂无白名单品牌信号。" },
-  noBrandsKeywordsMsg: { en: "No additional brand or keyword signals are available for this category.", zh: "当前类目下暂无其他品牌或关键词信号。" },
+  noVerifiedBrandsMsg: { en: "No verified shopping brands are available for this category.", zh: "当前类目下暂无白名单购物品牌。" },
+  noBrandsKeywordsMsg: { en: "No high-confidence brands or high-quality keywords are available for this category.", zh: "当前类目下暂无高置信度品牌或高质量关键词。" },
   viewEvidenceLabel: { en: "View evidence", zh: "查看依据" },
   activeCommunitiesRegion: { en: "Active communities, scroll for more", zh: "活跃社区，可滚动查看更多" },
   learnMoreBrand: { en: "Learn more about the brand", zh: "了解更多品牌信息" },
@@ -189,8 +183,6 @@ const dict = {
   mostDiscussed: { en: "Most Discussed", zh: "讨论最多" },
   loadMore: { en: "Load More", zh: "加载更多" },
 
-  categoryFilter: { en: "Category Filter", zh: "品类筛选" },
-  overallAllCategories: { en: "Overall / All categories", zh: "总体 / 所有品类" },
   freshKicker: { en: "Fresh Signals", zh: "新增信号" },
   freshTitle: { en: "New & Emerging", zh: "新兴信号" },
   sparkleDefinition: { en: "This page only shows categories and signals absent in both of the previous two full weeks but newly detected this week above the minimum discussion threshold.", zh: "本页仅展示此前连续两个完整自然周均未出现、但在本周首次出现并达到最低讨论门槛的类目与信号。" },
@@ -222,33 +214,6 @@ const dict = {
   evidenceLoading: { en: "Loading source evidence...", zh: "正在加载原帖证据…" },
   noSignalEvidence: { en: "No source evidence is available for this signal.", zh: "当前信号暂无可用原帖证据。" },
 
-  vizKicker: { en: "Visualization Board", zh: "可视化看板" },
-  vizTitle: { en: "Analytics Dashboard", zh: "分析看板" },
-  vizBody: {
-    en: "Score validation, raw evidence, selected-category word cloud, daily movement, and keyword sentiment.",
-    zh: "评分核对、原始依据、所选品类词云、每日走势与关键词情感。"
-  },
-  overallKicker: { en: "Overall", zh: "总体" },
-  trendRankTitle: { en: "Category Trend Score Ranking", zh: "品类趋势分排名" },
-  rankingSuffix: { en: "Ranking", zh: "排名" },
-  rawDataKicker: { en: "Raw Data", zh: "原始数据" },
-  rawDataTitle: { en: "Selected Category Reddit Rows", zh: "所选品类 Reddit 原始记录" },
-  rawHeadBrandSignal: { en: "Brand / Signal", zh: "品牌 / 信号" },
-  rawHeadPost: { en: "Post", zh: "帖子" },
-  rawHeadSubreddit: { en: "Subreddit", zh: "子版块" },
-  rawHeadSentiment: { en: "Sentiment", zh: "情感" },
-  rawHeadUrl: { en: "URL", zh: "链接" },
-  open: { en: "Open", zh: "打开" },
-  topicKicker: { en: "Topic", zh: "话题" },
-  wordCloudTitle: { en: "Word Cloud", zh: "词云" },
-  weeklyTrendKicker: { en: "Weekly Trend", zh: "每周趋势" },
-  dailyChartTitle: { en: "Daily Posts + Avg Sentiment", zh: "每日帖子数 + 平均情感" },
-  keywordSentimentKicker: { en: "Keyword Sentiment", zh: "关键词情感" },
-  keywordSentimentTitle: { en: "Keyword Sentiment", zh: "关键词情感" },
-
-  // Signal Explorer IA restructure: 2-tab layout
-  tabCategoryTrends: { en: "Category Trends & Opportunities", zh: "类目趋势与机会" },
-  tabBrandsSignals: { en: "Brands & New Signals", zh: "品牌与新信号" },
   currentRanking: { en: "Current Ranking", zh: "当前排名" },
   sortByLabel: { en: "Sort By", zh: "排序方式" },
   rankedByPrefix: { en: "Currently ranked by", zh: "当前按" },
@@ -275,9 +240,8 @@ const dict = {
     en: "Choose a bar on the left to explore its discussion volume, sentiment, and supporting Reddit posts.",
     zh: "点击左侧条形图，查看该信号的讨论声量、情绪和相关 Reddit 原帖。"
   },
-  searchOnGoogle: { en: "Search on Google", zh: "查看 Google 页面" },
   viewRedditPosts: { en: "View Reddit Posts", zh: "查看 Reddit 原帖" },
-  chooseClusterForEvidence: { en: "Choose which category's posts to view", zh: "选择要查看哪个类目下的原帖" },
+  chooseClusterForEvidence: { en: "Choose a product category to view Reddit posts", zh: "选择要查看原帖的商品类目" },
 
   newlyActiveCategoriesShort: { en: "Newly Active Categories", zh: "本周新出现类目" },
   newBrandKeywordSignalsShort: { en: "New Brand / Keyword Signals", zh: "本周新出现品牌 / 关键词" },
@@ -292,12 +256,18 @@ const dict = {
   sentimentLegendPositive: { en: "Positive", zh: "正面" },
 
   // V2: unified profile/evidence button copy
-  brandProfileLabel: { en: "Brand Profile", zh: "品牌介绍" },
-  brandProfileHelpTab1: { en: "See what this brand is", zh: "查看品牌介绍" },
+  brandProfileLabel: { en: "Brand Profile", zh: "品牌详情" },
+  brandProfileHelpTab1: { en: "View brand information and external references", zh: "查看品牌介绍与外部资料" },
   exploreTopicLabel: { en: "Explore Topic", zh: "了解话题" },
-  redditEvidenceLabel: { en: "Reddit Evidence", zh: "Reddit 原帖" },
-  redditEvidenceHelpTab1: { en: "View posts from this category", zh: "查看当前类目原帖" },
-  redditEvidenceHelpTab2: { en: "View posts for this brand", zh: "查看该品牌讨论原帖" },
+  redditEvidenceLabel: { en: "Reddit Posts", zh: "讨论原帖" },
+  redditEvidenceHelpTab1: {
+    en: "View Reddit posts for this brand in the current category and analysis week",
+    zh: "查看该品牌在当前类目和当前自然周下的 Reddit 讨论原帖"
+  },
+  redditEvidenceHelpTab2: {
+    en: "View Reddit posts for this brand within the current filter scope",
+    zh: "查看该品牌在当前筛选范围内的 Reddit 讨论"
+  },
 
   // V2: reduced opportunity quadrants
   scalingOpportunitiesFull: { en: "Scaling Opportunities", zh: "规模化机会" },

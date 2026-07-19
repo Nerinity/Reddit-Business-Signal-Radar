@@ -15,12 +15,12 @@ function initials(name: string) {
     .join("");
 }
 
-export function CategoryAvatar({ name, illustrationUrl }: { name: string; illustrationUrl?: string }) {
+export function CategoryAvatar({ name, illustrationUrl, size = "md" }: { name: string; illustrationUrl?: string; size?: "sm" | "md" | "lg" }) {
   const [imageFailed, setImageFailed] = useState(false);
-  if (!validAssetUrl(illustrationUrl) || imageFailed) return <i>{initials(name)}</i>;
+  if (!validAssetUrl(illustrationUrl) || imageFailed) return <i className={`clusterAvatar-${size}`}>{initials(name)}</i>;
 
   return (
-    <span className="clusterAvatar">
+    <span className={`clusterAvatar clusterAvatar-${size}`}>
       <img
         src={illustrationUrl}
         alt=""

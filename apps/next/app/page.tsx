@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { BrandAvatar } from "./components/BrandAvatar";
 import { CategoryAvatar } from "./components/CategoryAvatar";
+import { BrandSignalCloud } from "./components/BrandSignalCloud";
 import { HorizontalScroller } from "./components/HorizontalScroller";
 import { TikTokRadarChart, type RadarMetric, type RadarMetricKey } from "./components/TikTokRadarChart";
 import {
@@ -244,6 +245,70 @@ function applyBrandLogos(bundle: DashboardBundle, logoMap: Record<string, string
   };
 }
 
+// -- Brand / keyword noise reduction --------------------------------------------------
+// The pipeline already produces a real confidence signal (07_extract_entities.py: whitelist
+// alias matches score 1.0, catalog n-gram matches 0.85, regex-candidate matches a flat 0.45)
+// but nothing downstream of the pipeline ever gates on it -- Brands/Keywords today shows
+// every brand_signal_type indiscriminately and every keyword above unique_posts >= 2 with
+// no entity_type/length/stoplist check at all. This curates that down to a much smaller,
+// higher-confidence set, applied once at load time so every consumer (per-cluster
+// RelatedSignalsPanel, Tab 2's signalCards, Home's Top 15) sees the same curated data with
+// no other code changes needed. cluster_brand_signals/sparkle/posts are left untouched --
+// sparkle's own 3-week-new diffing and the dashboard-contract row-count tests depend on the
+// raw (uncurated) versions of those.
+function isHighConfidenceNonWhitelistBrand(brand: { brand_signal_type?: string; unique_posts?: number }) {
+  return brand.brand_signal_type === "catalog_known_brand" && Number(brand.unique_posts || 0) >= 2;
+}
+
+const KEYWORD_QUALITY_ALLOWED_TYPES = new Set([
+  "product_phrase", "category_keyword", "need_state", "ingredient_material", "retailer_channel"
+]);
+// Deliberately separate from build_web_dashboard_bundle.py's SPARKLE_KEYWORD_STOPLIST --
+// Sparkle's own quality gate must not be touched by this round's changes.
+const KEYWORD_NOISE_STOPLIST = new Set([
+  "link comments", "read more", "see more", "click here", "view all", "this post", "this comment"
+]);
+
+function isHighQualityKeyword(term: { term_norm?: string; entity_type?: string; unique_posts?: number }) {
+  const text = String(term.term_norm || "").trim();
+  if (!KEYWORD_QUALITY_ALLOWED_TYPES.has(String(term.entity_type || ""))) return false;
+  if (Number(term.unique_posts || 0) < 3) return false;
+  if (text.length < 3) return false;
+  if (/^\d+$/.test(text)) return false;
+  if (/^[^\w\s]+$/.test(text)) return false;
+  if (/^(u|r)\//.test(text)) return false;
+  if (/http|www\.|\.com\b/.test(text)) return false;
+  if (KEYWORD_NOISE_STOPLIST.has(text)) return false;
+  return true;
+}
+
+function curateBrandsKeywords<B extends ClusterBrand | Brand, K extends ClusterTerm | Keyword>(
+  brands: B[],
+  terms: K[]
+): { brands: B[]; terms: K[] } {
+  const curatedBrands = brands.filter((brand) =>
+    isVerifiedShoppingBrand(brand.brand_signal_type, brand.brand_domain)
+    || isHighConfidenceNonWhitelistBrand(brand)
+    || isPlatformServiceBrand(brand.brand_domain));
+  const keptBrandNorms = new Set(curatedBrands.map((brand) => brand.brand_norm));
+  const curatedTerms = terms.filter((term) =>
+    isHighQualityKeyword(term) && !keptBrandNorms.has(String(term.term_norm || "")));
+  return { brands: curatedBrands, terms: curatedTerms };
+}
+
+function sanitizeSignalNoise(bundle: DashboardBundle): DashboardBundle {
+  const { brands: curatedTopBrands, terms: curatedTopKeywords } = curateBrandsKeywords(bundle.brands, bundle.keywords);
+  return {
+    ...bundle,
+    brands: curatedTopBrands,
+    keywords: curatedTopKeywords,
+    clusters: bundle.clusters.map((cluster) => {
+      const { brands, terms } = curateBrandsKeywords(cluster.brands, cluster.terms);
+      return { ...cluster, brands, terms };
+    })
+  };
+}
+
 type OpsTeam2Option = { ops_team_2: string; identity_key: string; categories: string[] };
 type OpsTeamMapping = { ops_team_1: string; ops_team_2_options: OpsTeam2Option[] };
 type OpsMapping = { version: number; ops_teams: OpsTeamMapping[]; pairs: OpsTeam2Option[] };
@@ -262,7 +327,7 @@ function normalizeCategoryName(value: string) {
   return value.normalize("NFKC").trim().replace(/\s+/g, " ").toLocaleLowerCase();
 }
 
-type View = "identity" | "home" | "explore" | "dashboard";
+type View = "identity" | "home" | "explore";
 // Signal Explorer collapsed from 4 tabs to 2: "category" merges the old trend-ranking +
 // opportunity-quadrant pages, "signals" merges the old brand/keyword mapping + sparkle
 // pages. "evidence" stays as an internal detail view, not a user-facing tab.
@@ -395,7 +460,11 @@ function brandTag(type?: string) {
   return type ? type.replaceAll("_", " ") : "other";
 }
 
-function brandTypeLabel(type: string | undefined, lang: Lang) {
+// A whitelisted or catalog-known brand that isn't a shopping brand (PayPal, TikTok,
+// Google...) should never read as "Verified"/"Known" in the Brands/Keywords list --
+// that badge is reserved for shopping brands. Domain wins over signal-type here.
+function brandTypeLabel(type: string | undefined, lang: Lang, domain?: string) {
+  if (isPlatformServiceBrand(domain)) return lang === "zh" ? "平台 / 服务" : "Platform / Service";
   if (type === "confirmed_whitelist_brand") return lang === "zh" ? "白名单品牌" : "Verified Brand";
   if (type === "catalog_known_brand") return lang === "zh" ? "已知品牌" : "Known Brand";
   return lang === "zh" ? "候选品牌" : "Emerging Candidate";
@@ -424,6 +493,10 @@ function brandTypeClass(type?: string) {
 // anything not on the curated denylist, so a missing field also reads as shopping.
 function isVerifiedShoppingBrand(signalType?: string, brandDomain?: string) {
   return signalType === "confirmed_whitelist_brand" && (brandDomain || "shopping") === "shopping";
+}
+
+function isPlatformServiceBrand(brandDomain?: string) {
+  return Boolean(brandDomain) && brandDomain !== "shopping";
 }
 
 // Classic red-yellow-green traffic-light scale: an explicit yellow stop at 0 reads more
@@ -537,7 +610,7 @@ async function openProfileLink(name: string, fallbackUrl: string) {
 }
 
 function openBrandProfile(name: string) {
-  void openProfileLink(name, googleBrandUrl(name));
+  void openProfileLink(name, bingSearchUrl(`${name} brand`));
 }
 
 function openExploreTopic(name: string) {
@@ -611,7 +684,6 @@ function RadarAppInner() {
   const [selectedSignalKey, setSelectedSignalKey] = useState("");
   const [opportunityZoom, setOpportunityZoom] = useState(1);
   const [opportunityDrag, setOpportunityDrag] = useState(0);
-  const [dashboardCategoryId, setDashboardCategoryId] = useState("all");
   const [selectedWeek, setSelectedWeek] = useState("");
   const [signalSort, setSignalSort] = useState<SignalSort>("volume");
   const [evidenceTarget, setEvidenceTarget] = useState<EvidenceTarget | null>(null);
@@ -649,10 +721,10 @@ function RadarAppInner() {
             return { recognized_brand_count: 0, logo_count: 0, logos: {} };
           });
         const [keywords, logoBundle] = await Promise.all([keywordPromise, logoPromise]);
-        return applyBrandLogos(
+        return sanitizeSignalNoise(applyBrandLogos(
           { ...wireBundle, keywords } as DashboardBundle,
           logoBundle.logos
-        );
+        ));
       })
       .then((bundle) => {
         setData(bundle);
@@ -923,7 +995,6 @@ function RadarAppInner() {
       setIdentityInvalid(false);
       setSelectedClusterId("");
       setSelectedSignalKey("");
-      setDashboardCategoryId("all");
       setEvidenceTarget(null);
       setEvidencePosts([]);
       setTab("category");
@@ -950,6 +1021,24 @@ function RadarAppInner() {
     setSelectedClusterId(clusterId);
     setTab("category");
   };
+  const goToCategoryTab = () => {
+    setTab("category");
+    setView("explore");
+  };
+  const goToSignalsTab = () => {
+    setTab("signals");
+    setView("explore");
+  };
+  const openClusterFromHome = (clusterId: string) => {
+    openClusterDetail(clusterId);
+    setView("explore");
+  };
+  const openBrandFromHome = (brandNorm: string) => {
+    setSignalScope("verified_brands");
+    setSignalCategoryId("all");
+    setSelectedSignalKey(`brand:${brandNorm}`);
+    goToSignalsTab();
+  };
 
   return (
     <main className="shell">
@@ -959,11 +1048,15 @@ function RadarAppInner() {
           {t("brandName")}
         </button>
         <nav>
-          {(["home", "explore", "dashboard"] as View[]).map((item) => (
-            <button key={item} className={view === item ? "active" : ""} onClick={() => setView(item)}>
-              {item === "home" ? t("navHome") : item === "explore" ? t("navExplore") : t("navAnalytics")}
-            </button>
-          ))}
+          <button className={view === "home" ? "active" : ""} onClick={() => setView("home")}>
+            {t("navHome")}
+          </button>
+          <button className={view === "explore" && tab === "category" ? "active" : ""} onClick={goToCategoryTab}>
+            {t("navCategorySignals")}
+          </button>
+          <button className={view === "explore" && tab === "signals" ? "active" : ""} onClick={goToSignalsTab}>
+            {t("navBrandDiscovery")}
+          </button>
         </nav>
         <div className="topActions">
           <button className="identityChip" onClick={() => setView("identity")} title={t("switchIdentity")}>
@@ -997,35 +1090,18 @@ function RadarAppInner() {
         </div>
       </header>
 
-      {view === "home" && <Home data={scopedData} setView={setView} />}
+      {view === "home" && (
+        <Home
+          data={scopedData}
+          onOpenCategoryTab={goToCategoryTab}
+          onOpenBrandTab={goToSignalsTab}
+          onOpenCluster={openClusterFromHome}
+          onOpenBrand={openBrandFromHome}
+        />
+      )}
 
       {view === "explore" && (
         <section>
-          <SectionHeader
-            kicker={t("exploreSectionKicker")}
-            title={t("exploreSectionTitle")}
-            body={t("exploreSectionBody")}
-          />
-          <HorizontalScroller ariaLabel={t("exploreSectionTitle")} className="tabsScroller" showArrows={false}>
-          <div className="tabs" role="tablist">
-            {[
-              ["category", t("tabCategoryTrends")],
-              ["signals", t("tabBrandsSignals")]
-            ].map(([key, label], index) => (
-              <button
-                key={key}
-                role="tab"
-                aria-selected={tab === key}
-                className={tab === key ? "active" : ""}
-                onClick={() => setTab(key as ExploreTab)}
-              >
-                <small>{t("tabWord")} {index + 1}</small>
-                <strong>{label}</strong>
-              </button>
-            ))}
-          </div>
-          </HorizontalScroller>
-
           {tab === "category" && (
             <CategoryTab
               clusters={clusters}
@@ -1077,16 +1153,6 @@ function RadarAppInner() {
             />
           )}
         </section>
-      )}
-
-      {view === "dashboard" && (
-        <Dashboard
-          data={scopedData}
-          selectedCluster={selectedCluster}
-          dashboardCategoryId={dashboardCategoryId}
-          setDashboardCategoryId={setDashboardCategoryId}
-          setSelectedClusterId={setSelectedClusterId}
-        />
       )}
     </main>
   );
@@ -1177,9 +1243,30 @@ function IdentitySelection({ mapping, data, current, invalidSavedIdentity, onSel
   );
 }
 
-function Home({ data, setView }: { data: DashboardBundle; setView: (view: View) => void }) {
+// Home's own priority order for "worth watching" clusters -- deliberately separate from
+// Tab 1's user-configurable sortBy/compareClusters (which the user can point at any of the
+// 5 score dimensions). Home always leads with overall trend_score, using momentum and raw
+// volume only as tie-breakers, since this is a fixed summary, not a re-orderable ranking.
+function compareHomeClusters(a: Cluster, b: Cluster): number {
+  return (b.trend_score - a.trend_score)
+    || (finite(b.momentum_percentile) - finite(a.momentum_percentile))
+    || (b.current_week_posts - a.current_week_posts);
+}
+
+function Home({ data, onOpenCategoryTab, onOpenBrandTab, onOpenCluster, onOpenBrand }: {
+  data: DashboardBundle;
+  onOpenCategoryTab: () => void;
+  onOpenBrandTab: () => void;
+  onOpenCluster: (clusterId: string) => void;
+  onOpenBrand: (brandNorm: string) => void;
+}) {
   const { lang, t } = useLang();
-  const topCluster = [...data.clusters].sort((a, b) => compareClusters(a, b, "trend_score"))[0];
+  const topCluster = [...data.clusters].sort(compareHomeClusters)[0];
+  const topClusters = [...data.clusters].sort(compareHomeClusters).slice(0, 5);
+  const topBrands = data.brands
+    .filter((brand) => isVerifiedShoppingBrand(brand.brand_signal_type, brand.brand_domain))
+    .sort((a, b) => b.unique_posts - a.unique_posts || b.mentions - a.mentions || a.brand_display.localeCompare(b.brand_display))
+    .slice(0, 15);
   const capabilities = [
     { Icon: Compass, text: t("capability1") },
     { Icon: Users, text: t("capability2") },
@@ -1205,15 +1292,15 @@ function Home({ data, setView }: { data: DashboardBundle; setView: (view: View) 
         <Stat icon={Gauge} label={t("statCoveredClusters")} value={data.meta.covered_cluster_count.toLocaleString()} />
       </div>
       <div className="routeCards">
-        <button onClick={() => setView("explore")}>
-          <span>{t("exploreCardKicker")}</span>
-          <strong>{t("exploreCardTitle")}</strong>
-          <small>{t("exploreCardBody")}</small>
+        <button onClick={onOpenCategoryTab}>
+          <span>{t("homeCardCategoryKicker")}</span>
+          <strong>{t("homeCardCategoryTitle")}</strong>
+          <small>{t("homeCardCategoryBody")}</small>
         </button>
-        <button onClick={() => setView("dashboard")}>
-          <span>{t("dashboardCardKicker")}</span>
-          <strong>{t("dashboardCardTitle")}</strong>
-          <small>{t("dashboardCardBody")}</small>
+        <button onClick={onOpenBrandTab}>
+          <span>{t("homeCardBrandKicker")}</span>
+          <strong>{t("homeCardBrandTitle")}</strong>
+          <small>{t("homeCardBrandBody")}</small>
         </button>
       </div>
       {topCluster && (
@@ -1237,6 +1324,33 @@ function Home({ data, setView }: { data: DashboardBundle; setView: (view: View) 
           </div>
         </article>
       )}
+
+      <SectionHeader kicker={t("worthWatchingKicker")} title={t("worthWatchingTitle")} body="" />
+      <div className="worthWatchingGrid">
+        <article className="panel">
+          <div className="panelHeader"><h3>{t("topClustersTitle")}</h3></div>
+          {!topClusters.length && <p className="emptyState">{t("noTopClustersHomeMsg")}</p>}
+          <div className="clusterList">
+            {topClusters.map((cluster, index) => (
+              <button key={cluster.cluster_id} onClick={() => onOpenCluster(cluster.cluster_id)}>
+                <b>#{index + 1}</b>
+                <CategoryAvatar name={cluster.cluster_name} illustrationUrl={cluster.illustration_url} size="sm" />
+                <span>
+                  <strong>{cluster.cluster_name}</strong>
+                  <small>{dimensionContext(cluster, "trend_score", lang, t)}</small>
+                  <small>{cluster.current_week_posts.toLocaleString()} {t("postsUnit")}</small>
+                </span>
+              </button>
+            ))}
+          </div>
+        </article>
+        <article className="panel">
+          <div className="panelHeader"><h3>{t("topBrandsTitle")}</h3></div>
+          {!topBrands.length
+            ? <p className="emptyState">{t("noBrandSignalsHomeMsg")}</p>
+            : <BrandSignalCloud brands={topBrands} onSelect={onOpenBrand} />}
+        </article>
+      </div>
     </section>
   );
 }
@@ -1364,7 +1478,10 @@ function CategoryTab({
         <article className="panel stickyPanel">
           <div className="panelHeader">
             <span>{t("detailKicker")}</span>
-            <h3>{selectedCluster.cluster_name}</h3>
+            <h3 className="detailTitleWithAvatar">
+              <CategoryAvatar name={selectedCluster.cluster_name} illustrationUrl={selectedCluster.illustration_url} size="md" />
+              {selectedCluster.cluster_name}
+            </h3>
           </div>
           <div className="radarDetailRow">
             <TikTokRadarChart
@@ -1506,25 +1623,13 @@ function RelatedSignalsPanel({ cluster, openEvidence }: { cluster: Cluster; open
         {!filteredRows.length && <p className="emptyState">{activeTab === "verified_brands" ? t("noVerifiedBrandsMsg") : t("noBrandsKeywordsMsg")}</p>}
         {filteredRows.slice(0, visibleCount).map((item) => {
           const isBrand = item.kind === "brand";
-          const tagLabel = isBrand ? brandTypeLabel(item.signalType, lang) : (item.entityType || "keyword");
+          const tagLabel = isBrand ? brandTypeLabel(item.signalType, lang, item.brandDomain) : (item.entityType || "keyword");
           const tagClass = isBrand ? brandTypeClass(item.signalType) : "known";
-          const selectRow = () => openEvidence(isBrand
+          const openThisEvidence = () => openEvidence(isBrand
             ? { kind: "brand", clusterId: cluster.cluster_id, brandNorm: item.id, display: item.name }
             : { kind: "keyword", clusterId: cluster.cluster_id, termNorm: item.id, display: item.name });
           return (
-            <div
-              key={`${item.kind}:${item.id}`}
-              className="signalRow"
-              role="button"
-              tabIndex={0}
-              onClick={selectRow}
-              onKeyDown={(event) => {
-                if (event.key === "Enter" || event.key === " ") {
-                  event.preventDefault();
-                  selectRow();
-                }
-              }}
-            >
+            <div key={`${item.kind}:${item.id}`} className="signalRow">
               {isBrand
                 ? <BrandAvatar name={item.name} logoUrl={item.logoUrl || ""} signalType={item.signalType} size="md" />
                 : <BrandAvatar name={item.name} size="md" />}
@@ -1534,20 +1639,22 @@ function RelatedSignalsPanel({ cluster, openEvidence }: { cluster: Cluster; open
                   <span className={`brandTypeBadge ${tagClass}`}>{tagLabel}</span> · {item.uniquePosts} {t("postsUnit")} · {item.mentions} {t("mentionsUnit")} · {sentimentTag(lang, sentimentClass(item.sentiment) as SentimentKey)}
                 </small>
               </span>
-              <button
-                className="signalRowExternal"
-                title={isBrand ? t("brandProfileLabel") : t("exploreTopicLabel")}
-                aria-label={isBrand ? t("brandProfileLabel") : t("exploreTopicLabel")}
-                onClick={(event) => {
-                  event.stopPropagation();
-                  if (isBrand) openBrandProfile(item.name); else openExploreTopic(item.name);
-                }}
-              >
-                <ExternalLink size={14} />
-              </button>
-              <span className="signalRowArrow" title={t("redditEvidenceHelpTab1")}>
-                <ArrowRight size={16} aria-label={t("redditEvidenceLabel")} />
-              </span>
+              <div className="signalRowActions">
+                <button
+                  className="signalRowAction"
+                  title={isBrand ? t("brandProfileHelpTab1") : undefined}
+                  onClick={() => { if (isBrand) openBrandProfile(item.name); else openExploreTopic(item.name); }}
+                >
+                  {isBrand ? t("brandProfileLabel") : t("exploreTopicLabel")} <ExternalLink size={14} />
+                </button>
+                <button
+                  className="signalRowAction primary"
+                  title={t("redditEvidenceHelpTab1")}
+                  onClick={openThisEvidence}
+                >
+                  {t("redditEvidenceLabel")} <ArrowRight size={14} />
+                </button>
+              </div>
             </div>
           );
         })}
@@ -1555,6 +1662,64 @@ function RelatedSignalsPanel({ cluster, openEvidence }: { cluster: Cluster; open
       </div>
     </div>
   );
+}
+
+type ScatterPoint = { cluster: Cluster; x: number; y: number; size: number };
+
+// Fixed reference canvas the deconfliction math runs against -- the actual .scatter
+// container is responsive (and can be zoomed 1x-3x), but the *relative* spacing produced
+// here (in %) holds regardless of the container's real pixel size.
+const SCATTER_CANVAS_WIDTH = 960;
+const SCATTER_CANVAS_HEIGHT = 440;
+
+// Bubble x/y come from absolute current_week_posts/unique_subreddits values, so most
+// lower-volume clusters land on nearly the same handful of pixels near the origin and
+// become visually indistinguishable/unclickable even though every cluster IS present in
+// the data (see OpportunitySection's clusters prop, always the full filteredClusters set).
+// This runs a few passes of simple pairwise separation so overlapping bubbles nudge apart
+// into distinct, independently clickable circles without materially changing their
+// relative position on the two axes.
+function deconflictBubbles(clusters: Cluster[], maxPosts: number, maxSubreddits: number, maxTrend: number): ScatterPoint[] {
+  const points: ScatterPoint[] = clusters.map((cluster) => ({
+    cluster,
+    x: 6 + Math.max(0, Math.min(1, cluster.current_week_posts / maxPosts)) * 88,
+    y: 6 + Math.max(0, Math.min(1, cluster.unique_subreddits / maxSubreddits)) * 88,
+    size: 16 + 34 * (cluster.trend_score / maxTrend)
+  }));
+  const PADDING = 4;
+  for (let pass = 0; pass < 4; pass += 1) {
+    for (let i = 0; i < points.length; i += 1) {
+      for (let j = i + 1; j < points.length; j += 1) {
+        const a = points[i];
+        const b = points[j];
+        const ax = (a.x / 100) * SCATTER_CANVAS_WIDTH;
+        const ay = (a.y / 100) * SCATTER_CANVAS_HEIGHT;
+        const bx = (b.x / 100) * SCATTER_CANVAS_WIDTH;
+        const by = (b.y / 100) * SCATTER_CANVAS_HEIGHT;
+        let dx = bx - ax;
+        let dy = by - ay;
+        let distance = Math.sqrt(dx * dx + dy * dy);
+        const minDistance = (a.size + b.size) / 2 + PADDING;
+        if (distance >= minDistance) continue;
+        if (distance === 0) {
+          // Identical position (rare, e.g. two clusters with the same volume/reach) --
+          // pick a stable pseudo-random direction so they don't stay stacked forever.
+          const angle = (i * 97 + j * 53) % 360 * (Math.PI / 180);
+          dx = Math.cos(angle);
+          dy = Math.sin(angle);
+          distance = 1;
+        }
+        const overlap = (minDistance - distance) / 2;
+        const nx = (dx / distance) * overlap;
+        const ny = (dy / distance) * overlap;
+        a.x = Math.max(2, Math.min(98, a.x - (nx / SCATTER_CANVAS_WIDTH) * 100));
+        a.y = Math.max(2, Math.min(98, a.y - (ny / SCATTER_CANVAS_HEIGHT) * 100));
+        b.x = Math.max(2, Math.min(98, b.x + (nx / SCATTER_CANVAS_WIDTH) * 100));
+        b.y = Math.max(2, Math.min(98, b.y + (ny / SCATTER_CANVAS_HEIGHT) * 100));
+      }
+    }
+  }
+  return points;
 }
 
 // Four exhaustive, mutually-exclusive quadrants split at the 0.5 percentile mark on both
@@ -1584,6 +1749,32 @@ function OpportunitySection({
   const maxSubreddits = maxOf(clusters.map((cluster) => cluster.unique_subreddits), 1);
   const maxTrend = maxOf(clusters.map((cluster) => cluster.trend_score), 1);
   const dragOffset = (drag / 100) * (zoom - 1) * 100;
+  const points = useMemo(
+    () => deconflictBubbles(clusters, maxPosts, maxSubreddits, maxTrend),
+    [clusters, maxPosts, maxSubreddits, maxTrend]
+  );
+  // Top clusters by trend_score get their label shown by default (not just on hover/
+  // selection) so the map isn't a wall of anonymous circles for the highest-priority
+  // categories; everything else still reveals its name on hover, and the selected
+  // cluster's label is always on via the existing button.active + .scatterLabel rule.
+  const labeledClusterIds = useMemo(() => new Set(
+    [...clusters].sort((a, b) => b.trend_score - a.trend_score).slice(0, 18).map((cluster) => cluster.cluster_id)
+  ), [clusters]);
+  useEffect(() => {
+    if (process.env.NODE_ENV === "production") return;
+    const renderedIds = points.map((point) => point.cluster.cluster_id);
+    const dataIds = clusters.map((cluster) => cluster.cluster_id);
+    const missing = dataIds.filter((id) => !renderedIds.includes(id));
+    const seen = new Set<string>();
+    const duplicates = renderedIds.filter((id) => (seen.has(id) ? true : (seen.add(id), false)));
+    // eslint-disable-next-line no-console
+    console.table({
+      identityClusterCount: dataIds.length,
+      renderedBubbleCount: renderedIds.length,
+      missingClusterIds: missing.length ? missing.join(", ") : "(none)",
+      duplicateClusterIds: duplicates.length ? duplicates.join(", ") : "(none)"
+    });
+  }, [points, clusters]);
   const hasPercentiles = (cluster: Cluster) => Number.isFinite(Number(cluster.momentum_percentile))
     && Number.isFinite(Number(cluster.cross_community_percentile));
   const momentumRank = (cluster: Cluster) => hasPercentiles(cluster) ? Number(cluster.momentum_percentile) : cluster.momentum_score / 5;
@@ -1602,10 +1793,8 @@ function OpportunitySection({
       || b.trend_score - a.trend_score
       || a.unique_subreddits - b.unique_subreddits)
     .slice(0, 5);
-  // Highest trend_score cluster in the map always shows its name (not just on hover) so the
-  // chart isn't a wall of anonymous circles; every other bubble reveals its name on hover.
-  // Only ever 1-2 labels are visible at once (the pinned top cluster + whatever's hovered),
-  // so a full force-directed collision-avoidance layout isn't needed to keep this readable.
+  // Highest trend_score cluster in the map always shows its name (not just on hover), and
+  // gets the extra "pinned" emphasis treatment (backdrop pill) on top of the "labeled" set.
   const topTrendClusterId = clusters.length
     ? [...clusters].sort((a, b) => b.trend_score - a.trend_score)[0].cluster_id
     : "";
@@ -1632,11 +1821,9 @@ function OpportunitySection({
           <div className="scatterCanvas" style={{ width: `${zoom * 100}%`, transform: `translateX(-${dragOffset}%)` }}>
             <span className="axis top">{t("axisHighMomentum")}</span>
             <span className="axis right">{t("axisReach")}</span>
-            {clusters.map((cluster) => {
-              const x = 6 + Math.max(0, Math.min(1, cluster.current_week_posts / maxPosts)) * 88;
-              const y = 6 + Math.max(0, Math.min(1, cluster.unique_subreddits / maxSubreddits)) * 88;
-              const size = 16 + 34 * (cluster.trend_score / maxTrend);
+            {points.map(({ cluster, x, y, size }) => {
               const isTop = cluster.cluster_id === topTrendClusterId;
+              const isLabeled = labeledClusterIds.has(cluster.cluster_id);
               const tooltip = [
                 cluster.cluster_name,
                 `${t("bubbleTooltipPosts")}: ${cluster.current_week_posts.toLocaleString()}`,
@@ -1644,7 +1831,11 @@ function OpportunitySection({
                 `${t("bubbleTooltipTrendScore")}: ${fmt(cluster.trend_score, 1)}`
               ].join("\n");
               return (
-                <div key={cluster.cluster_id} className={`scatterPoint ${isTop ? "pinned" : ""}`} style={{ left: `${x}%`, bottom: `${y}%` }}>
+                <div
+                  key={cluster.cluster_id}
+                  className={`scatterPoint ${isTop ? "pinned" : ""} ${isLabeled ? "labeled" : ""}`}
+                  style={{ left: `${x}%`, bottom: `${y}%` }}
+                >
                   <button
                     className={selectedClusterId === cluster.cluster_id ? "active" : ""}
                     title={tooltip}
@@ -1676,6 +1867,7 @@ function QuadrantColumn({ title, rows, openClusterDetail }: { title: string; row
         {rows.map((cluster, index) => (
           <button key={cluster.cluster_id} className="opportunityRow" onClick={() => openClusterDetail(cluster.cluster_id)}>
             <b>#{index + 1}</b>
+            <CategoryAvatar name={cluster.cluster_name} illustrationUrl={cluster.illustration_url} size="sm" />
             <span>
               <strong>{cluster.cluster_name}</strong>
               <small>
@@ -1755,6 +1947,11 @@ function SignalsTab({
   useEffect(() => setVisibleSignals(40), [sparkle.current_week]);
   const maxUniquePosts = maxOf(signalCards.map((item) => item.uniquePosts), 1);
   const sortedCategories = useMemo(() => [...clusters].sort((a, b) => a.cluster_name.localeCompare(b.cluster_name)), [clusters]);
+  const illustrationByClusterId = useMemo(() => {
+    const map = new Map<string, string>();
+    clusters.forEach((cluster) => map.set(cluster.cluster_id, cluster.illustration_url || ""));
+    return map;
+  }, [clusters]);
 
   // Evidence is keyed by week x cluster x brand/keyword -- a signal discussed in more than
   // one category needs the user to pick which category's posts to view. That picker only
@@ -1858,7 +2055,7 @@ function SignalsTab({
               />
               <strong className="brandProfileName">{selected.display}</strong>
               <span className={selected.kind === "brand" ? `brandTypeBadge ${brandTypeClass(selected.tag)}` : "brandTypeBadge known"}>
-                {selected.kind === "brand" ? brandTypeLabel(selected.tag, lang) : t("keywordPhraseLabel")}
+                {selected.kind === "brand" ? brandTypeLabel(selected.tag, lang, selected.brandDomain) : t("keywordPhraseLabel")}
               </span>
               <div className="brandProfileDivider" />
               <div className="metricGrid">
@@ -1919,12 +2116,14 @@ function SignalsTab({
                     {sparkle.newly_active_clusters.map((cluster) => (
                       <button
                         key={cluster.cluster_id}
+                        className="newClusterRow"
                         onClick={() => {
                           setSelectedClusterId(cluster.cluster_id);
                           setTab("category");
                         }}
                       >
                         <b>{t("newTag")}</b>
+                        <CategoryAvatar name={cluster.cluster_name} illustrationUrl={illustrationByClusterId.get(cluster.cluster_id)} size="sm" />
                         <span>
                           <strong>{cluster.cluster_name}</strong>
                           <small>
@@ -2004,225 +2203,5 @@ function EvidenceTab({ cluster, target, posts, loading, error, setTab }: { clust
         ))}
       </div>
     </article>
-  );
-}
-
-function Dashboard({
-  data,
-  selectedCluster,
-  dashboardCategoryId,
-  setDashboardCategoryId,
-  setSelectedClusterId,
-}: {
-  data: DashboardBundle;
-  selectedCluster: Cluster;
-  dashboardCategoryId: string;
-  setDashboardCategoryId: (id: string) => void;
-  setSelectedClusterId: (id: string) => void;
-}) {
-  const { lang, t } = useLang();
-  const dashboardCluster = dashboardCategoryId === "all"
-    ? undefined
-    : data.clusters.find((cluster) => cluster.cluster_id === dashboardCategoryId) || selectedCluster;
-  const rawRows = dashboardCluster ? clusterPosts(data.posts, dashboardCluster.cluster_id) : data.posts;
-  // Word cloud / sentiment chart have no browsing value past a few hundred terms -- the
-  // long tail is orders of magnitude smaller than the head. Cap at 400 by mentions rather
-  // than rendering every unique term (300k+ across the full keyword set) as a DOM node.
-  const dashboardTerms = [...(dashboardCluster ? dashboardCluster.terms : aggregateTerms(data.keywords))]
-    .sort((a, b) => Number(b.mentions || 0) - Number(a.mentions || 0))
-    .slice(0, 400);
-  const maxTrend = maxOf(data.clusters.map((cluster) => cluster.trend_score), 1);
-  return (
-    <section>
-      <SectionHeader
-        kicker={t("vizKicker")}
-        title={t("vizTitle")}
-        body={t("vizBody")}
-      />
-      <div className="dashboardGrid">
-        <article className="panel wide">
-          <div className="panelHeader">
-            <span>{t("overallKicker")}</span>
-            <h3>{t("trendRankTitle")}</h3>
-          </div>
-          <div className="barChart">
-            {data.clusters.map((cluster) => (
-              <button key={cluster.cluster_id} onClick={() => setSelectedClusterId(cluster.cluster_id)}>
-                <span>{cluster.cluster_name}</span>
-                <i>
-                  <b style={{ width: `${(cluster.trend_score / maxTrend) * 100}%` }} />
-                </i>
-                <strong>{fmt(cluster.trend_score, 1)}</strong>
-              </button>
-            ))}
-          </div>
-        </article>
-        {scoreOptions.slice(1).map((option) => (
-          <article key={option.key} className="panel">
-            <div className="panelHeader">
-              <span>{dimensionLabel(lang, option.key)}</span>
-              <h3>{dimensionLabel(lang, option.key)} {t("rankingSuffix")}</h3>
-            </div>
-            <div className="dimensionChart">
-              {[...data.clusters]
-                .sort((a, b) => Number(b[option.key]) - Number(a[option.key]))
-                .map((cluster, index) => (
-                  <button key={cluster.cluster_id} onClick={() => setSelectedClusterId(cluster.cluster_id)}>
-                    <b>#{index + 1}</b>
-                    <span>{cluster.cluster_name}</span>
-                    <i>
-                      <b style={{ width: `${Math.max(4, Number(cluster[option.key]) * 20)}%` }} />
-                    </i>
-                    <em>{dimensionRawValue(cluster, option.key, lang, t)}</em>
-                  </button>
-                ))}
-            </div>
-          </article>
-        ))}
-        <article className="panel wide rawPanel">
-          <div className="panelHeader">
-            <span>{t("rawDataKicker")}</span>
-            <h3>{t("rawDataTitle")}</h3>
-          </div>
-          <RawTable rows={rawRows.length ? rawRows : data.posts.slice(0, 12)} />
-        </article>
-        <article className="panel wide filterPanel">
-          <label>
-            {t("categoryFilter")}
-            <select
-              value={dashboardCategoryId}
-              onChange={(event) => {
-                setDashboardCategoryId(event.target.value);
-                if (event.target.value !== "all") setSelectedClusterId(event.target.value);
-              }}
-            >
-              <option value="all">{t("overallAllCategories")}</option>
-              {[...data.clusters]
-                .sort((a, b) => a.cluster_name.localeCompare(b.cluster_name))
-                .map((cluster) => (
-                  <option key={cluster.cluster_id} value={cluster.cluster_id}>
-                    {cluster.cluster_name}
-                  </option>
-                ))}
-            </select>
-          </label>
-        </article>
-        <article className="panel half">
-          <div className="panelHeader">
-            <span>{t("weeklyTrendKicker")}</span>
-            <h3>{t("dailyChartTitle")}</h3>
-          </div>
-          <DailyChart posts={rawRows} />
-        </article>
-        <article className="panel half">
-          <div className="panelHeader">
-            <span>{t("keywordSentimentKicker")}</span>
-            <h3>{t("keywordSentimentTitle")}</h3>
-          </div>
-          <KeywordSentiment terms={dashboardTerms} zoom={1} />
-        </article>
-      </div>
-    </section>
-  );
-}
-
-function RawTable({ rows }: { rows: Post[] }) {
-  const { t } = useLang();
-  // This is a raw-evidence sample viewed through a 300px scroll window, not a full data
-  // export -- capping avoids rendering hundreds of thousands of DOM rows (the full "all
-  // categories" post-brand index) for a view only ever browsed a handful of rows at a time.
-  const visibleRows = rows.slice(0, 500);
-  return (
-    <div className="rawTable">
-      <div className="rawHead">
-        <span>{t("rawHeadBrandSignal")}</span>
-        <span>{t("rawHeadPost")}</span>
-        <span>{t("rawHeadSubreddit")}</span>
-        <span>{t("rawHeadSentiment")}</span>
-        <span>{t("rawHeadUrl")}</span>
-      </div>
-      <div className="rawBody">
-        {visibleRows.map((post, index) => (
-          <div key={`${post.url || post.title}-${index}`} className="rawRow">
-            <span>{post.brand_display || t("fallbackReddit")}</span>
-            <span>
-              <strong>{post.title}</strong>
-              <small>{post.text_snippet || post.context_window}</small>
-            </span>
-            <span>r/{post.subreddit || t("fallbackUnknown")}</span>
-            <span className={post.sentiment_label || "neutral"}>{post.sentiment_label || "neutral"}</span>
-            <span>
-              <a href={post.url || "#"} target="_blank" rel="noreferrer">
-                {t("open")} <ExternalLink size={12} />
-              </a>
-            </span>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-const weekdayFallback = {
-  en: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
-  zh: ["周一", "周二", "周三", "周四", "周五", "周六", "周日"]
-} as const;
-
-function DailyChart({ posts }: { posts: Post[] }) {
-  const { lang } = useLang();
-  const locale = lang === "zh" ? "zh-CN" : "en-US";
-  const rows = useMemo(() => {
-    const map = new Map<string, { label: string; posts: number; sentiment: number }>();
-    posts.forEach((post) => {
-      const date = post.published_at ? new Date(post.published_at) : undefined;
-      if (!date || Number.isNaN(date.getTime())) return;
-      const key = date.toISOString().slice(0, 10);
-      const current = map.get(key) || { label: date.toLocaleDateString(locale, { weekday: "short" }), posts: 0, sentiment: 0 };
-      current.posts += 1;
-      current.sentiment += Number(post.sentiment_compound || 0);
-      map.set(key, current);
-    });
-    return [...map.entries()]
-      .sort(([a], [b]) => a.localeCompare(b))
-      .map(([, row]) => ({ ...row, sentiment: row.posts ? row.sentiment / row.posts : 0 }));
-  }, [posts, locale]);
-  const chartRows = rows.length ? rows : weekdayFallback[lang].map((label) => ({ label, posts: 0, sentiment: 0 }));
-  const maxPosts = maxOf(chartRows.map((row) => row.posts), 1);
-  return (
-    <div className="dailyChart">
-      {chartRows.map((row) => (
-        <div key={row.label}>
-          <i style={{ height: `${Math.max(4, (row.posts / maxPosts) * 100)}%` }} />
-          <strong>{row.posts}</strong>
-          <small>{row.label}</small>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function KeywordSentiment({ terms, zoom }: { terms: ClusterTerm[]; zoom: number }) {
-  const { lang } = useLang();
-  const maxMentions = terms.reduce((max, term) => Math.max(max, term.mentions || 0), 1);
-  return (
-    <div className="keywordViewport">
-      <div className="keywordRows" style={{ width: `${zoom * 100}%` }}>
-        {terms.map((term) => {
-          const x = Math.max(6, Math.min(96, ((term.mentions || 0) / maxMentions) * 92));
-          const state = sentimentClass(term.sentiment);
-          return (
-            <div key={term.term}>
-              <span>{term.term}</span>
-              <i>
-                <b className={state} style={{ left: `${x}%` }} />
-              </i>
-              <em className={state}>
-                {term.mentions || 0} · {sentimentTag(lang, state as SentimentKey)}
-              </em>
-            </div>
-          );
-        })}
-      </div>
-    </div>
   );
 }
