@@ -1975,7 +1975,11 @@ function SignalsTab({
   const selectedSearchCategory = sortedCategories.find((cluster) => cluster.cluster_id === signalCategoryId);
   const categorySuggestions = useMemo(() => {
     const query = brandQuery.trim().toLocaleLowerCase();
-    if (!query) return sortedCategories.slice(0, 8);
+    // Unfiltered (dropdown just opened, nothing typed yet) shows every category the current
+    // identity scope allows -- the scrollable .categorySuggestions container (max-height +
+    // overflow-y: auto) handles long lists, so there's no need to truncate here. A typed
+    // query still caps at 8 since that's a narrowing search, not a browse-everything list.
+    if (!query) return sortedCategories;
     return sortedCategories.filter((cluster) => cluster.cluster_name.toLocaleLowerCase().includes(query)).slice(0, 8);
   }, [brandQuery, sortedCategories]);
   const illustrationByClusterId = useMemo(() => new Map(clusters.map((cluster) => [cluster.cluster_id, cluster.illustration_url || ""])), [clusters]);
