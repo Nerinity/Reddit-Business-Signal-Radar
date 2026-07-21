@@ -34,6 +34,18 @@ def col(df: pd.DataFrame, name: str, default: object = "") -> pd.Series:
     return df[name] if name in df.columns else pd.Series([default] * len(df), index=df.index)
 
 
+def first_available_col(df: pd.DataFrame, names: tuple[str, ...], default: object = "") -> pd.Series:
+    """Return the first existing source column without nesting a fallback Series.
+
+    Passing col(df, "fallback") as col()'s scalar default creates a Series whose cells
+    each contain another Series. Numeric coercion then turns every row into NaN/0.
+    """
+    for name in names:
+        if name in df.columns:
+            return df[name]
+    return pd.Series([default] * len(df), index=df.index)
+
+
 def choose_text(df: pd.DataFrame) -> pd.Series:
     text = col(df, "text", "").fillna("").astype(str)
     selftext = col(df, "selftext", "").fillna("").astype(str)
@@ -64,11 +76,13 @@ def main() -> None:
 
     out["title_raw"] = col(df, "title", "").fillna("").astype(str)
     out["text_raw"] = choose_text(df)
-    out["subreddit"] = col(df, "subreddit", col(df, "community", "")).fillna("").astype(str)
+    out["subreddit"] = first_available_col(df, ("subreddit", "community"), "").fillna("").astype(str)
     out["published_at"] = pd.to_datetime(
-        col(df, "published_at", col(df, "created_at", "")), utc=True, errors="coerce"
+        first_available_col(df, ("published_at", "created_at"), ""), utc=True, errors="coerce"
     )
-    out["score"] = pd.to_numeric(col(df, "score", col(df, "engagement_score", 0)), errors="coerce").fillna(0)
+    out["score"] = pd.to_numeric(
+        first_available_col(df, ("score", "engagement_score"), 0), errors="coerce"
+    ).fillna(0)
     out["num_comments"] = pd.to_numeric(col(df, "num_comments", 0), errors="coerce").fillna(0)
     out["url"] = col(df, "url", "").fillna("").astype(str)
     out["author"] = col(df, "author", "").fillna("").astype(str)

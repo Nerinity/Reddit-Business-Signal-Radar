@@ -148,12 +148,13 @@ const dict = {
 
   quadrantKicker: { en: "Opportunity Quadrant", zh: "机会象限" },
   quadrantTitle: { en: "Discussion Volume x Cross-Community Map", zh: "讨论度 x 跨社区数地图" },
+  momentumScoreLabel: { en: "Momentum Score", zh: "Momentum Score" },
   xZoom: { en: "X Zoom", zh: "X 轴缩放" },
   dragRight: { en: "Drag Right", zh: "向右拖动" },
-  axisHighMomentum: { en: "Cross-community count", zh: "跨社区数" },
-  axisReach: { en: "Discussion volume", zh: "讨论度" },
-  listHighHigh: { en: "Top 5 High-Growth, Broad-Reach Categories", zh: "高热 + 高扩 Top 5" },
-  listHighLow: { en: "Top 5 High-Growth, Niche Categories", zh: "高热 + 高垂 Top 5" },
+  axisHighMomentum: { en: "Community count", zh: "社区数" },
+  axisReach: { en: "Post volume", zh: "帖子量" },
+  listHighHigh: { en: "High Volume + Broad Reach Top 5", zh: "高帖量 + 高扩散 Top 5" },
+  listHighLow: { en: "High Volume + High Verticality Top 5", zh: "高帖量 + 高垂直 Top 5" },
   noOpportunityCategories: { en: "No categories meet the criteria this week.", zh: "本周暂无符合条件的类目。" },
 
   signalDetailKicker: { en: "Signal Detail", zh: "信号详情" },
@@ -192,8 +193,8 @@ const dict = {
   newActiveCategoriesHelp: { en: "Categories with no valid discussions in either prior full week that first reached the minimum discussion threshold this week.", zh: "此前连续两个完整自然周无有效讨论、本周首次达到最低讨论门槛的类目。" },
   newlyDetectedSignals: { en: "Newly Detected Signals This Week", zh: "本周新出现信号" },
   newlyDetectedSignalsHelp: { en: "Brand or keyword signals absent from this category in both prior full weeks and first detected this week.", zh: "此前连续两个完整自然周未在该类目出现、本周首次被识别到的品牌或关键词信号。" },
-  verifiedBrandTag: { en: "TikTok Brand", zh: "TikTok 收录品牌" },
-  tiktokShopRecordedBrand: { en: "TikTok Brand", zh: "TikTok 收录品牌" },
+  verifiedBrandTag: { en: "TikTok Listed Brand", zh: "TikTok 收录品牌" },
+  tiktokShopRecordedBrand: { en: "TikTok Listed Brand", zh: "TikTok 收录品牌" },
   newBrandSignalsHome: { en: "New Brand Signals This Week", zh: "本周新出现的品牌" },
   newBrandKeywordSignalsHome: { en: "New Brands / Keywords This Week", zh: "本周新出现的品牌/关键词" },
   topSignalsInCategory: { en: "Top 5 brands / keywords", zh: "该类目 Top 5 品牌 / 关键词" },
@@ -236,7 +237,7 @@ const dict = {
   showingLabel: { en: "Showing", zh: "显示" },
 
   categoryOpportunityMap: { en: "Category Opportunity Map", zh: "类目机会分布" },
-  scalingOpportunities: { en: "Scaling Opportunities", zh: "规模化机会" },
+  scalingOpportunities: { en: "High Volume + Broad Reach Top 5", zh: "高帖量 + 高扩散 Top 5" },
   nicheOpportunities: { en: "Niche Opportunities", zh: "垂直机会" },
   broadEstablished: { en: "Broad & Established", zh: "成熟广泛" },
   limitedSignals: { en: "Limited Signals", zh: "有限信号" },
@@ -290,7 +291,7 @@ const dict = {
 
   // V2: reduced opportunity quadrants
   scalingOpportunitiesFull: { en: "Scaling Opportunities", zh: "规模化机会" },
-  emergingNicheOpportunities: { en: "Emerging Niche Opportunities", zh: "新兴垂直机会" },
+  emergingNicheOpportunities: { en: "High Volume + High Verticality Top 5", zh: "高帖量 + 高垂直 Top 5" },
   bubbleTooltipPosts: { en: "Posts", zh: "帖子数" },
   bubbleTooltipCommunities: { en: "Communities", zh: "社区数" },
   bubbleTooltipTrendScore: { en: "Trend Score", zh: "趋势分" }

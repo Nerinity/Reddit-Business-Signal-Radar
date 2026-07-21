@@ -56,6 +56,7 @@ type ClusterBrand = {
   brand_norm: string;
   brand_display: string;
   brand_signal_type?: string;
+  is_tiktok_shop_listed?: boolean;
   brand_domain?: string;
   mentions?: number;
   unique_posts?: number;
@@ -107,6 +108,7 @@ type Brand = {
   brand_display: string;
   aliases?: string[];
   brand_signal_type?: string;
+  is_tiktok_shop_listed?: boolean;
   brand_domain?: string;
   mentions: number;
   unique_posts: number;
@@ -123,6 +125,7 @@ type ClusterBrandSignal = {
   brand_norm: string;
   brand_display: string;
   brand_signal_type: string;
+  is_tiktok_shop_listed?: boolean;
   unique_posts: number;
   mentions: number;
   avg_sentiment?: number;
@@ -161,6 +164,7 @@ type SparkleSignal = {
   display: string;
   source_type: string;
   ui_tag: "verified_brand" | "brand_keyword";
+  is_tiktok_shop_listed?: boolean;
   unique_posts: number;
   mentions: number;
   avg_sentiment: number;
@@ -340,7 +344,7 @@ type View = "identity" | "home" | "explore";
 // pages. "evidence" stays as an internal detail view, not a user-facing tab.
 type ExploreTab = "category" | "signals" | "evidence";
 type SignalSort = "volume" | "mentions" | "positive";
-type RankView = "worth_watching" | "all";
+type RankView = "top10" | "all";
 
 const INFORMATIVE_KEYWORD_TYPES = new Set([
   "category_keyword",
@@ -436,8 +440,7 @@ function dimensionTag(cluster: Cluster, sortBy: ScoreKey, lang: Lang): { label: 
 
 function dimensionContext(cluster: Cluster, sortBy: ScoreKey, lang: Lang, t: (key: TKey) => string) {
   if (sortBy === "momentum_score") {
-    const growth = cluster.previous_week_posts === 0 ? (lang === "zh" ? "首次出现" : "New this week") : `${finite(cluster.growth_rate) >= 0 ? "+" : ""}${Math.round(finite(cluster.growth_rate) * 100)}% WoW`;
-    return `${cluster.current_week_posts} ${t("postsUnit")} · ${growth}`;
+    return `${cluster.current_week_posts} ${t("postsUnit")} · ${t("momentumScoreLabel")} ${fmt(cluster.momentum_score, 1)}`;
   }
   if (sortBy === "cross_community_score") return `${cluster.unique_subreddits} ${t("communitiesUnit")} · ${cluster.current_week_posts} ${t("postsUnit")}`;
   if (sortBy === "sentiment_score") return `${Math.round(finite(cluster.positive_share) * 100)}% ${t("positiveUnit")} · ${cluster.current_week_posts} ${t("postsUnit")}`;
@@ -477,13 +480,15 @@ function brandTag(type?: string) {
   return type ? type.replaceAll("_", " ") : "other";
 }
 
-// A whitelisted or catalog-known brand that isn't a shopping brand (PayPal, TikTok,
-// Google...) should never read as "Verified"/"Known" in the Brands/Keywords list --
-// that badge is reserved for shopping brands. Domain wins over signal-type here.
-function brandTypeLabel(type: string | undefined, lang: Lang, domain?: string) {
+function isTikTokListedBrand(listed?: boolean) {
+  return listed === true;
+}
+
+// Both source types come from the deduplicated union of the whitelist and full-domain
+// brand_name columns. Their provenance stays separate while their product badge is shared.
+function brandTypeLabel(type: string | undefined, lang: Lang, domain?: string, listed?: boolean) {
+  if (isTikTokListedBrand(listed)) return lang === "zh" ? "TikTok 收录品牌" : "TikTok Listed Brand";
   if (isPlatformServiceBrand(domain)) return lang === "zh" ? "平台 / 服务" : "Platform / Service";
-  if (type === "confirmed_whitelist_brand") return lang === "zh" ? "TikTok 收录品牌" : "TikTok Brand";
-  if (type === "catalog_known_brand") return "";
   return lang === "zh" ? "候选品牌" : "Emerging Candidate";
 }
 
@@ -498,9 +503,8 @@ function maxOf(values: number[], fallback: number) {
   return result;
 }
 
-function brandTypeClass(type?: string) {
-  if (type === "confirmed_whitelist_brand") return "verified";
-  if (type === "catalog_known_brand") return "known";
+function brandTypeClass(type?: string, listed?: boolean) {
+  if (isTikTokListedBrand(listed)) return "verified";
   return "candidate";
 }
 
@@ -568,27 +572,8 @@ function sentimentValue(value: number | undefined, lang: Lang, t: (key: TKey) =>
   );
 }
 
-// Real week-over-week multiple (current / previous), not the percentage-style
-// growth_rate field -- growth_rate = (current - previous) / previous under-reports
-// the actual multiple by 1x (doubling shows as "1.0x" instead of "2.0x").
-function spikeRatio(cluster: Cluster): number | null {
-  const previous = Number(cluster.previous_week_posts || 0);
-  const current = Number(cluster.current_week_posts || 0);
-  if (previous <= 0) return null;
-  return current / previous;
-}
-
-function spikeValue(cluster: Cluster, t: (key: TKey) => string): string {
-  const ratio = spikeRatio(cluster);
-  return ratio === null ? t("newRatioLabel") : `${fmt(ratio, 1)}x`;
-}
-
-function spikeLabel(cluster: Cluster, t: (key: TKey) => string): string {
-  return `${t("spikeWord")}: ${spikeValue(cluster, t)}`;
-}
-
 function dimensionRawValue(cluster: Cluster, key: ScoreKey, lang: Lang, t: (key: TKey) => string) {
-  if (key === "momentum_score") return <span className="rawValue">{cluster.current_week_posts} {t("postsUnit")} · {spikeLabel(cluster, t)}</span>;
+  if (key === "momentum_score") return <span className="rawValue">{t("momentumScoreLabel")} {fmt(cluster.momentum_score, 1)}</span>;
   if (key === "engagement_score") return <span className="rawValue">{fmt(cluster.avg_log_engagement, 2)} {t("engagementUnit")}</span>;
   if (key === "cross_community_score") return <span className="rawValue">{cluster.unique_subreddits} {t("subredditsUnit")}</span>;
   if (key === "sentiment_score") return sentimentValue(cluster.avg_sentiment, lang, t);
@@ -678,7 +663,7 @@ function RadarAppInner() {
   const [view, setView] = useState<View>("identity");
   const [tab, setTab] = useState<ExploreTab>("category");
   const [sortBy, setSortBy] = useState<ScoreKey>("trend_score");
-  const [rankView, setRankView] = useState<RankView>("worth_watching");
+  const [rankView, setRankView] = useState<RankView>("top10");
   const [selectedClusterId, setSelectedClusterId] = useState<string>("");
   const [signalCategoryId, setSignalCategoryId] = useState("");
   const [brandQuery, setBrandQuery] = useState("");
@@ -939,6 +924,7 @@ function RadarAppInner() {
         communityCoverage: selectedClusterSignal?.unique_subreddits,
         clusterAverageSentiment: categoryScoped ? Number(selectedCategory?.avg_sentiment || 0) : undefined,
         tag: item.brand_signal_type || "candidate_non_whitelist_brand",
+        isTikTokShopListed: item.is_tiktok_shop_listed,
         brandDomain: item.brand_domain,
         url: item.google_search_url || googleBrandUrl(item.brand_display),
         logoUrl: item.logo_url || "",
@@ -1313,7 +1299,7 @@ function Home({ data, onOpenCategoryTab, onOpenBrandTab, onOpenCluster, onOpenBr
     const brands = cluster.brands
       .filter((brand) => isCatalogShoppingBrand(brand.brand_signal_type, brand.brand_domain)
         || isVerifiedShoppingBrand(brand.brand_signal_type, brand.brand_domain))
-      .map((brand) => ({ key: `brand:${brand.brand_norm}`, kind: "brand" as const, norm: brand.brand_norm, display: brand.brand_display, volume: Number(brand.unique_posts || 0), tag: brand.brand_signal_type === "confirmed_whitelist_brand" ? t("verifiedBrandTag") : "" }));
+      .map((brand) => ({ key: `brand:${brand.brand_norm}`, kind: "brand" as const, norm: brand.brand_norm, display: brand.brand_display, volume: Number(brand.unique_posts || 0), tag: isTikTokListedBrand(brand.is_tiktok_shop_listed) ? t("verifiedBrandTag") : "" }));
     const keywords = cluster.terms
       .filter((term) => isInformativeKeyword(term.entity_type))
       .map((term) => ({ key: `keyword:${term.term_norm}`, kind: "keyword" as const, norm: term.term_norm, display: term.term, volume: Number(term.unique_posts || 0), tag: "" }));
@@ -1360,7 +1346,7 @@ function Home({ data, onOpenCategoryTab, onOpenBrandTab, onOpenCluster, onOpenBr
       </div>
       <SectionHeader kicker={t("worthWatchingKicker")} title={t("worthWatchingTitle")} body="" />
       <div className={`homeFocusGrid ${hasFreshSignals ? "" : "single"}`}>
-        <div className="homeRadarSection">
+        <div className="panel homeRadarSection">
           <div className="panelHeader"><h3>{t("topClustersTitle")}</h3></div>
           <div className="homeClusterScroller">
             {topClusters.map((cluster, index) => (
@@ -1371,7 +1357,7 @@ function Home({ data, onOpenCategoryTab, onOpenBrandTab, onOpenCluster, onOpenBr
         {hasFreshSignals && <div className="homeSparkleGrid">
             {newSignals.length > 0 && <article className="panel">
               <div className="panelHeader"><span>{t("freshKicker")}</span><h3>{t("newBrandKeywordSignalsHome")}</h3></div>
-              <div className="compactSignalList">{newSignals.slice(0, 10).map((signal) => <div key={`${signal.kind}:${signal.cluster_id}:${signal.signal_norm}`} className="compactSignalRow"><span><b>{signal.display}</b>{signal.source_type === "confirmed_whitelist_brand" && <em className="brandTypeBadge verified">{t("tiktokShopRecordedBrand")}</em>}</span><div><button onClick={() => signal.kind === "brand" ? openBrandProfile(signal.display) : openExploreTopic(signal.display)}>{t("webSearchLabel")} <ExternalLink size={12} /></button><button onClick={() => openEvidence(signal.kind === "brand" ? {kind:"brand", clusterId:signal.cluster_id, brandNorm:signal.signal_norm, display:signal.display} : {kind:"keyword", clusterId:signal.cluster_id, termNorm:signal.signal_norm, display:signal.display})}>{t("redditEvidenceLabel")} <ArrowRight size={12} /></button></div></div>)}</div>
+              <div className="compactSignalList">{newSignals.slice(0, 10).map((signal) => <div key={`${signal.kind}:${signal.cluster_id}:${signal.signal_norm}`} className="compactSignalRow"><span><b>{signal.display}</b>{isTikTokListedBrand(signal.is_tiktok_shop_listed) && <em className="brandTypeBadge verified">{t("tiktokShopRecordedBrand")}</em>}</span><div><button onClick={() => signal.kind === "brand" ? openBrandProfile(signal.display) : openExploreTopic(signal.display)}>{t("webSearchLabel")} <ExternalLink size={12} /></button><button onClick={() => openEvidence(signal.kind === "brand" ? {kind:"brand", clusterId:signal.cluster_id, brandNorm:signal.signal_norm, display:signal.display} : {kind:"keyword", clusterId:signal.cluster_id, termNorm:signal.signal_norm, display:signal.display})}>{t("redditEvidenceLabel")} <ArrowRight size={12} /></button></div></div>)}</div>
             </article>}
             {data.sparkle.newly_active_clusters.length > 0 && <article className="panel">
               <div className="panelHeader"><span>{t("freshKicker")}</span><h3>{t("newlyActiveCategoriesShort")}</h3></div>
@@ -1454,10 +1440,7 @@ function CategoryTab({
   const upperRef = useRef<HTMLDivElement | null>(null);
   const visibleClusters = rankView === "all"
     ? clusters
-    : clusters.filter((cluster) => {
-        const tone = dimensionTag(cluster, sortBy, lang).tone;
-        return tone !== "risk" && tone !== "steady";
-      });
+    : clusters.slice(0, 10);
   return (
     <div className="categoryTabPage">
       <div className="trendGrid" ref={upperRef}>
@@ -1466,15 +1449,21 @@ function CategoryTab({
             <span>{t("analysisView")}</span>
             <h3>{t("currentRanking")}</h3>
           </div>
-          <div className="sortRow">
-            <label className="sortSelectLabel">
-              {t("sortByLabel")}
-              <select value={sortBy} onChange={(event) => setSortBy(event.target.value as ScoreKey)}>
-                {scoreOptions.map((option) => (
-                  <option key={option.key} value={option.key}>{dimensionLabel(lang, option.key)}</option>
-                ))}
-              </select>
-            </label>
+          <div className="sortRow dimensionSortRow">
+            <div className="dimensionFilters" role="tablist" aria-label={t("sortByLabel")}>
+              {scoreOptions.map((option) => (
+                <button
+                  key={option.key}
+                  type="button"
+                  role="tab"
+                  aria-selected={sortBy === option.key}
+                  className={sortBy === option.key ? "active" : ""}
+                  onClick={() => setSortBy(option.key)}
+                >
+                  {dimensionLabel(lang, option.key)}
+                </button>
+              ))}
+            </div>
             <span className="rankedByNote">{t("rankedByPrefix")} {dimensionLabel(lang, sortBy)}{t("rankedBySuffix")}</span>
           </div>
           <p className="analysisViewHelper">{dimensionHelper(lang, sortBy)}</p>
@@ -1485,9 +1474,9 @@ function CategoryTab({
             <h3>{t("rankTitle")}</h3>
           </div>
           <div className="rankViewToggle" role="tablist">
-            {(["worth_watching", "all"] as RankView[]).map((view) => (
+            {(["top10", "all"] as RankView[]).map((view) => (
               <button key={view} role="tab" aria-selected={rankView === view} className={rankView === view ? "active" : ""} onClick={() => setRankView(view)}>
-                {view === "worth_watching" ? t("viewWorthWatching") : t("viewAll")}
+                {view === "top10" ? t("viewTop10") : t("viewAll")}
               </button>
             ))}
           </div>
@@ -1576,6 +1565,7 @@ type NormalizedSignalRow = {
   mentions: number;
   sentiment: number;
   signalType?: string;
+  isTikTokShopListed?: boolean;
   brandDomain?: string;
   entityType?: string;
   logoUrl?: string;
@@ -1590,7 +1580,8 @@ function toSignalRow(item: ClusterBrand | ClusterTerm, kind: "brand" | "keyword"
     return {
       kind, id: brand.brand_norm, name: brand.brand_display,
       uniquePosts: Number(brand.unique_posts || 0), mentions: Number(brand.mentions || 0), sentiment: Number(brand.sentiment || 0),
-      signalType: brand.brand_signal_type, brandDomain: brand.brand_domain, logoUrl: brand.logo_url || ""
+      signalType: brand.brand_signal_type, isTikTokShopListed: brand.is_tiktok_shop_listed,
+      brandDomain: brand.brand_domain, logoUrl: brand.logo_url || ""
     };
   }
   const term = item as ClusterTerm;
@@ -1633,7 +1624,7 @@ function RelatedSignalsPanel({ cluster, openEvidence }: { cluster: Cluster; open
         {!filteredRows.length && <p className="emptyState">{t("noBrandsKeywordsMsg")}</p>}
         {filteredRows.slice(0, visibleCount).map((item) => {
           const isBrand = item.kind === "brand";
-          const showTikTokBadge = isBrand && item.signalType === "confirmed_whitelist_brand";
+          const showTikTokBadge = isBrand && isTikTokListedBrand(item.isTikTokShopListed);
           return (
             <div key={`${item.kind}:${item.id}`} className="signalRow">
               <span className="signalRowText">
@@ -1655,7 +1646,14 @@ function RelatedSignalsPanel({ cluster, openEvidence }: { cluster: Cluster; open
   );
 }
 
-type ScatterPoint = { cluster: Cluster; x: number; y: number; size: number };
+type ScatterPoint = {
+  cluster: Cluster;
+  x: number;
+  y: number;
+  size: number;
+  highVolume: boolean;
+  highReach: boolean;
+};
 
 // Fixed reference canvas the deconfliction math runs against -- the actual .scatter
 // container is responsive (and can be zoomed 1x-3x), but the *relative* spacing produced
@@ -1663,20 +1661,36 @@ type ScatterPoint = { cluster: Cluster; x: number; y: number; size: number };
 const SCATTER_CANVAS_WIDTH = 960;
 const SCATTER_CANVAS_HEIGHT = 440;
 
-// Bubble x/y come from absolute current_week_posts/unique_subreddits values, so most
-// lower-volume clusters land on nearly the same handful of pixels near the origin and
-// become visually indistinguishable/unclickable even though every cluster IS present in
-// the data (see OpportunitySection's clusters prop, always the full filteredClusters set).
+function percentilePosition(value: number, sortedValues: number[]): number {
+  if (!sortedValues.length) return 0;
+  let upperBound = 0;
+  while (upperBound < sortedValues.length && sortedValues[upperBound] <= value) upperBound += 1;
+  return upperBound / sortedValues.length;
+}
+
+// Bubble x/y use post-volume and community-count percentile positions. The center lines
+// therefore represent the same 50% waterlines used to build the two lists below.
 // This runs a few passes of simple pairwise separation so overlapping bubbles nudge apart
 // into distinct, independently clickable circles without materially changing their
 // relative position on the two axes.
-function deconflictBubbles(clusters: Cluster[], maxPosts: number, maxSubreddits: number, maxTrend: number): ScatterPoint[] {
+function deconflictBubbles(
+  clusters: Cluster[],
+  sortedPostCounts: number[],
+  sortedCommunityCounts: number[],
+  maxTrend: number
+): ScatterPoint[] {
   const points: ScatterPoint[] = clusters.map((cluster) => ({
     cluster,
-    x: 6 + Math.max(0, Math.min(1, cluster.current_week_posts / maxPosts)) * 88,
-    y: 6 + Math.max(0, Math.min(1, cluster.unique_subreddits / maxSubreddits)) * 88,
-    size: 16 + 34 * (cluster.trend_score / maxTrend)
+    x: 6 + percentilePosition(cluster.current_week_posts, sortedPostCounts) * 88,
+    y: 6 + percentilePosition(cluster.unique_subreddits, sortedCommunityCounts) * 88,
+    size: 16 + 34 * (cluster.trend_score / maxTrend),
+    highVolume: cluster.current_week_posts >= sortedPostCounts[Math.floor(sortedPostCounts.length / 2)],
+    highReach: cluster.unique_subreddits >= sortedCommunityCounts[Math.floor(sortedCommunityCounts.length / 2)]
   }));
+  const keepInQuadrant = (point: ScatterPoint) => {
+    point.x = point.highVolume ? Math.max(50.5, point.x) : Math.min(49.5, point.x);
+    point.y = point.highReach ? Math.max(50.5, point.y) : Math.min(49.5, point.y);
+  };
   const PADDING = 4;
   for (let pass = 0; pass < 4; pass += 1) {
     for (let i = 0; i < points.length; i += 1) {
@@ -1707,6 +1721,8 @@ function deconflictBubbles(clusters: Cluster[], maxPosts: number, maxSubreddits:
         a.y = Math.max(2, Math.min(98, a.y - (ny / SCATTER_CANVAS_HEIGHT) * 100));
         b.x = Math.max(2, Math.min(98, b.x + (nx / SCATTER_CANVAS_WIDTH) * 100));
         b.y = Math.max(2, Math.min(98, b.y + (ny / SCATTER_CANVAS_HEIGHT) * 100));
+        keepInQuadrant(a);
+        keepInQuadrant(b);
       }
     }
   }
@@ -1736,13 +1752,19 @@ function OpportunitySection({
   openClusterDetail: (id: string) => void;
 }) {
   const { t } = useLang();
-  const maxPosts = maxOf(clusters.map((cluster) => cluster.current_week_posts), 1);
-  const maxSubreddits = maxOf(clusters.map((cluster) => cluster.unique_subreddits), 1);
   const maxTrend = maxOf(clusters.map((cluster) => cluster.trend_score), 1);
+  const sortedPostCounts = useMemo(
+    () => clusters.map((cluster) => cluster.current_week_posts).sort((a, b) => a - b),
+    [clusters]
+  );
+  const sortedCommunityCounts = useMemo(
+    () => clusters.map((cluster) => cluster.unique_subreddits).sort((a, b) => a - b),
+    [clusters]
+  );
   const dragOffset = (drag / 100) * (zoom - 1) * 100;
   const points = useMemo(
-    () => deconflictBubbles(clusters, maxPosts, maxSubreddits, maxTrend),
-    [clusters, maxPosts, maxSubreddits, maxTrend]
+    () => deconflictBubbles(clusters, sortedPostCounts, sortedCommunityCounts, maxTrend),
+    [clusters, sortedPostCounts, sortedCommunityCounts, maxTrend]
   );
   // Top clusters by trend_score get their label shown by default (not just on hover/
   // selection) so the map isn't a wall of anonymous circles for the highest-priority
@@ -1766,23 +1788,25 @@ function OpportunitySection({
       duplicateClusterIds: duplicates.length ? duplicates.join(", ") : "(none)"
     });
   }, [points, clusters]);
-  const hasPercentiles = (cluster: Cluster) => Number.isFinite(Number(cluster.momentum_percentile))
-    && Number.isFinite(Number(cluster.cross_community_percentile));
-  const momentumRank = (cluster: Cluster) => hasPercentiles(cluster) ? Number(cluster.momentum_percentile) : cluster.momentum_score / 5;
-  const reachRank = (cluster: Cluster) => hasPercentiles(cluster) ? Number(cluster.cross_community_percentile) : cluster.cross_community_score / 5;
-  const scaling = [...clusters]
-    .filter((cluster) => momentumRank(cluster) >= 0.5 && reachRank(cluster) >= 0.5)
-    .sort((a, b) => b.trend_score - a.trend_score
-      || momentumRank(b) - momentumRank(a)
-      || reachRank(b) - reachRank(a)
-      || b.current_week_posts - a.current_week_posts)
+  const highVolumeCutoff = sortedPostCounts.length
+    ? sortedPostCounts[Math.floor(sortedPostCounts.length / 2)]
+    : 0;
+  const highReachCutoff = sortedCommunityCounts.length
+    ? sortedCommunityCounts[Math.floor(sortedCommunityCounts.length / 2)]
+    : 0;
+  const scaling = clusters
+    .filter((cluster) => cluster.current_week_posts >= highVolumeCutoff
+      && cluster.unique_subreddits >= highReachCutoff)
+    .sort((a, b) => b.current_week_posts - a.current_week_posts
+      || b.unique_subreddits - a.unique_subreddits
+      || b.trend_score - a.trend_score)
     .slice(0, 5);
-  const niche = [...clusters]
-    .filter((cluster) => momentumRank(cluster) >= 0.5 && reachRank(cluster) < 0.5)
-    .sort((a, b) => momentumRank(b) - momentumRank(a)
-      || b.current_week_posts - a.current_week_posts
-      || b.trend_score - a.trend_score
-      || a.unique_subreddits - b.unique_subreddits)
+  const niche = clusters
+    .filter((cluster) => cluster.current_week_posts >= highVolumeCutoff
+      && cluster.unique_subreddits < highReachCutoff)
+    .sort((a, b) => b.current_week_posts - a.current_week_posts
+      || a.unique_subreddits - b.unique_subreddits
+      || b.trend_score - a.trend_score)
     .slice(0, 5);
   // Highest trend_score cluster in the map always shows its name (not just on hover), and
   // gets the extra "pinned" emphasis treatment (backdrop pill) on top of the "labeled" set.
@@ -1861,9 +1885,7 @@ function QuadrantColumn({ title, rows, openClusterDetail }: { title: string; row
             <span>
               <strong>{cluster.cluster_name}</strong>
               <small>
-                {cluster.current_week_posts} {t("postsUnit")} · {cluster.previous_week_posts === 0
-                  ? t("newTag")
-                  : `${cluster.growth_rate >= 0 ? "+" : ""}${Math.round(cluster.growth_rate * 100)}% WoW`} · {cluster.unique_subreddits} {t("subredditsUnit")}
+                {cluster.current_week_posts} {t("postsUnit")} · {t("momentumScoreLabel")} {fmt(cluster.momentum_score, 1)} · {cluster.unique_subreddits} {t("subredditsUnit")}
               </small>
             </span>
           </button>
@@ -1886,6 +1908,7 @@ type SignalCard = {
   clusterAverageSentiment?: number;
   tag: string;
   brandDomain?: string;
+  isTikTokShopListed?: boolean;
   clusterSignals: ClusterBrandSignal[];
   aliases: string[];
   url: string;
@@ -2055,7 +2078,7 @@ function SignalsTab({
             {signalCards.slice(0, visibleCount).map((item, index) => {
               const width = Math.max(4, (item.uniquePosts / maxUniquePosts) * 100);
               const tooltip = `${item.display} · ${item.uniquePosts} ${t("postsUnit")} · ${item.mentions} ${t("mentionsUnit")} · ${sentimentTag(lang, sentimentClass(item.sentiment) as SentimentKey)}`;
-              const showTikTokBadge = item.kind === "brand" && item.tag === "confirmed_whitelist_brand";
+              const showTikTokBadge = item.kind === "brand" && isTikTokListedBrand(item.isTikTokShopListed);
               return (
                 <button
                   key={item.key}
@@ -2095,7 +2118,7 @@ function SignalsTab({
                 <span className="signalProfileCopy">
                   <strong className="brandProfileName">{selected.display}</strong>
                   <small>{selected.kind === "brand" ? t("brandSignalLabel") : t("keywordSignalLabel")}</small>
-                  {selected.kind === "brand" && selected.tag === "confirmed_whitelist_brand" && <em className="brandTypeBadge verified">{t("verifiedBrandTag")}</em>}
+                  {selected.kind === "brand" && isTikTokListedBrand(selected.isTikTokShopListed) && <em className="brandTypeBadge verified">{t("verifiedBrandTag")}</em>}
                 </span>
               </div>
               <div className="brandProfileDivider" />
@@ -2200,7 +2223,7 @@ function SignalsTab({
                         <span>
                           <strong>{signal.display}</strong>
                           <small>{signal.cluster_name} · {signal.unique_posts} {t("postsUnit")} · {signal.mentions} {t("mentionsUnit")}</small>
-                          <span className="brandTypeBadge">{signal.ui_tag === "verified_brand" ? t("verifiedBrandTag") : t("brandKeywordTag")}</span>
+                          <span className="brandTypeBadge">{isTikTokListedBrand(signal.is_tiktok_shop_listed) ? t("verifiedBrandTag") : t("brandKeywordTag")}</span>
                         </span>
                         <ArrowRight size={16} className="rowArrow" />
                       </button>

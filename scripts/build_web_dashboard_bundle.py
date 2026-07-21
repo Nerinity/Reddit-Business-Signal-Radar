@@ -105,6 +105,13 @@ def load_brand_domain_overrides(path: Path) -> dict[str, str]:
     return {str(k).strip(): str(v).strip() for k, v in raw.items() if not str(k).startswith("_")}
 
 
+def load_tiktok_listed_brand_norms(path: Path) -> set[str]:
+    if not path.exists():
+        raise FileNotFoundError(f"Missing audited TikTok-listed brand index: {path}")
+    raw = json.loads(path.read_text(encoding="utf-8"))
+    return {str(value).strip() for value in raw.get("brand_norms", []) if str(value).strip()}
+
+
 def brand_domain_for(brand_norm: str, overrides: dict[str, str]) -> str:
     return overrides.get(str(brand_norm or "").strip(), "shopping")
 
@@ -202,8 +209,10 @@ def prepare_week_posts(posts: pd.DataFrame, week: str) -> pd.DataFrame:
 
 
 def build_sparkle_data(week: str, all_weeks: list[str], scores: pd.DataFrame,
-                       terms: pd.DataFrame, brands: pd.DataFrame) -> dict:
+                       terms: pd.DataFrame, brands: pd.DataFrame,
+                       tiktok_listed_brand_norms: set[str] | None = None) -> dict:
     """Return signals absent in both prior complete weeks and present above this week's gates."""
+    tiktok_listed_brand_norms = tiktok_listed_brand_norms or set()
     try:
         week_index = all_weeks.index(week)
     except ValueError:
@@ -266,6 +275,7 @@ def build_sparkle_data(week: str, all_weeks: list[str], scores: pd.DataFrame,
         if pair not in new_brand_pairs:
             continue
         source_type = str(row.brand_signal_type)
+        is_tiktok_shop_listed = pair[1] in tiktok_listed_brand_norms
         brand_signals.append({
             "kind": "brand",
             "cluster_id": pair[0],
@@ -273,7 +283,8 @@ def build_sparkle_data(week: str, all_weeks: list[str], scores: pd.DataFrame,
             "signal_norm": pair[1],
             "display": canonical_brand_display(row.brand_display),
             "source_type": source_type,
-            "ui_tag": "verified_brand" if source_type == "confirmed_whitelist_brand" else "brand_keyword",
+            "ui_tag": "verified_brand" if is_tiktok_shop_listed else "brand_keyword",
+            "is_tiktok_shop_listed": is_tiktok_shop_listed,
             "unique_posts": safe_int(row.unique_posts),
             "mentions": safe_int(row.mentions),
             "avg_sentiment": safe_float(row.avg_sentiment),
@@ -328,9 +339,11 @@ def build_sparkle_data(week: str, all_weeks: list[str], scores: pd.DataFrame,
 def build_week_bundle(week: str, all_weeks: list[str], scores: pd.DataFrame, terms: pd.DataFrame,
                        brands: pd.DataFrame, posts: pd.DataFrame, discussion_posts: pd.DataFrame,
                        category_illustrations: dict[str, str] | None = None,
-                       brand_domain_overrides: dict[str, str] | None = None) -> dict:
+                       brand_domain_overrides: dict[str, str] | None = None,
+                       tiktok_listed_brand_norms: set[str] | None = None) -> dict:
     category_illustrations = category_illustrations or {}
     brand_domain_overrides = brand_domain_overrides or {}
+    tiktok_listed_brand_norms = tiktok_listed_brand_norms or set()
     latest = scores[scores["week_start"].astype(str).eq(week)].copy()
     sorted_scores = latest.sort_values(["trend_score", "current_week_posts"], ascending=[False, False])
 
@@ -403,6 +416,7 @@ def build_week_bundle(week: str, all_weeks: list[str], scores: pd.DataFrame, ter
             "brand_norm": norm,
             "brand_display": canonical_brand_display(meta_row.brand_display),
             "brand_signal_type": str(meta_row.brand_signal_type),
+            "is_tiktok_shop_listed": norm in tiktok_listed_brand_norms,
             "unique_posts": safe_int(cluster_post_counts.get((cid, norm), rows["unique_posts"].max())),
             "mentions": safe_int(rows["mentions"].sum()),
             "avg_sentiment": safe_float((rows["avg_sentiment"] * weights).sum() / weights.sum()),
@@ -475,6 +489,7 @@ def build_week_bundle(week: str, all_weeks: list[str], scores: pd.DataFrame, ter
                     "brand_norm": b["brand_norm"],
                     "brand_display": b["brand_display"],
                     "brand_signal_type": b["brand_signal_type"],
+                    "is_tiktok_shop_listed": b["is_tiktok_shop_listed"],
                     "brand_domain": brand_domain_for(b["brand_norm"], brand_domain_overrides),
                     "brand_confidence_tier": brand_confidence_tier(b["brand_signal_type"]),
                     "unique_posts": b["unique_posts"],
@@ -517,6 +532,7 @@ def build_week_bundle(week: str, all_weeks: list[str], scores: pd.DataFrame, ter
             "brand_display": canonical_brand_display(meta_row.brand_display),
             "aliases": aliases,
             "brand_signal_type": str(meta_row.brand_signal_type),
+            "is_tiktok_shop_listed": norm in tiktok_listed_brand_norms,
             "brand_domain": brand_domain_for(norm, brand_domain_overrides),
             "brand_confidence_tier": brand_confidence_tier(str(meta_row.brand_signal_type)),
             "unique_posts": safe_int(post_counts.get(norm, rows["unique_posts"].max())),
@@ -594,7 +610,7 @@ def build_week_bundle(week: str, all_weeks: list[str], scores: pd.DataFrame, ter
         "keywords": keyword_map,
         "brands": brand_signals,
         "cluster_brand_signals": cluster_signal_rows,
-        "sparkle": build_sparkle_data(week, all_weeks, scores, terms, brands),
+        "sparkle": build_sparkle_data(week, all_weeks, scores, terms, brands, tiktok_listed_brand_norms),
         "posts": post_index,
         "trend_distribution": [
             {"band": str(k), "count": int(v)}
@@ -678,6 +694,7 @@ def main() -> None:
     parser.add_argument("--next-output-dir", default="apps/next/public/data")
     parser.add_argument("--category-illustrations", default="configs/taxonomy/category_illustrations.json")
     parser.add_argument("--brand-domain-overrides", default="configs/taxonomy/brand_domain_overrides.json")
+    parser.add_argument("--tiktok-listed-brands", default="configs/taxonomy/tiktok_listed_brand_norms.json")
     parser.add_argument("--weeks-limit", type=int, default=None,
                          help="Only build the N most recent eligible weeks (default: all).")
     args = parser.parse_args()
@@ -690,6 +707,7 @@ def main() -> None:
         if str(url).strip()
     }
     brand_domain_overrides = load_brand_domain_overrides(Path(args.brand_domain_overrides))
+    tiktok_listed_brand_norms = load_tiktok_listed_brand_norms(Path(args.tiktok_listed_brands))
 
     base = Path(args.processed_dir)
     scores = pd.read_parquet(base / "weekly_cluster_scores.parquet")
@@ -758,7 +776,7 @@ def main() -> None:
     for week in all_weeks:
         bundle = build_week_bundle(
             week, all_weeks, scores, terms, brands, posts, discussion_posts, category_illustrations,
-            brand_domain_overrides
+            brand_domain_overrides, tiktok_listed_brand_norms
         )
         evidence_payloads = build_week_evidence(week, brands, posts, keyword_post_index)
         keywords = bundle.pop("keywords")

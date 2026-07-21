@@ -67,3 +67,23 @@ def test_sparkle_reports_insufficient_comparison_weeks():
         "newly_active_clusters": [],
         "new_signals": [],
     }
+
+
+def test_sparkle_badge_uses_audited_brand_index_not_catalog_type():
+    scores = pd.DataFrame([score(WEEKS[0], "new", 8)])
+    terms = pd.DataFrame(columns=[
+        "week_start", "cluster_id", "term_norm", "term", "entity_type",
+        "unique_posts", "mentions", "avg_sentiment",
+    ])
+    brands = pd.DataFrame([
+        brand(WEEKS[0], "new", "trusted-brand"),
+        brand(WEEKS[0], "new", "ambiguous-catalog-name"),
+    ])
+    result = module.build_sparkle_data(
+        WEEKS[0], WEEKS, scores, terms, brands, {"trusted-brand"}
+    )
+    rows = {row["signal_norm"]: row for row in result["new_signals"]}
+    assert rows["trusted-brand"]["is_tiktok_shop_listed"] is True
+    assert rows["trusted-brand"]["ui_tag"] == "verified_brand"
+    assert rows["ambiguous-catalog-name"]["is_tiktok_shop_listed"] is False
+    assert rows["ambiguous-catalog-name"]["ui_tag"] == "brand_keyword"
