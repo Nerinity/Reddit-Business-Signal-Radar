@@ -1411,7 +1411,7 @@ h4 {
 
 .signalRow {
   display: grid;
-  grid-template-columns: 44px minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) 184px;
   align-items: center;
   gap: 10px;
   min-height: 64px;
@@ -1422,13 +1422,6 @@ h4 {
   border-radius: var(--radius);
   background: var(--bg-surface);
   transition: border-color var(--transition), box-shadow var(--transition);
-}
-
-.brandAvatarSlot {
-  display: block;
-  width: 44px;
-  height: 44px;
-  flex: 0 0 44px;
 }
 
 .signalRow:hover {
@@ -1510,16 +1503,8 @@ h4 {
   color: var(--sentiment-neutral) !important;
 }
 
-.signalRow:hover .brandAvatar {
-  transform: scale(1.04);
-}
-
-/* BrandAvatar -- one shared component, one shared style. A white rounded-square
-   plate at a consistent size/padding regardless of whether it holds a real logo
-   image or the initials fallback, so the two states never look like different
-   components. */
-.brandAvatar,
-.keywordAvatar {
+/* Real brand logos are reserved for selected-detail surfaces. */
+.brandAvatar {
   display: inline-grid;
   place-items: center;
   flex: none;
@@ -1543,52 +1528,6 @@ h4 {
   object-fit: contain;
   padding: 15%;
   box-sizing: border-box;
-}
-
-.brandAvatar img.brandAvatarFallbackImage {
-  padding: 0;
-  object-fit: cover;
-}
-
-.brandAvatarInitials {
-  color: #17171c;
-  font-weight: 700;
-  letter-spacing: 0.01em;
-}
-
-/* No logo available -- fall back to the pink brand accent instead of the plain
-   white/dark plate used for real logo assets, so a missing logo reads as an
-   intentional brand color rather than a blank placeholder. */
-.brandAvatar-fallback {
-  background: #ffffff;
-  border: 1px solid rgba(255, 69, 0, 0.35);
-}
-
-.brandAvatar-fallback .brandAvatarInitials {
-  color: var(--text-on-accent);
-}
-
-.brandAvatar-sm .brandAvatarInitials {
-  font-size: 11px;
-}
-
-.brandAvatar-md .brandAvatarInitials {
-  font-size: 13px;
-}
-
-.brandAvatar-lg .brandAvatarInitials {
-  font-size: 16px;
-}
-
-.keywordAvatar {
-  width: 44px;
-  height: 44px;
-  background: var(--surface-elevated);
-  border: 1px solid var(--border);
-  color: var(--text-secondary);
-  font-style: normal;
-  font-weight: 600;
-  font-size: 15px;
 }
 
 .primaryLink {
@@ -1799,8 +1738,15 @@ h4 {
 .opportunityLists {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
+  gap: 16px;
+  width: 100%;
   padding: 14px;
+}
+
+.opportunityListColumn,
+.opportunityListRows {
+  width: 100%;
+  min-width: 0;
 }
 
 .opportunityListRows {
@@ -1817,13 +1763,19 @@ h4 {
 
 .opportunityRow {
   display: grid;
-  grid-template-columns: 20px 36px 1fr;
+  grid-template-columns: 36px minmax(0, 1fr) 24px;
   align-items: center;
   gap: 10px;
-  min-height: 74px;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  min-height: 84px;
   margin-top: 8px;
   padding: 12px 14px;
 }
+
+.opportunityRow > span { grid-column: 2 / -1; }
+.opportunityRow strong { display: -webkit-box; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
 
 .opportunityRow b {
   color: var(--muted);
@@ -1944,6 +1896,45 @@ h4 {
   border-bottom: 1px solid var(--border-subtle);
 }
 
+.unifiedSignalSearch {
+  position: relative;
+  display: flex;
+  flex: 1 1 360px;
+  align-items: center;
+  gap: 6px;
+  min-width: 240px;
+  min-height: 40px;
+  padding: 4px 6px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  background: var(--bg-surface-elevated);
+}
+
+.unifiedSignalSearch input {
+  flex: 1;
+  min-width: 80px;
+  min-height: 30px;
+  padding: 0 4px;
+  border: 0;
+  background: transparent;
+}
+
+.unifiedSignalSearch input:focus { outline: none; }
+.searchCategoryChip, .clearSignalSearch { flex: none; border: 0; background: transparent; color: var(--text-secondary); }
+.searchCategoryChip { max-width: 45%; overflow: hidden; border-radius: 999px; padding: 5px 8px; background: var(--orchid-petal); color: var(--orchid-plum); text-overflow: ellipsis; white-space: nowrap; }
+.clearSignalSearch { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; font-size: 18px; }
+.categorySuggestions { position: absolute; top: calc(100% + 6px); left: 0; z-index: 20; display: grid; width: 100%; max-height: 260px; overflow-y: auto; padding: 6px; border: 1px solid var(--border-default); border-radius: var(--radius-sm); background: var(--bg-surface-elevated); box-shadow: var(--shadow-card); }
+.categorySuggestions button { width: 100%; border: 0; border-radius: 8px; padding: 9px 10px; background: transparent; color: var(--text-primary); text-align: left; }
+.categorySuggestions button:hover, .categorySuggestions button[aria-selected="true"] { background: var(--orchid-petal); }
+.signalNoResults { display: grid; justify-items: start; gap: 10px; padding: 18px 4px; }
+.signalNoResults button { border: 1px solid var(--border-default); border-radius: 999px; padding: 7px 11px; background: var(--bg-surface); color: var(--text-primary); }
+
+:where(button, input, select, a):focus-visible { outline: 2px solid var(--orchid-purple); outline-offset: 2px; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; }
+}
+
 .barGraphFilters input,
 .barGraphFilters select {
   min-height: 36px;
@@ -2035,11 +2026,12 @@ h4 {
 
 .barGraphRow {
   display: grid;
-  grid-template-columns: minmax(0, 30%) 1fr;
+  grid-template-columns: 32px minmax(0, 1fr);
   align-items: center;
   gap: 10px;
-  min-height: 34px;
-  padding: 6px 10px;
+  width: 100%;
+  min-height: 68px;
+  padding: 10px 12px;
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-sm);
   background: var(--bg-surface);
@@ -2060,20 +2052,46 @@ h4 {
   background: var(--bg-surface-hover);
 }
 
-.barGraphLabel {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  min-width: 0;
-  overflow: hidden;
+.barGraphRank {
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 700;
 }
 
-.barGraphLabel b {
+.barGraphContent {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+}
+
+.barGraphHeading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.barGraphHeading strong {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 12px;
-  font-weight: 600;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.barGraphHeading .brandTypeBadge {
+  flex: none;
+  max-width: 42%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-style: normal;
+}
+
+.barGraphContent small {
+  color: var(--text-secondary);
+  font-size: 11px;
+  line-height: 1.4;
 }
 
 .barGraphTrack {
@@ -2329,17 +2347,45 @@ h4 {
    reference) replacing the old left-aligned icon+text signalHero row. */
 .brandProfileCard {
   display: grid;
-  justify-items: center;
+  justify-items: stretch;
   gap: 6px;
   padding: 28px 20px 20px;
-  text-align: center;
+  text-align: left;
 }
 
 .brandProfileName {
-  margin-top: 8px;
   font-size: 18px;
   font-weight: 700;
   color: var(--text-primary);
+}
+
+.signalProfileHero {
+  display: grid;
+  align-items: center;
+  width: 100%;
+}
+
+.signalProfileHero.hasLogo {
+  grid-template-columns: 58px minmax(0, 1fr);
+  gap: 14px;
+}
+
+.signalProfileHero.textOnly {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.signalProfileCopy {
+  display: grid;
+  justify-items: start;
+  gap: 7px;
+  min-width: 0;
+}
+
+.signalProfileCopy .brandProfileName {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .brandProfileDivider {
@@ -2418,14 +2464,10 @@ h4 {
 
 .sparkleList button {
   display: grid;
-  grid-template-columns: auto 1fr auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   gap: 10px;
   padding: 12px 14px;
-}
-
-.sparkleList button:hover .brandAvatar {
-  transform: scale(1.04);
 }
 
 .sparkleList button.newClusterRow {
@@ -2796,7 +2838,13 @@ h4 {
   }
 
   .opportunityLists {
+    display: grid;
     grid-template-columns: 1fr;
+  }
+
+  .opportunityLists.quadrantGrid > .opportunityListColumn {
+    flex: none;
+    width: 100%;
   }
 
   .wide,
@@ -2860,7 +2908,12 @@ h4 {
   }
 
   .signalRow {
-    grid-template-columns: 44px minmax(0, 1fr) auto;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .signalRowActions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .signalRowAction span,

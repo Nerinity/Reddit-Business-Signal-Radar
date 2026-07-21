@@ -482,7 +482,7 @@ function brandTag(type?: string) {
 // that badge is reserved for shopping brands. Domain wins over signal-type here.
 function brandTypeLabel(type: string | undefined, lang: Lang, domain?: string) {
   if (isPlatformServiceBrand(domain)) return lang === "zh" ? "平台 / 服务" : "Platform / Service";
-  if (type === "confirmed_whitelist_brand") return lang === "zh" ? "TikTok Shop 已收录品牌" : "TikTok Shop Listed Brand";
+  if (type === "confirmed_whitelist_brand") return lang === "zh" ? "TikTok 收录品牌" : "TikTok Brand";
   if (type === "catalog_known_brand") return "";
   return lang === "zh" ? "候选品牌" : "Emerging Candidate";
 }
@@ -599,6 +599,16 @@ function googleBrandUrl(name: string) {
   return `https://www.google.com/search?q=${encodeURIComponent(`${name} brand`)}`;
 }
 
+function hasRenderableLogoUrl(url?: string) {
+  if (!url?.trim()) return false;
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === "http:" || parsed.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
 function openBrandProfile(name: string) {
   window.open(googleBrandUrl(name), "_blank", "noopener,noreferrer");
 }
@@ -663,7 +673,9 @@ function RadarAppInner() {
   const [identity, setIdentity] = useState<OpsIdentity | null>(null);
   const [identityResolved, setIdentityResolved] = useState(false);
   const [identityInvalid, setIdentityInvalid] = useState(false);
-  const [view, setView] = useState<View>("home");
+  // Every fresh app load starts at identity confirmation. A valid saved identity is
+  // restored only to prefill the selection UI; it never bypasses this entry step.
+  const [view, setView] = useState<View>("identity");
   const [tab, setTab] = useState<ExploreTab>("category");
   const [sortBy, setSortBy] = useState<ScoreKey>("trend_score");
   const [rankView, setRankView] = useState<RankView>("worth_watching");
@@ -751,7 +763,6 @@ function RadarAppInner() {
                 categoryNames: [],
                 mappingVersion: mapping.version
               });
-              setView("home");
             } else if (pair && saved.mappingVersion === mapping.version) {
               setIdentity({
                 identityKey: pair.option.identity_key,
@@ -760,7 +771,6 @@ function RadarAppInner() {
                 categoryNames: pair.option.categories,
                 mappingVersion: mapping.version
               });
-              setView("home");
             } else {
               window.localStorage.removeItem(OPS_IDENTITY_STORAGE_KEY);
               setIdentityInvalid(true);
@@ -936,8 +946,13 @@ function RadarAppInner() {
         clusterSignals: selectedClusterSignal ? [selectedClusterSignal] : allClusterSignals
       }];
     });
-    const searchMatch = (item: { display: string; key: string; aliases: string[] }) => !query
-      || [item.display, item.key.slice(item.key.indexOf(":") + 1), ...item.aliases].some((value) => value.toLowerCase().includes(query));
+    const searchMatch = (item: { display: string; key: string; aliases: string[]; clusterSignals: ClusterBrandSignal[] }) => !query
+      || [
+        item.display,
+        item.key.slice(item.key.indexOf(":") + 1),
+        ...item.aliases,
+        ...item.clusterSignals.map((signal) => signal.cluster_name)
+      ].some((value) => String(value || "").toLowerCase().includes(query));
     const bySort = (a: { uniquePosts: number; mentions: number; sentiment: number; clusterShare?: number }, b: { uniquePosts: number; mentions: number; sentiment: number; clusterShare?: number }) => {
       const defaultOrder = b.uniquePosts - a.uniquePosts
         || Number(b.clusterShare || 0) - Number(a.clusterShare || 0)
@@ -1298,11 +1313,15 @@ function Home({ data, onOpenCategoryTab, onOpenBrandTab, onOpenCluster, onOpenBr
     const brands = cluster.brands
       .filter((brand) => isCatalogShoppingBrand(brand.brand_signal_type, brand.brand_domain)
         || isVerifiedShoppingBrand(brand.brand_signal_type, brand.brand_domain))
-      .map((brand) => ({ key: `brand:${brand.brand_norm}`, brandNorm: brand.brand_norm, display: brand.brand_display, volume: Number(brand.unique_posts || 0), tag: brandTypeLabel(brand.brand_signal_type, lang, brand.brand_domain) }));
-    return brands.sort((a, b) => b.volume - a.volume || a.display.localeCompare(b.display)).slice(0, 5);
+      .map((brand) => ({ key: `brand:${brand.brand_norm}`, kind: "brand" as const, norm: brand.brand_norm, display: brand.brand_display, volume: Number(brand.unique_posts || 0), tag: brand.brand_signal_type === "confirmed_whitelist_brand" ? t("verifiedBrandTag") : "" }));
+    const keywords = cluster.terms
+      .filter((term) => isInformativeKeyword(term.entity_type))
+      .map((term) => ({ key: `keyword:${term.term_norm}`, kind: "keyword" as const, norm: term.term_norm, display: term.term, volume: Number(term.unique_posts || 0), tag: "" }));
+    return [...brands, ...keywords].sort((a, b) => b.volume - a.volume || a.display.localeCompare(b.display)).slice(0, 5);
   };
   const newSignals = data.sparkle.new_signals.filter((signal) => signal.kind === "brand"
-    && ["confirmed_whitelist_brand", "catalog_known_brand", "candidate_non_whitelist_brand"].includes(signal.source_type));
+    ? ["confirmed_whitelist_brand", "catalog_known_brand", "candidate_non_whitelist_brand"].includes(signal.source_type)
+    : isInformativeKeyword(signal.source_type));
   const hasFreshSignals = data.sparkle.status === "ready" && (newSignals.length > 0 || data.sparkle.newly_active_clusters.length > 0);
   const capabilities = [
     { Icon: Compass, text: t("capability1") },
@@ -1351,8 +1370,8 @@ function Home({ data, onOpenCategoryTab, onOpenBrandTab, onOpenCluster, onOpenBr
         </div>
         {hasFreshSignals && <div className="homeSparkleGrid">
             {newSignals.length > 0 && <article className="panel">
-              <div className="panelHeader"><span>{t("freshKicker")}</span><h3>{t("newBrandSignalsHome")}</h3></div>
-              <div className="compactSignalList">{newSignals.slice(0, 10).map((signal) => <div key={`${signal.cluster_id}:${signal.signal_norm}`} className="compactSignalRow"><span><b>{signal.display}</b>{signal.source_type === "confirmed_whitelist_brand" && <em className="brandTypeBadge verified">{t("tiktokShopRecordedBrand")}</em>}</span><div><button onClick={() => openBrandProfile(signal.display)}>{t("webSearchLabel")} <ExternalLink size={12} /></button><button onClick={() => openEvidence({kind:"brand", clusterId:signal.cluster_id, brandNorm:signal.signal_norm, display:signal.display})}>{t("redditEvidenceLabel")} <ArrowRight size={12} /></button></div></div>)}</div>
+              <div className="panelHeader"><span>{t("freshKicker")}</span><h3>{t("newBrandKeywordSignalsHome")}</h3></div>
+              <div className="compactSignalList">{newSignals.slice(0, 10).map((signal) => <div key={`${signal.kind}:${signal.cluster_id}:${signal.signal_norm}`} className="compactSignalRow"><span><b>{signal.display}</b>{signal.source_type === "confirmed_whitelist_brand" && <em className="brandTypeBadge verified">{t("tiktokShopRecordedBrand")}</em>}</span><div><button onClick={() => signal.kind === "brand" ? openBrandProfile(signal.display) : openExploreTopic(signal.display)}>{t("webSearchLabel")} <ExternalLink size={12} /></button><button onClick={() => openEvidence(signal.kind === "brand" ? {kind:"brand", clusterId:signal.cluster_id, brandNorm:signal.signal_norm, display:signal.display} : {kind:"keyword", clusterId:signal.cluster_id, termNorm:signal.signal_norm, display:signal.display})}>{t("redditEvidenceLabel")} <ArrowRight size={12} /></button></div></div>)}</div>
             </article>}
             {data.sparkle.newly_active_clusters.length > 0 && <article className="panel">
               <div className="panelHeader"><span>{t("freshKicker")}</span><h3>{t("newlyActiveCategoriesShort")}</h3></div>
@@ -1364,7 +1383,7 @@ function Home({ data, onOpenCategoryTab, onOpenBrandTab, onOpenCluster, onOpenBr
   );
 }
 
-function HomeRadarCard({ title, cluster, posts, sentimentLabel, tag, signals, openEvidence, onClick }: { title: string; cluster: Cluster; posts: number; sentimentLabel: string; tag: string; signals: Array<{ key: string; brandNorm: string; display: string; volume: number; tag: string }>; openEvidence: (target: EvidenceTarget) => void; onClick: () => void }) {
+function HomeRadarCard({ title, cluster, posts, sentimentLabel, tag, signals, openEvidence, onClick }: { title: string; cluster: Cluster; posts: number; sentimentLabel: string; tag: string; signals: Array<{ key: string; kind: "brand" | "keyword"; norm: string; display: string; volume: number; tag: string }>; openEvidence: (target: EvidenceTarget) => void; onClick: () => void }) {
   const { lang, t } = useLang();
   return <article className="panel homeRadarCard">
     <div className="panelHeader"><button className="homeRadarCardTitle" onClick={onClick}>{title}</button></div>
@@ -1375,7 +1394,7 @@ function HomeRadarCard({ title, cluster, posts, sentimentLabel, tag, signals, op
       <Stat label={t("statSentiment")} value={sentimentLabel} />
       <Stat label={t("statTag")} value={tag} />
     </div>
-    <div className="homeClusterSignals"><strong>{t("topBrandsQuickGlance")}</strong>{signals.map((signal, index) => <div className="quickGlanceRow" key={signal.key}><button className="quickGlancePrimary" onClick={() => openBrandProfile(signal.display)}><span><b>#{index + 1} {signal.display}</b>{signal.tag && <small className="brandTypeBadge verified">{signal.tag}</small>}</span><span>{t("webSearchLabel")} <ArrowRight size={14} /></span></button><button className="quickGlanceEvidence" onClick={() => openEvidence({kind:"brand", clusterId:cluster.cluster_id, brandNorm:signal.brandNorm, display:signal.display})}>{t("redditEvidenceLabel")}</button></div>)}</div>
+    <div className="homeClusterSignals"><strong>{t("topSignalsQuickGlance")}</strong>{signals.map((signal, index) => <div className="quickGlanceRow" key={signal.key}><button className="quickGlancePrimary" onClick={() => signal.kind === "brand" ? openBrandProfile(signal.display) : openExploreTopic(signal.display)}><span><b>#{index + 1} {signal.display}</b>{signal.tag && <small className="brandTypeBadge verified">{signal.tag}</small>}</span><span>{t("webSearchLabel")} <ArrowRight size={14} /></span></button><button className="quickGlanceEvidence" onClick={() => openEvidence(signal.kind === "brand" ? {kind:"brand", clusterId:cluster.cluster_id, brandNorm:signal.norm, display:signal.display} : {kind:"keyword", clusterId:cluster.cluster_id, termNorm:signal.norm, display:signal.display})}>{t("redditEvidenceLabel")}</button></div>)}</div>
   </article>;
 }
 
@@ -1614,17 +1633,13 @@ function RelatedSignalsPanel({ cluster, openEvidence }: { cluster: Cluster; open
         {!filteredRows.length && <p className="emptyState">{t("noBrandsKeywordsMsg")}</p>}
         {filteredRows.slice(0, visibleCount).map((item) => {
           const isBrand = item.kind === "brand";
-          const tagLabel = isBrand ? brandTypeLabel(item.signalType, lang, item.brandDomain) : (item.entityType || "keyword");
-          const tagClass = isBrand ? brandTypeClass(item.signalType) : "known";
+          const showTikTokBadge = isBrand && item.signalType === "confirmed_whitelist_brand";
           return (
             <div key={`${item.kind}:${item.id}`} className="signalRow">
-              <span className="brandAvatarSlot">
-                {isBrand && <BrandAvatar name={item.name} logoUrl={item.logoUrl || ""} signalType={item.signalType} size="md" />}
-              </span>
               <span className="signalRowText">
                 <b>{item.name}</b>
                 <small>
-                  {tagLabel && <><span className={`brandTypeBadge ${tagClass}`}>{tagLabel}</span> · </>}{item.uniquePosts} {t("postsUnit")} · {item.mentions} {t("mentionsUnit")} · {sentimentTag(lang, sentimentClass(item.sentiment) as SentimentKey)}
+                  {showTikTokBadge && <><span className="brandTypeBadge verified">{t("verifiedBrandTag")}</span> · </>}{item.uniquePosts} {t("postsUnit")} · {item.mentions} {t("mentionsUnit")} · {sentimentTag(lang, sentimentClass(item.sentiment) as SentimentKey)}
                 </small>
               </span>
               <div className="signalRowActions">
@@ -1950,22 +1965,19 @@ function SignalsTab({
   const [visibleCount, setVisibleCount] = useState(20);
   const [visibleSignals, setVisibleSignals] = useState(40);
   const [clusterPickerOpen, setClusterPickerOpen] = useState(false);
-  const [categorySearch, setCategorySearch] = useState("");
+  const [searchSuggestionsOpen, setSearchSuggestionsOpen] = useState(false);
   const upperRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => setVisibleCount(20), [brandQuery, signalSort, signalCategoryId]);
   useEffect(() => setClusterPickerOpen(false), [selectedSignalKey]);
   useEffect(() => setVisibleSignals(40), [sparkle.current_week]);
   const maxUniquePosts = maxOf(signalCards.map((item) => item.uniquePosts), 1);
   const sortedCategories = useMemo(() => [...clusters].sort((a, b) => a.cluster_name.localeCompare(b.cluster_name)), [clusters]);
-  const searchedCategories = useMemo(() => {
-    const query = categorySearch.trim().toLocaleLowerCase();
-    if (!query) return sortedCategories;
-    const matching = sortedCategories.filter((cluster) => cluster.cluster_name.toLocaleLowerCase().includes(query));
-    const selected = sortedCategories.find((cluster) => cluster.cluster_id === signalCategoryId);
-    return selected && !matching.some((cluster) => cluster.cluster_id === selected.cluster_id)
-      ? [selected, ...matching]
-      : matching;
-  }, [categorySearch, signalCategoryId, sortedCategories]);
+  const selectedSearchCategory = sortedCategories.find((cluster) => cluster.cluster_id === signalCategoryId);
+  const categorySuggestions = useMemo(() => {
+    const query = brandQuery.trim().toLocaleLowerCase();
+    if (!query) return sortedCategories.slice(0, 8);
+    return sortedCategories.filter((cluster) => cluster.cluster_name.toLocaleLowerCase().includes(query)).slice(0, 8);
+  }, [brandQuery, sortedCategories]);
   const illustrationByClusterId = useMemo(() => new Map(clusters.map((cluster) => [cluster.cluster_id, cluster.illustration_url || ""])), [clusters]);
 
   // Evidence is keyed by week x cluster x brand/keyword -- a signal discussed in more than
@@ -1987,6 +1999,12 @@ function SignalsTab({
     upperRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
+  const clearDiscoverySearch = () => {
+    setBrandQuery("");
+    setSignalCategoryId("all");
+    setSearchSuggestionsOpen(false);
+  };
+
   return (
     <div className="signalsTabPage">
       <div className="mappingGrid signalsUpperGrid" ref={upperRef}>
@@ -1996,17 +2014,26 @@ function SignalsTab({
             <h3>{t("signalDetailTitle")}</h3>
           </div>
           <div className="barGraphFilters">
-            <input className="categorySearchInput" value={categorySearch} onChange={(event) => setCategorySearch(event.target.value)} placeholder={t("searchCategoriesPlaceholder")} />
-            <label className="categoryFilterSelect">
-              {t("categoryFilterLabel")}
-              <select value={signalCategoryId} onChange={(event) => setSignalCategoryId(event.target.value)}>
-                <option value="all">{t("allCategoriesOption")}</option>
-                {searchedCategories.map((cluster) => (
-                  <option key={cluster.cluster_id} value={cluster.cluster_id}>{cluster.cluster_name}</option>
-                ))}
-              </select>
-            </label>
-            <input value={brandQuery} onChange={(event) => setBrandQuery(event.target.value)} placeholder={t("searchSignalsPlaceholder")} />
+            <div className="unifiedSignalSearch" onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setSearchSuggestionsOpen(false); }}>
+              {selectedSearchCategory && <button className="searchCategoryChip" onClick={() => setSignalCategoryId("all")} aria-label={t("clearCategoryScope")}>{selectedSearchCategory.cluster_name} <span aria-hidden="true">×</span></button>}
+              <input
+                value={brandQuery}
+                onFocus={() => setSearchSuggestionsOpen(true)}
+                onChange={(event) => { setBrandQuery(event.target.value); setSearchSuggestionsOpen(true); }}
+                onKeyDown={(event) => {
+                  if (event.key === "Escape") setSearchSuggestionsOpen(false);
+                  if (event.key === "Enter" && !brandQuery.trim()) clearDiscoverySearch();
+                }}
+                placeholder={t("unifiedSignalSearchPlaceholder")}
+                aria-label={t("unifiedSignalSearchPlaceholder")}
+              />
+              {(brandQuery || signalCategoryId !== "all") && <button className="clearSignalSearch" onClick={clearDiscoverySearch} aria-label={t("clearSearch")}>×</button>}
+              {searchSuggestionsOpen && categorySuggestions.length > 0 && (
+                <div className="categorySuggestions" role="listbox" aria-label={t("categorySuggestionsLabel")}>
+                  {categorySuggestions.map((cluster) => <button key={cluster.cluster_id} role="option" aria-selected={cluster.cluster_id === signalCategoryId} onMouseDown={(event) => event.preventDefault()} onClick={() => { setSignalCategoryId(cluster.cluster_id); setBrandQuery(""); setSearchSuggestionsOpen(false); }}>{cluster.cluster_name}</button>)}
+                </div>
+              )}
+            </div>
             <select value={signalSort} onChange={(event) => setSignalSort(event.target.value as SignalSort)}>
               <option value="volume">{t("sortVolume")}</option>
               <option value="mentions">{t("sortMentions")}</option>
@@ -2020,10 +2047,11 @@ function SignalsTab({
             <em>{t("sentimentLegendPositive")}</em>
           </div>
           <div className="barGraphList">
-            {!signalCards.length && <p className="emptyState">{t("noSignalData")}</p>}
-            {signalCards.slice(0, visibleCount).map((item) => {
+            {!signalCards.length && <div className="signalNoResults"><p className="emptyState">{brandQuery || signalCategoryId !== "all" ? t("noSignalSearchResults") : t("noSignalData")}</p>{(brandQuery || signalCategoryId !== "all") && <button onClick={clearDiscoverySearch}>{t("clearSearch")}</button>}</div>}
+            {signalCards.slice(0, visibleCount).map((item, index) => {
               const width = Math.max(4, (item.uniquePosts / maxUniquePosts) * 100);
               const tooltip = `${item.display} · ${item.uniquePosts} ${t("postsUnit")} · ${item.mentions} ${t("mentionsUnit")} · ${sentimentTag(lang, sentimentClass(item.sentiment) as SentimentKey)}`;
+              const showTikTokBadge = item.kind === "brand" && item.tag === "confirmed_whitelist_brand";
               return (
                 <button
                   key={item.key}
@@ -2032,9 +2060,13 @@ function SignalsTab({
                   title={tooltip}
                   aria-label={tooltip}
                 >
-                  <span className="barGraphLabel"><b>{item.display}</b></span>
-                  <span className="barGraphTrack">
-                    <i style={{ width: `${width}%`, background: sentimentGradientColor(item.sentiment) }} />
+                  <b className="barGraphRank">#{index + 1}</b>
+                  <span className="barGraphContent">
+                    <span className="barGraphHeading"><strong>{item.display}</strong>{showTikTokBadge && <em className="brandTypeBadge verified">{t("verifiedBrandTag")}</em>}</span>
+                    <small>{item.uniquePosts} {t("postsUnit")} · {item.mentions} {t("mentionsUnit")} · {item.clusterCount} {t("categoriesUnit")}</small>
+                    <span className="barGraphTrack" aria-hidden="true">
+                      <i style={{ width: `${width}%`, background: sentimentGradientColor(item.sentiment) }} />
+                    </span>
                   </span>
                 </button>
               );
@@ -2054,9 +2086,14 @@ function SignalsTab({
           )}
           {selected && (
             <div className="brandProfileCard">
-              {selected.kind === "brand" && <BrandAvatar name={selected.display} logoUrl={selected.logoUrl} signalType={selected.tag} size="xl" />}
-              <strong className="brandProfileName">{selected.display}</strong>
-              {selected.kind === "brand" && selected.tag === "confirmed_whitelist_brand" && <span className={`brandTypeBadge ${brandTypeClass(selected.tag)}`}>{brandTypeLabel(selected.tag, lang, selected.brandDomain)}</span>}
+              <div className={`signalProfileHero ${selected.kind === "brand" && hasRenderableLogoUrl(selected.logoUrl) ? "hasLogo" : "textOnly"}`}>
+                {selected.kind === "brand" && hasRenderableLogoUrl(selected.logoUrl) && <BrandAvatar name={selected.display} logoUrl={selected.logoUrl} signalType={selected.tag} size="lg" />}
+                <span className="signalProfileCopy">
+                  <strong className="brandProfileName">{selected.display}</strong>
+                  <small>{selected.kind === "brand" ? t("brandSignalLabel") : t("keywordSignalLabel")}</small>
+                  {selected.kind === "brand" && selected.tag === "confirmed_whitelist_brand" && <em className="brandTypeBadge verified">{t("verifiedBrandTag")}</em>}
+                </span>
+              </div>
               <div className="brandProfileDivider" />
               <div className="metricGrid">
                 <Stat label={t("discussionPosts")} value={`${selected.uniquePosts} ${t("postsUnit")}`} />
@@ -2156,9 +2193,6 @@ function SignalsTab({
                         key={`${signal.kind}:${signal.cluster_id}:${signal.signal_norm}`}
                         onClick={() => selectSignalFromSparkle(signal)}
                       >
-                        {signal.kind === "brand"
-                          ? <BrandAvatar name={signal.display} logoUrl={signal.logo_url} signalType={signal.source_type} size="md" />
-                          : <BrandAvatar name={signal.display} size="md" />}
                         <span>
                           <strong>{signal.display}</strong>
                           <small>{signal.cluster_name} · {signal.unique_posts} {t("postsUnit")} · {signal.mentions} {t("mentionsUnit")}</small>
