@@ -853,13 +853,13 @@ function RadarAppInner() {
       if (signalSort === "positive") return b.sentiment - a.sentiment;
       return b.uniquePosts - a.uniquePosts;
     };
-    // Verified Brands and Brands/Keywords are disjoint sets -- a confirmed_whitelist_brand
-    // shows up in exactly one of the two scopes, never both, matching the same split used in
-    // the per-category Related Signals panel (RelatedSignalsPanel / toSignalRow).
+    // Verified Brands and Brands/Keywords are disjoint sets -- every confirmed_whitelist_brand
+    // belongs to Verified Brands only, regardless of brand_domain, matching the same split used
+    // in the per-category Related Signals panel (RelatedSignalsPanel / toSignalRow).
     const filteredBrands = brandItems
       .filter((item) => signalScope === "verified_brands"
         ? isVerifiedShoppingBrand(item.tag, item.brandDomain)
-        : !isVerifiedShoppingBrand(item.tag, item.brandDomain))
+        : item.tag !== "confirmed_whitelist_brand")
       .filter(searchMatch)
       .filter(categoryMatch)
       .sort(bySort);
@@ -1187,7 +1187,6 @@ function Home({ data, setView }: { data: DashboardBundle; setView: (view: View) 
   ];
   return (
     <section className="hero">
-      <div className="eyebrow">{t("heroEyebrow")}</div>
       <h1>{t("heroTitle")}</h1>
       <p>{t("heroBody")}</p>
       <div className="capabilityRow">
@@ -1424,11 +1423,12 @@ type NormalizedSignalRow = {
   logoUrl?: string;
 };
 
-// Verified-brand membership requires BOTH confirmed_whitelist_brand AND brand_domain ===
-// "shopping" -- a whitelisted payment/search/social/marketplace/service name (PayPal,
-// TikTok, Google, Amazon...) still routes into Brands/Keywords, never Verified Brands. The
-// exact same rule (isVerifiedShoppingBrand) is reused by Tab 2's global signal scope so the
-// two surfaces never disagree about what counts as "verified".
+// Verified-brand membership (the Verified Brands tab) requires BOTH confirmed_whitelist_brand
+// AND brand_domain === "shopping". Brands/Keywords excludes every confirmed_whitelist_brand
+// outright regardless of domain (see brandsKeywords below) -- a whitelisted non-shopping name
+// (PayPal, TikTok, Google, Amazon...) shows up in neither tab's brand list, only in Verified
+// Brands' unfiltered set upstream. The isVerifiedShoppingBrand rule itself is reused by Tab 2's
+// global signal scope so the two surfaces never disagree about what counts as "verified".
 function toSignalRow(item: ClusterBrand | ClusterTerm, kind: "brand" | "keyword"): NormalizedSignalRow {
   if (kind === "brand") {
     const brand = item as ClusterBrand;
@@ -1473,7 +1473,7 @@ function RelatedSignalsPanel({ cluster, openEvidence }: { cluster: Cluster; open
     sortMode
   ), [cluster.brands, sortMode]);
   const brandsKeywords = useMemo(() => sortSignalRows([
-    ...cluster.brands.filter((item) => !isVerifiedShoppingBrand(item.brand_signal_type, item.brand_domain)).map((item) => toSignalRow(item, "brand")),
+    ...cluster.brands.filter((item) => item.brand_signal_type !== "confirmed_whitelist_brand").map((item) => toSignalRow(item, "brand")),
     ...cluster.terms.map((item) => toSignalRow(item, "keyword"))
   ], sortMode), [cluster.brands, cluster.terms, sortMode]);
 

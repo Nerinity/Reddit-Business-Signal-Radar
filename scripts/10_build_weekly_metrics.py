@@ -26,7 +26,7 @@ def json_sample(values, n: int = 10) -> str:
 def add_week(df: pd.DataFrame) -> pd.DataFrame:
     df = df.copy()
     dt = pd.to_datetime(df.get("published_at"), errors="coerce", utc=True)
-    df["week_start"] = dt.dt.to_period("W-MON").dt.start_time.astype(str)
+    df["week_start"] = dt.dt.to_period("W-SUN").dt.start_time.astype(str)
     return df
 
 

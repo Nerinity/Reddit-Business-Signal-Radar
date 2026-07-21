@@ -93,7 +93,7 @@ QUALITY_REPORT_TOP_N = 10
 def add_week(df: pd.DataFrame) -> pd.DataFrame:
     df = df.copy()
     dt = pd.to_datetime(df.get("published_at"), errors="coerce", utc=True)
-    df["week_start"] = dt.dt.to_period("W-MON").dt.start_time.astype(str)
+    df["week_start"] = dt.dt.to_period("W-SUN").dt.start_time.astype(str)
     return df
 
 
@@ -117,10 +117,12 @@ def mode_or_blank(series: pd.Series) -> str:
 
 
 def complete_weeks(df: pd.DataFrame, coverage_start: pd.Timestamp, coverage_end: pd.Timestamp) -> set[str]:
+    # +6 days reaches the week's own last calendar day (week_start=Monday -> Sunday); see the
+    # matching gate in build_web_dashboard_bundle.py for why this isn't +7.
     result = set()
     for week in df["week_start"].dropna().astype(str).unique():
         start = pd.Timestamp(week, tz="UTC")
-        if coverage_start <= start and coverage_end >= start + pd.Timedelta(days=7):
+        if coverage_start <= start and coverage_end >= start + pd.Timedelta(days=6):
             result.add(week)
     return result
 

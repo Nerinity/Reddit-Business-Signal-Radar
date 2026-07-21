@@ -677,6 +677,9 @@ def main() -> None:
     # handful of clusters instead of the usual ~100+ -- exclude it entirely rather than
     # ever loading it as the default view or offering it in the switcher, since it reads
     # as "the data broke" rather than "this week is still in progress."
+    # +6 days reaches the week's own last calendar day (week_start=Monday -> Sunday);
+    # it does not require coverage to spill into the following Monday, since a Sun 23:59:xx
+    # timestamp already proves the Mon-Sun window itself is fully collected.
     MIN_WEEK_CLUSTER_COUNT = 20
     cluster_counts = scores.groupby(scores["week_start"].astype(str))["cluster_id"].nunique()
     term_counts = terms.groupby(terms["week_start"].astype(str))["term_norm"].count()
@@ -689,7 +692,7 @@ def main() -> None:
             if count >= MIN_WEEK_CLUSTER_COUNT
             and term_counts.get(week, 0) > 0
             and coverage_start <= pd.Timestamp(week, tz="UTC")
-            and coverage_end >= pd.Timestamp(week, tz="UTC") + pd.Timedelta(days=7)
+            and coverage_end >= pd.Timestamp(week, tz="UTC") + pd.Timedelta(days=6)
         ),
         reverse=True,
     )

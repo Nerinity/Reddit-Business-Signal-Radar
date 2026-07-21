@@ -75,7 +75,6 @@ const dict = {
   outOfScopeCategory: { en: "This category is outside your operations scope.", zh: "当前类目不在你的运营范围内。" },
   noTeamSignals: { en: "No category signals are available for the selected operations team.", zh: "当前运营团队暂无可展示的类目信号。" },
 
-  heroEyebrow: { en: "AI powered real consumer signals", zh: "AI 驱动的真实消费者信号" },
   heroTitle: { en: "Reddit - North America Product Trend Radar", zh: "Reddit - 北美消费趋势雷达" },
   heroBody: {
     en: "Identify emerging product opportunities from real consumer discussions before they appear in marketplace metrics.",

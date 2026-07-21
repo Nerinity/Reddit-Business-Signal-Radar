@@ -44,7 +44,7 @@ def write_empty(path: str) -> None:
 def add_week(df: pd.DataFrame) -> pd.DataFrame:
     df = df.copy()
     dt = pd.to_datetime(df.get("published_at"), errors="coerce", utc=True)
-    df["week_start_dt"] = dt.dt.to_period("W-MON").dt.start_time
+    df["week_start_dt"] = dt.dt.to_period("W-SUN").dt.start_time
     df["week_start"] = df["week_start_dt"].astype(str)
     return df
 
