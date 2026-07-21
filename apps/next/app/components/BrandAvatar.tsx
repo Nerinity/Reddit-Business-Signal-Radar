@@ -24,11 +24,9 @@ function isValidLogoUrl(url?: string): url is string {
 /**
  * The single shared representation of a brand across the product. Every page renders
  * this instead of re-implementing its own logo/initials tile. A white rounded-square
- * plate keeps transparent-background logo assets legible against the dark theme;
- * initials render inside that same plate so the fallback never reads as a different
- * component. Three independent fallback paths, in order: no logo_url at all, a
- * logo_url that isn't even a well-formed http(s) URL, and a logo_url that is
- * well-formed but 404s / fails to load once the browser actually requests it.
+ * plate keeps transparent-background logo assets legible against the dark theme.
+ * Missing or failed logos intentionally render nothing: a generic Reddit mark implies
+ * brand identity where none was actually matched.
  */
 export function BrandAvatar({
   name,
@@ -49,21 +47,14 @@ export function BrandAvatar({
 
   useEffect(() => setImageFailed(false), [logoUrl, signalType]);
 
+  if (!canShowLogo) return null;
+
   return (
     <span
-      className={`brandAvatar brandAvatar-${size} ${canShowLogo ? "" : "brandAvatar-fallback"} ${className}`.trim()}
+      className={`brandAvatar brandAvatar-${size} ${className}`.trim()}
       style={{ width: dimension, height: dimension }}
     >
-      {canShowLogo ? (
-        <img src={logoUrl} alt={`${name} logo`} loading="lazy" onError={() => setImageFailed(true)} />
-      ) : (
-        <img
-          className="brandAvatarFallbackImage"
-          src="/assets/reddit-signal-avatar.png"
-          alt={`${name} Reddit fallback`}
-          loading="lazy"
-        />
-      )}
+      <img src={logoUrl} alt={`${name} logo`} loading="lazy" onError={() => setImageFailed(true)} />
     </span>
   );
 }

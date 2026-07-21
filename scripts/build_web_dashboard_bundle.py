@@ -92,41 +92,69 @@ def sparkle_keyword_quality_reason(term_norm: str, entity_type: str) -> str:
 
 
 # "Verified Brands" is meant to answer "which shopping brands are people discussing" --
-# not "which internet companies got mentioned in passing." A curated denylist of
-# well-known payment/search/social/marketplace/service names keeps those out of the
-# shopping bucket regardless of how confidently the crawler whitelisted them; anything
-# not on this list defaults to "shopping". Keys are normalize_brand() output (lowercase,
-# punctuation stripped) so matching is exact and dependency-free.
-BRAND_DOMAIN_OVERRIDES = {
-    # payment
-    "paypal": "payment", "venmo": "payment", "apple pay": "payment", "google pay": "payment",
-    "cash app": "payment", "stripe": "payment", "zelle": "payment", "klarna": "payment",
-    "afterpay": "payment", "affirm": "payment", "square": "payment",
-    # search
-    "google": "search", "bing": "search", "yahoo": "search", "duckduckgo": "search",
-    # social
-    "tiktok": "social", "instagram": "social", "facebook": "social", "meta": "social",
-    "twitter": "social", "x": "social", "snapchat": "social", "pinterest": "social",
-    "reddit": "social", "linkedin": "social", "youtube": "social", "discord": "social",
-    "whatsapp": "social", "telegram": "social", "wechat": "social", "threads": "social",
-    # marketplace / platform
-    "amazon": "platform", "ebay": "platform", "etsy": "platform", "walmart": "platform",
-    "alibaba": "platform", "aliexpress": "platform", "shopify": "platform", "temu": "platform",
-    "wish": "platform", "craigslist": "platform", "poshmark": "platform", "depop": "platform",
-    "mercari": "platform", "facebook marketplace": "platform",
-    # service
-    "uber": "service", "lyft": "service", "doordash": "service", "grubhub": "service",
-    "airbnb": "service", "netflix": "service", "spotify": "service", "zoom": "service",
-    "slack": "service", "dropbox": "service", "uber eats": "service", "postmates": "service",
-    "instacart": "service", "grab": "service",
-    # Deliberately NOT denylisted: Apple, Microsoft, Sony, Samsung, etc. -- these
-    # manufacture physical products people genuinely shop for (iPhone, Surface, PS5),
-    # so blanket-excluding the parent company name would hide real shopping signal.
+# not "which internet companies got mentioned in passing." A curated override list of
+# well-known payment/search/social/marketplace/service names (configs/taxonomy/
+# brand_domain_overrides.json, keyed by normalize_brand() output) keeps those out of the
+# shopping bucket regardless of how confidently the crawler whitelisted them; anything not
+# in that file defaults to "shopping". Loaded once in main() and passed down explicitly
+# rather than read as a module-level global, so this stays testable with an empty/fake map.
+def load_brand_domain_overrides(path: Path) -> dict[str, str]:
+    if not path.exists():
+        return {}
+    raw = json.loads(path.read_text(encoding="utf-8"))
+    return {str(k).strip(): str(v).strip() for k, v in raw.items() if not str(k).startswith("_")}
+
+
+def brand_domain_for(brand_norm: str, overrides: dict[str, str]) -> str:
+    return overrides.get(str(brand_norm or "").strip(), "shopping")
+
+
+# brand_signal_type already carries a real (if coarse) confidence signal from
+# 07_extract_entities.py: whitelist alias matches score 1.0, catalog n-gram matches 0.85,
+# regex-candidate matches a flat 0.45. There's no natural "medium" tier in that data, so
+# this is deliberately a 2-tier high/low split rather than an invented middle bucket.
+BRAND_CONFIDENCE_TIER_BY_SIGNAL_TYPE = {
+    "confirmed_whitelist_brand": "high",
+    "catalog_known_brand": "high",
 }
 
 
-def brand_domain_for(brand_norm: str) -> str:
-    return BRAND_DOMAIN_OVERRIDES.get(str(brand_norm or "").strip(), "shopping")
+def brand_confidence_tier(brand_signal_type: str) -> str:
+    return BRAND_CONFIDENCE_TIER_BY_SIGNAL_TYPE.get(str(brand_signal_type or ""), "low")
+
+
+# Quality gate for the main Tab 1 / Tab 2 keyword lists (cluster_cards[].terms / the
+# top-level keyword bundle) -- deliberately separate from SPARKLE_KEYWORD_ALLOWED_TYPES /
+# sparkle_keyword_quality_reason() above, which must not change. Mirrors the same rule set
+# field-for-field so behavior between the two surfaces stays consistent.
+KEYWORD_QUALITY_ALLOWED_TYPES = {
+    "product_phrase", "category_keyword", "need_state", "ingredient_material", "retailer_channel",
+}
+KEYWORD_QUALITY_STOPLIST = {
+    "link comments", "read more", "see more", "click here", "view all", "this post", "this comment",
+}
+KEYWORD_QUALITY_MIN_UNIQUE_POSTS = 3
+
+
+def keyword_quality_ok(term_norm: str, entity_type: str, unique_posts: int) -> bool:
+    text = str(term_norm or "").strip()
+    if entity_type not in KEYWORD_QUALITY_ALLOWED_TYPES:
+        return False
+    if safe_int(unique_posts) < KEYWORD_QUALITY_MIN_UNIQUE_POSTS:
+        return False
+    if len(text) < 3:
+        return False
+    if re.match(r"^\d+$", text):
+        return False
+    if re.match(r"^[^\w\s]+$", text):
+        return False
+    if text in KEYWORD_QUALITY_STOPLIST:
+        return False
+    if re.match(r"^(u|r)/", text):
+        return False
+    if re.search(r"http|www\.|\.com\b", text):
+        return False
+    return True
 
 
 def normalize_brand(value) -> str:
@@ -299,13 +327,18 @@ def build_sparkle_data(week: str, all_weeks: list[str], scores: pd.DataFrame,
 
 def build_week_bundle(week: str, all_weeks: list[str], scores: pd.DataFrame, terms: pd.DataFrame,
                        brands: pd.DataFrame, posts: pd.DataFrame, discussion_posts: pd.DataFrame,
-                       category_illustrations: dict[str, str] | None = None) -> dict:
+                       category_illustrations: dict[str, str] | None = None,
+                       brand_domain_overrides: dict[str, str] | None = None) -> dict:
     category_illustrations = category_illustrations or {}
+    brand_domain_overrides = brand_domain_overrides or {}
     latest = scores[scores["week_start"].astype(str).eq(week)].copy()
     sorted_scores = latest.sort_values(["trend_score", "current_week_posts"], ascending=[False, False])
 
     week_brands = brands[brands["week_start"].astype(str).eq(week)].copy()
     week_terms = terms[terms["week_start"].astype(str).eq(week)].copy()
+    week_terms["quality_ok"] = week_terms.apply(
+        lambda r: keyword_quality_ok(r.term_norm, r.entity_type, r.unique_posts), axis=1
+    )
     week_posts = prepare_week_posts(posts, week)
     discussion_start = pd.Timestamp(week, tz="UTC")
     discussion_end = discussion_start + pd.Timedelta(days=7)
@@ -387,7 +420,7 @@ def build_week_bundle(week: str, all_weeks: list[str], scores: pd.DataFrame, ter
         cluster_terms = week_terms[
             (week_terms["cluster_id"].astype(str) == cid)
             & (week_terms["term_norm"].fillna("").astype(str).str.strip().ne(""))
-            & (week_terms["unique_posts"].fillna(0).astype(float) >= 2)
+            & week_terms["quality_ok"]
         ].sort_values(
             ["unique_posts", "mentions", "term_norm"], ascending=[False, False, True]
         )
@@ -442,7 +475,8 @@ def build_week_bundle(week: str, all_weeks: list[str], scores: pd.DataFrame, ter
                     "brand_norm": b["brand_norm"],
                     "brand_display": b["brand_display"],
                     "brand_signal_type": b["brand_signal_type"],
-                    "brand_domain": brand_domain_for(b["brand_norm"]),
+                    "brand_domain": brand_domain_for(b["brand_norm"], brand_domain_overrides),
+                    "brand_confidence_tier": brand_confidence_tier(b["brand_signal_type"]),
                     "unique_posts": b["unique_posts"],
                     "mentions": b["mentions"],
                     "sentiment": b["avg_sentiment"],
@@ -453,7 +487,7 @@ def build_week_bundle(week: str, all_weeks: list[str], scores: pd.DataFrame, ter
             ],
         })
 
-    all_terms = week_terms.sort_values(
+    all_terms = week_terms[week_terms["quality_ok"]].sort_values(
         ["unique_posts", "mentions", "cluster_id", "term_norm"],
         ascending=[False, False, True, True],
     )
@@ -483,7 +517,8 @@ def build_week_bundle(week: str, all_weeks: list[str], scores: pd.DataFrame, ter
             "brand_display": canonical_brand_display(meta_row.brand_display),
             "aliases": aliases,
             "brand_signal_type": str(meta_row.brand_signal_type),
-            "brand_domain": brand_domain_for(norm),
+            "brand_domain": brand_domain_for(norm, brand_domain_overrides),
+            "brand_confidence_tier": brand_confidence_tier(str(meta_row.brand_signal_type)),
             "unique_posts": safe_int(post_counts.get(norm, rows["unique_posts"].max())),
             "mentions": mentions,
             "cluster_count": int(rows["cluster_id"].astype(str).nunique()),
@@ -642,6 +677,7 @@ def main() -> None:
     parser.add_argument("--output-dir", default="apps/web/public/data")
     parser.add_argument("--next-output-dir", default="apps/next/public/data")
     parser.add_argument("--category-illustrations", default="configs/taxonomy/category_illustrations.json")
+    parser.add_argument("--brand-domain-overrides", default="configs/taxonomy/brand_domain_overrides.json")
     parser.add_argument("--weeks-limit", type=int, default=None,
                          help="Only build the N most recent eligible weeks (default: all).")
     args = parser.parse_args()
@@ -653,6 +689,7 @@ def main() -> None:
         for category, url in raw_illustrations.items()
         if str(url).strip()
     }
+    brand_domain_overrides = load_brand_domain_overrides(Path(args.brand_domain_overrides))
 
     base = Path(args.processed_dir)
     scores = pd.read_parquet(base / "weekly_cluster_scores.parquet")
@@ -720,7 +757,8 @@ def main() -> None:
 
     for week in all_weeks:
         bundle = build_week_bundle(
-            week, all_weeks, scores, terms, brands, posts, discussion_posts, category_illustrations
+            week, all_weeks, scores, terms, brands, posts, discussion_posts, category_illustrations,
+            brand_domain_overrides
         )
         evidence_payloads = build_week_evidence(week, brands, posts, keyword_post_index)
         keywords = bundle.pop("keywords")
