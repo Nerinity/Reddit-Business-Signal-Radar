@@ -2984,3 +2984,110 @@ h4 {
     font-size: 13px !important;
   }
 }
+/* Component-level image exports */
+.exportablePanel { position: relative; }
+.panelExportButton {
+  position: absolute;
+  z-index: 8;
+  top: 12px;
+  right: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 6px 10px;
+  border: 1px solid rgba(88, 54, 102, .18);
+  border-radius: 999px;
+  color: #593d64;
+  background: rgba(255, 255, 255, .94);
+  box-shadow: 0 6px 18px rgba(60, 38, 69, .10);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+}
+.panelExportButton:hover { border-color: #805b8d; background: #fff; transform: translateY(-1px); }
+.panelExportButton:disabled { cursor: wait; opacity: .65; transform: none; }
+.panelExportButton.compact { min-height: 28px; padding: 5px 8px; }
+.panelExportButton.iconOnly { width: 34px; min-width: 34px; height: 34px; min-height: 34px; justify-content: center; padding: 0; }
+.exportablePanel > .panelHeader { padding-right: 52px; }
+.panelExportMenu {
+  position: absolute;
+  z-index: 9;
+  top: 10px;
+  right: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.exportRangeControl {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 7px;
+  border: 1px solid rgba(88, 54, 102, .15);
+  border-radius: 999px;
+  background: rgba(255,255,255,.95);
+  color: #6b5870;
+  font-size: 11px;
+  font-weight: 700;
+  box-shadow: 0 5px 15px rgba(60,38,69,.08);
+}
+.exportRangeControl input {
+  width: 48px;
+  padding: 2px 4px;
+  border: 1px solid rgba(88,54,102,.16);
+  border-radius: 6px;
+  outline: 0;
+  color: #4f3559;
+  background: #fff;
+  font: inherit;
+  text-align: center;
+}
+.exportRangeControl input:focus { border-color: #805b8d; box-shadow: 0 0 0 2px rgba(128,91,141,.10); }
+.panelExportMenu .panelExportButton { position: static; }
+.exportRenderStage {
+  position: fixed;
+  z-index: -100;
+  left: -10000px;
+  top: 0;
+  width: 720px;
+  pointer-events: none;
+}
+.exportLongPanel { width: 720px; padding: 24px; background: #fff; }
+.exportLongPanel .barGraphList { max-height: none; overflow: visible; }
+.exportClusterList { display: grid; gap: 8px; padding: 4px 0; }
+.exportClusterRow {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  min-height: 74px;
+  padding: 10px 12px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  background: var(--bg-surface);
+}
+.exportClusterRow > b { color: var(--text-muted); font-size: 12px; }
+.exportClusterRow > span { display: grid; gap: 5px; }
+.exportClusterRow small { color: var(--text-secondary); }
+.exportClusterRow .tag { justify-self: start; }
+.trendGrid .alignedTrendPanel { align-self: start; margin-top: 0; }
+.opportunityListsExport {
+  position: relative;
+  padding-top: 42px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  background: var(--bg-surface);
+  overflow: hidden;
+}
+.opportunityListsExport > .panelExportButton { top: 10px; right: 12px; }
+.opportunityListsExport .opportunityLists { padding-top: 4px; }
+.exportLongMeta { margin: 0 0 12px; color: #76667b; font-size: 12px; }
+.exportBarGraphRow { cursor: default; width: 100%; box-sizing: border-box; }
+
+@media (max-width: 760px) {
+  .panelExportButton { top: 8px; right: 8px; padding: 5px 7px; font-size: 11px; }
+  .panelExportMenu { position: relative; top: auto; right: auto; justify-content: flex-end; margin: 8px 8px 0; }
+  .exportablePanel > .panelHeader { padding-right: 48px; }
+}

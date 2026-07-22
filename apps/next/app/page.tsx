@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { toPng } from "html-to-image";
 import {
   ArrowRight,
   Building2,
@@ -221,6 +222,38 @@ type BrandLogoBundle = {
   logo_count: number;
   logos: Record<string, string>;
 };
+
+function safeExportName(value: string) {
+  return value.trim().replace(/[^a-zA-Z0-9\u4e00-\u9fff_-]+/g, "-").replace(/^-+|-+$/g, "").toLowerCase() || "signal-radar";
+}
+
+async function exportElementAsPng(element: HTMLElement, fileName: string) {
+  const pixelRatio = Math.max(1, Math.min(2, 28000 / Math.max(element.scrollHeight, 1)));
+  const dataUrl = await toPng(element, {
+    cacheBust: true,
+    pixelRatio,
+    backgroundColor: "#f8f6fb",
+    filter: (node) => !(node instanceof HTMLElement && node.dataset.exportExclude === "true")
+  });
+  const link = document.createElement("a");
+  link.download = `${safeExportName(fileName)}.png`;
+  link.href = dataUrl;
+  link.click();
+}
+
+function ExportControl({ targetRef, fileName, compact = false }: { targetRef: React.RefObject<HTMLElement | null>; fileName: string; compact?: boolean }) {
+  const { t } = useLang();
+  const [exporting, setExporting] = useState(false);
+  const runExport = async () => {
+    if (!targetRef.current || exporting) return;
+    setExporting(true);
+    try { await exportElementAsPng(targetRef.current, fileName); }
+    finally { setExporting(false); }
+  };
+  return <button type="button" className={`panelExportButton iconOnly ${compact ? "compact" : ""}`} data-export-exclude="true" onClick={runExport} disabled={exporting} title={exporting ? t("exportingRegion") : t("exportRegionHelp")} aria-label={exporting ? t("exportingRegion") : t("exportRegion")}>
+    <Download size={16} />
+  </button>;
+}
 
 function applyBrandLogos(bundle: DashboardBundle, logoMap: Record<string, string>): DashboardBundle {
   const logoFor = (brandNorm: string) => logoMap[brandNorm] || "";
@@ -1294,6 +1327,7 @@ function Home({ data, onOpenCategoryTab, onOpenBrandTab, onOpenCluster, onOpenBr
   openEvidence: (target: EvidenceTarget) => void;
 }) {
   const { lang, t } = useLang();
+  const freshSignalsRef = useRef<HTMLElement | null>(null);
   const topClusters = [...data.clusters].sort(compareHomeClusters).slice(0, 5);
   const topSignalsForCluster = (cluster: Cluster) => {
     const brands = cluster.brands
@@ -1355,7 +1389,8 @@ function Home({ data, onOpenCategoryTab, onOpenBrandTab, onOpenCluster, onOpenBr
           </div>
         </div>
         {hasFreshSignals && <div className="homeSparkleGrid">
-            {newSignals.length > 0 && <article className="panel">
+            {newSignals.length > 0 && <article className="panel exportablePanel" ref={freshSignalsRef}>
+              <ExportControl targetRef={freshSignalsRef} fileName={`new-brand-keyword-signals-${data.meta.latest_week}`} compact />
               <div className="panelHeader"><span>{t("freshKicker")}</span><h3>{t("newBrandKeywordSignalsHome")}</h3></div>
               <div className="compactSignalList">{newSignals.slice(0, 10).map((signal) => <div key={`${signal.kind}:${signal.cluster_id}:${signal.signal_norm}`} className="compactSignalRow"><span><b>{signal.display}</b>{isTikTokListedBrand(signal.is_tiktok_shop_listed) && <em className="brandTypeBadge verified">{t("tiktokShopRecordedBrand")}</em>}</span><div><button onClick={() => signal.kind === "brand" ? openBrandProfile(signal.display) : openExploreTopic(signal.display)}>{t("webSearchLabel")} <ExternalLink size={12} /></button><button onClick={() => openEvidence(signal.kind === "brand" ? {kind:"brand", clusterId:signal.cluster_id, brandNorm:signal.signal_norm, display:signal.display} : {kind:"keyword", clusterId:signal.cluster_id, termNorm:signal.signal_norm, display:signal.display})}>{t("redditEvidenceLabel")} <ArrowRight size={12} /></button></div></div>)}</div>
             </article>}
@@ -1438,9 +1473,15 @@ function CategoryTab({
   const rankIndex = selectedCluster ? clusters.findIndex((cluster) => cluster.cluster_id === selectedCluster.cluster_id) : -1;
   const radarMetrics = selectedCluster ? radarMetricsForCluster(selectedCluster, lang, t) : [];
   const upperRef = useRef<HTMLDivElement | null>(null);
+  const categoryRankingExportRef = useRef<HTMLDivElement | null>(null);
+  const [categoryExportStart, setCategoryExportStart] = useState(1);
+  const [categoryExportEnd, setCategoryExportEnd] = useState(50);
   const visibleClusters = rankView === "all"
     ? clusters
     : clusters.slice(0, 10);
+  const normalizedCategoryStart = rankView === "top10" ? 1 : Math.min(Math.max(1, categoryExportStart), Math.max(clusters.length, 1));
+  const normalizedCategoryEnd = rankView === "top10" ? Math.min(10, clusters.length) : Math.min(Math.max(normalizedCategoryStart, categoryExportEnd), Math.max(clusters.length, 1));
+  const categoryExportRows = clusters.slice(normalizedCategoryStart - 1, normalizedCategoryEnd);
   return (
     <div className="categoryTabPage">
       <div className="trendGrid" ref={upperRef}>
@@ -1468,12 +1509,22 @@ function CategoryTab({
           </div>
           <p className="analysisViewHelper">{dimensionHelper(lang, sortBy)}</p>
         </article>
-        <article className="panel scrollPanel">
+        <article className="panel scrollPanel exportablePanel alignedTrendPanel">
+          <div className="panelExportMenu" data-export-exclude="true">
+            {rankView === "all" && <div className="exportRangeControl" aria-label={t("exportRangeLabel")}>
+              <span>{t("exportRangeTitle")}：{t("exportRangePrefix")}</span>
+              <input type="number" min={1} max={Math.max(clusters.length, 1)} value={categoryExportStart} onChange={(event) => setCategoryExportStart(Number(event.target.value) || 1)} onBlur={() => setCategoryExportStart(normalizedCategoryStart)} aria-label={t("exportRangeStart")} />
+              <span>—</span>
+              <input type="number" min={normalizedCategoryStart} max={Math.max(clusters.length, 1)} value={categoryExportEnd} onChange={(event) => setCategoryExportEnd(Number(event.target.value) || normalizedCategoryStart)} onBlur={() => setCategoryExportEnd(normalizedCategoryEnd)} aria-label={t("exportRangeEnd")} />
+              <span>{t("exportRangeSuffix")}</span>
+            </div>}
+            <ExportControl targetRef={categoryRankingExportRef} fileName={`category-ranking-${sortBy}-${normalizedCategoryStart}-${normalizedCategoryEnd}`} compact />
+          </div>
           <div className="panelHeader">
             <span>{t("rankKicker")}</span>
             <h3>{t("rankTitle")}</h3>
           </div>
-          <div className="rankViewToggle" role="tablist">
+          <div className="rankViewToggle" role="tablist" data-export-exclude="true">
             {(["top10", "all"] as RankView[]).map((view) => (
               <button key={view} role="tab" aria-selected={rankView === view} className={rankView === view ? "active" : ""} onClick={() => setRankView(view)}>
                 {view === "top10" ? t("viewTop10") : t("viewAll")}
@@ -1504,7 +1555,7 @@ function CategoryTab({
             ))}
           </div>
         </article>
-        <article className="panel stickyPanel">
+        <article className="panel stickyPanel alignedTrendPanel">
           <div className="panelHeader">
             <span>{t("detailKicker")}</span>
             {selectedCluster && <h3>{selectedCluster.cluster_name}</h3>}
@@ -1539,6 +1590,19 @@ function CategoryTab({
           <RelatedSignalsPanel cluster={selectedCluster} openEvidence={openEvidence} />
           </>}
         </article>
+      </div>
+
+      <div className="exportRenderStage" aria-hidden="true">
+        <div className="panel exportLongPanel" ref={categoryRankingExportRef}>
+          <div className="panelHeader"><span>{t("rankKicker")}</span><h3>{t("rankTitle")}</h3></div>
+          <p className="exportLongMeta">{t("exportedRowsPrefix")} {normalizedCategoryStart}–{normalizedCategoryEnd} / {clusters.length}</p>
+          <div className="clusterList exportClusterList">
+            {categoryExportRows.map((cluster, index) => <div className="exportClusterRow" key={cluster.cluster_id}>
+              <b>#{normalizedCategoryStart + index}</b>
+              <span><strong>{cluster.cluster_name}</strong><small>{dimensionContext(cluster, sortBy, lang, t)}</small><span className={`tag tag-${dimensionTag(cluster, sortBy, lang).tone}`}>{dimensionTag(cluster, sortBy, lang).label}</span></span>
+            </div>)}
+          </div>
+        </div>
       </div>
 
       <OpportunitySection
@@ -1752,6 +1816,8 @@ function OpportunitySection({
   openClusterDetail: (id: string) => void;
 }) {
   const { t } = useLang();
+  const opportunityMapRef = useRef<HTMLElement | null>(null);
+  const opportunityListsRef = useRef<HTMLDivElement | null>(null);
   const maxTrend = maxOf(clusters.map((cluster) => cluster.trend_score), 1);
   const sortedPostCounts = useMemo(
     () => clusters.map((cluster) => cluster.current_week_posts).sort((a, b) => a - b),
@@ -1815,12 +1881,13 @@ function OpportunitySection({
     : "";
   return (
     <div className="opportunitySection">
-      <article className="panel">
+      <article className="panel exportablePanel" ref={opportunityMapRef}>
+        <ExportControl targetRef={opportunityMapRef} fileName="category-opportunity-map" compact />
         <div className="panelHeader">
           <span>{t("quadrantKicker")}</span>
           <h3>{t("categoryOpportunityMap")}</h3>
         </div>
-        <div className="axisControls">
+        <div className="axisControls" data-export-exclude="true">
           <label>
             {t("xZoom")}
             <input type="range" min="1" max="3" step="0.1" value={zoom} onChange={(event) => setZoom(Number(event.target.value))} />
@@ -1864,9 +1931,12 @@ function OpportunitySection({
           </div>
         </div>
       </article>
-      <div className="opportunityLists quadrantGrid quadrantGrid-half">
-        <QuadrantColumn title={t("scalingOpportunities")} rows={scaling} openClusterDetail={openClusterDetail} />
-        <QuadrantColumn title={t("emergingNicheOpportunities")} rows={niche} openClusterDetail={openClusterDetail} />
+      <div className="opportunityListsExport exportablePanel" ref={opportunityListsRef}>
+        <ExportControl targetRef={opportunityListsRef} fileName="high-volume-spread-and-vertical-top5" compact />
+        <div className="opportunityLists quadrantGrid quadrantGrid-half">
+          <QuadrantColumn title={t("scalingOpportunities")} rows={scaling} openClusterDetail={openClusterDetail} />
+          <QuadrantColumn title={t("emergingNicheOpportunities")} rows={niche} openClusterDetail={openClusterDetail} />
+        </div>
       </div>
     </div>
   );
@@ -1987,12 +2057,19 @@ function SignalsTab({
   const selected = signalCards.find((item) => item.key === selectedSignalKey);
   const [visibleCount, setVisibleCount] = useState(20);
   const [visibleSignals, setVisibleSignals] = useState(40);
+  const [exportStart, setExportStart] = useState(1);
+  const [exportEnd, setExportEnd] = useState(50);
   const [clusterPickerOpen, setClusterPickerOpen] = useState(false);
   const [searchSuggestionsOpen, setSearchSuggestionsOpen] = useState(false);
   const upperRef = useRef<HTMLDivElement | null>(null);
+  const signalRankingExportRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => setVisibleCount(20), [brandQuery, signalSort, signalCategoryId]);
   useEffect(() => setClusterPickerOpen(false), [selectedSignalKey]);
   useEffect(() => setVisibleSignals(40), [sparkle.current_week]);
+  useEffect(() => {
+    setExportStart((value) => Math.min(Math.max(1, value), Math.max(signalCards.length, 1)));
+    setExportEnd((value) => Math.min(Math.max(1, value), Math.max(signalCards.length, 1)));
+  }, [signalCards.length]);
   const maxUniquePosts = maxOf(signalCards.map((item) => item.uniquePosts), 1);
   const sortedCategories = useMemo(() => [...clusters].sort((a, b) => a.cluster_name.localeCompare(b.cluster_name)), [clusters]);
   const selectedSearchCategory = sortedCategories.find((cluster) => cluster.cluster_id === signalCategoryId);
@@ -2006,6 +2083,9 @@ function SignalsTab({
     return sortedCategories.filter((cluster) => cluster.cluster_name.toLocaleLowerCase().includes(query)).slice(0, 8);
   }, [brandQuery, sortedCategories]);
   const illustrationByClusterId = useMemo(() => new Map(clusters.map((cluster) => [cluster.cluster_id, cluster.illustration_url || ""])), [clusters]);
+  const normalizedExportStart = Math.min(Math.max(1, exportStart), Math.max(signalCards.length, 1));
+  const normalizedExportEnd = Math.min(Math.max(normalizedExportStart, exportEnd), Math.max(signalCards.length, 1));
+  const exportRows = signalCards.slice(normalizedExportStart - 1, normalizedExportEnd);
 
   // Evidence is keyed by week x cluster x brand/keyword -- a signal discussed in more than
   // one category needs the user to pick which category's posts to view. That picker only
@@ -2035,7 +2115,17 @@ function SignalsTab({
   return (
     <div className="signalsTabPage">
       <div className="mappingGrid signalsUpperGrid" ref={upperRef}>
-        <article className="panel">
+        <article className="panel exportablePanel">
+          <div className="panelExportMenu" data-export-exclude="true">
+            <div className="exportRangeControl" aria-label={t("exportRangeLabel")}>
+              <span>{t("exportRangeTitle")}：{t("exportRangePrefix")}</span>
+              <input type="number" min={1} max={Math.max(signalCards.length, 1)} value={exportStart} onChange={(event) => setExportStart(Number(event.target.value) || 1)} onBlur={() => setExportStart(normalizedExportStart)} aria-label={t("exportRangeStart")} />
+              <span>—</span>
+              <input type="number" min={normalizedExportStart} max={Math.max(signalCards.length, 1)} value={exportEnd} onChange={(event) => setExportEnd(Number(event.target.value) || normalizedExportStart)} onBlur={() => setExportEnd(normalizedExportEnd)} aria-label={t("exportRangeEnd")} />
+              <span>{t("exportRangeSuffix")}</span>
+            </div>
+            <ExportControl targetRef={signalRankingExportRef} fileName={`brand-keyword-ranking-${normalizedExportStart}-${normalizedExportEnd}`} compact />
+          </div>
           <div className="panelHeader">
             <span>{t("signalDetailKicker")}</span>
             <h3>{t("signalDetailTitle")}</h3>
@@ -2170,6 +2260,27 @@ function SignalsTab({
             </div>
           )}
         </article>
+      </div>
+
+      <div className="exportRenderStage" aria-hidden="true">
+        <div className="panel exportLongPanel" ref={signalRankingExportRef}>
+          <div className="panelHeader"><span>{t("signalDetailKicker")}</span><h3>{t("signalDetailTitle")}</h3></div>
+          <p className="exportLongMeta">{t("exportedRowsPrefix")} {normalizedExportStart}–{normalizedExportEnd} / {signalCards.length}</p>
+          <div className="barGraphList">
+            {exportRows.map((item, index) => {
+              const width = Math.max(4, (item.uniquePosts / maxUniquePosts) * 100);
+              const showTikTokBadge = item.kind === "brand" && isTikTokListedBrand(item.isTikTokShopListed);
+              return <div key={item.key} className="barGraphRow exportBarGraphRow">
+                <b className="barGraphRank">#{normalizedExportStart + index}</b>
+                <span className="barGraphContent">
+                  <span className="barGraphHeading"><strong>{item.display}</strong>{showTikTokBadge && <em className="brandTypeBadge verified">{t("verifiedBrandTag")}</em>}</span>
+                  <small>{item.uniquePosts} {t("postsUnit")} · {item.mentions} {t("mentionsUnit")} · {item.clusterCount} {t("categoriesUnit")}</small>
+                  <span className="barGraphTrack"><i style={{ width: `${width}%`, background: sentimentGradientColor(item.sentiment) }} /></span>
+                </span>
+              </div>;
+            })}
+          </div>
+        </div>
       </div>
 
       <div className="sparkleSection">
