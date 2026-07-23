@@ -73,6 +73,7 @@ def main() -> None:
         args.next_output_dir,
     ]
     run_command(command)
+    run_command([sys.executable, "scripts/build_bot_signal_export.py"])
 
 
 if __name__ == "__main__":

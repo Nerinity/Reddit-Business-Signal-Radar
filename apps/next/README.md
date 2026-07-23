@@ -24,6 +24,19 @@ That command also refreshes the static prototype bundle:
 apps/web/public/data/dashboard.json
 ```
 
+It also builds compact, team-scoped, read-only exports for briefing agents:
+
+```text
+apps/next/public/data/bot/v1/manifest.json
+apps/next/public/data/bot/v1/latest.json
+apps/next/public/data/bot/v1/weeks/YYYY-MM-DD.json
+```
+
+Each team export contains its overall trend-score Top 5 plus one unique category
+highlight for momentum, cross-community spread, sentiment, and engagement. Every
+selected category includes the app's mixed brand/keyword Top 50 and a link to its
+existing evidence bundle.
+
 ## Run
 
 From the repository root:

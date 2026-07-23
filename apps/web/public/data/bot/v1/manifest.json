@@ -1,0 +1,14 @@
+{
+  "schema_version": "1.0",
+  "latest_complete_week": "2026-07-13",
+  "generated_at": "2026-07-23T00:57:11Z",
+  "available_weeks": [
+    "2026-07-13",
+    "2026-07-06",
+    "2026-06-29",
+    "2026-06-22",
+    "2026-06-15"
+  ],
+  "latest_url": "/data/bot/v1/latest.json",
+  "week_url_template": "/data/bot/v1/weeks/{week_start}.json"
+}
