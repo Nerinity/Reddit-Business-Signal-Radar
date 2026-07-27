@@ -113,6 +113,17 @@ The NLP layer turns collected Reddit posts into product-facing signal tables:
 python3 scripts/run_nlp_signal_pipeline.py --reddit-sample 5000
 ```
 
+Scheduled/incremental updates reprocess only the latest two ISO weeks and merge those
+partitions back into the canonical artifacts. Rows from older weeks are preserved:
+
+```bash
+python3 scripts/run_nlp_update.py --mode incremental
+```
+
+Use `--mode full` only for an intentional full historical rebuild.
+The product dashboard publishes only the three most recent eligible weeks; older processed
+weeks remain stored but are not exposed in the dashboard switcher.
+
 `--reddit-sample` caps Reddit posts only, for smoke tests. It never truncates brand or product
 reference data — those default to building in full, and have their own `--brand-sample` /
 `--product-sample` debug caps if you explicitly want a smaller reference build.

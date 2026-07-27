@@ -290,18 +290,24 @@ def weekly_publish(args: argparse.Namespace) -> None:
             cwd=workspace,
         )
 
-    run([sys.executable, str(script_path(workspace, "run_nlp_update.py")), "--mode", "incremental"], "incremental NLP update", cwd=workspace)
-    run([sys.executable, str(script_path(workspace, "build_dashboard_bundle.py"))], "dashboard bundle build", cwd=workspace)
+    run(
+        [sys.executable, str(script_path(workspace, "run_nlp_update.py")), "--mode", "incremental", "--weeks", "2"],
+        "two-week incremental NLP and product dashboard update",
+        cwd=workspace,
+    )
 
     if not args.skip_forecast:
         log.info("Forecast build is not wired yet in this product scaffold; skipping.")
 
-    sync_streamlit_artifacts(workspace)
-
-    publish_cmd = [sys.executable, str(PUBLISH_SCRIPT), "--commit"]
-    if args.push:
-        publish_cmd.append("--push")
-    run(publish_cmd, "publish Streamlit snapshot")
+    legacy_required = [workspace / "data" / "processed" / name for name in ("dashboard_data_500k.pkl", "brand_posts_index.pkl")]
+    if all(path.exists() for path in legacy_required):
+        sync_streamlit_artifacts(workspace)
+        publish_cmd = [sys.executable, str(PUBLISH_SCRIPT), "--commit"]
+        if args.push:
+            publish_cmd.append("--push")
+        run(publish_cmd, "publish legacy Streamlit snapshot")
+    else:
+        log.info("Legacy Streamlit artifacts are absent; the formal product dashboard was already refreshed by the incremental update.")
 
     write_state(
         "weekly-publish",

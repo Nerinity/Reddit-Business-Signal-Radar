@@ -122,7 +122,10 @@ def complete_weeks(df: pd.DataFrame, coverage_start: pd.Timestamp, coverage_end:
     result = set()
     for week in df["week_start"].dropna().astype(str).unique():
         start = pd.Timestamp(week, tz="UTC")
-        if coverage_start <= start and coverage_end >= start + pd.Timedelta(days=6):
+        # Collection coverage is date-granular. A first post at Monday 00:00:01 still proves
+        # Monday is present; requiring a post at exactly midnight incorrectly drops the first
+        # week of an incremental window.
+        if coverage_start.normalize() <= start and coverage_end.normalize() >= start + pd.Timedelta(days=6):
             result.add(week)
     return result
 

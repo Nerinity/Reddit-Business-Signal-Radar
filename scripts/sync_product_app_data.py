@@ -57,6 +57,7 @@ def main() -> None:
     parser.add_argument("--processed-dir", default="data/processed")
     parser.add_argument("--web-output-dir", default=DEFAULT_WEB_OUTPUT_DIR)
     parser.add_argument("--next-output-dir", default=DEFAULT_NEXT_OUTPUT_DIR)
+    parser.add_argument("--dashboard-weeks", type=int, default=3, help="Number of recent weeks exposed by the dashboard.")
     args = parser.parse_args()
     processed_dir = (REPO_ROOT / args.processed_dir).resolve()
     validate_keyword_post_index(processed_dir / "keyword_post_index.parquet")
@@ -71,6 +72,8 @@ def main() -> None:
         args.web_output_dir,
         "--next-output-dir",
         args.next_output_dir,
+        "--weeks-limit",
+        str(args.dashboard_weeks),
     ]
     run_command(command)
     run_command([sys.executable, "scripts/build_bot_signal_export.py"])

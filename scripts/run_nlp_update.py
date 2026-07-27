@@ -14,14 +14,21 @@ ROOT = Path(__file__).resolve().parents[1]
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--mode", choices=["incremental", "full"], default="incremental")
+    parser.add_argument("--weeks", type=int, default=2, help="ISO weeks to replace in incremental mode.")
     args = parser.parse_args()
     if args.mode == "incremental":
-        print("Running canonical signal pipeline; stages reuse existing raw inputs.")
-    subprocess.run(
-        [sys.executable, str(ROOT / "scripts" / "run_nlp_signal_pipeline.py")],
-        cwd=ROOT,
-        check=True,
-    )
+        print(f"Reprocessing the latest {args.weeks} ISO weeks; older partitions are preserved.")
+        subprocess.run(
+            [sys.executable, str(ROOT / "scripts" / "run_recent_nlp_update.py"), "--weeks", str(args.weeks)],
+            cwd=ROOT,
+            check=True,
+        )
+    else:
+        subprocess.run(
+            [sys.executable, str(ROOT / "scripts" / "run_nlp_signal_pipeline.py")],
+            cwd=ROOT,
+            check=True,
+        )
 
 
 if __name__ == "__main__":

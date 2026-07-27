@@ -427,6 +427,11 @@ def build_week_bundle(week: str, all_weeks: list[str], scores: pd.DataFrame, ter
     signals_by_cluster: dict[str, list[dict]] = {}
     for signal in cluster_signal_rows:
         signals_by_cluster.setdefault(signal["cluster_id"], []).append(signal)
+    cluster_signal_rows = [
+        signal
+        for signals in signals_by_cluster.values()
+        for signal in signals[:50]
+    ]
 
     cluster_cards = []
     for row in sorted_scores.itertuples(index=False):
@@ -437,8 +442,8 @@ def build_week_bundle(week: str, all_weeks: list[str], scores: pd.DataFrame, ter
             & week_terms["quality_ok"]
         ].sort_values(
             ["unique_posts", "mentions", "term_norm"], ascending=[False, False, True]
-        )
-        cluster_brands = signals_by_cluster.get(cid, [])
+        ).head(100)
+        cluster_brands = signals_by_cluster.get(cid, [])[:50]
         cluster_cards.append({
             "week_start": week,
             "cluster_id": cid,
@@ -506,6 +511,7 @@ def build_week_bundle(week: str, all_weeks: list[str], scores: pd.DataFrame, ter
         ["unique_posts", "mentions", "cluster_id", "term_norm"],
         ascending=[False, False, True, True],
     )
+    all_terms = all_terms.groupby(all_terms["cluster_id"].astype(str), sort=False).head(100)
     keyword_map = [
         {
             "term": str(r.term),
@@ -544,6 +550,7 @@ def build_week_bundle(week: str, all_weeks: list[str], scores: pd.DataFrame, ter
             "logo_url": str(meta_row.get("logo_url", "") or ""),
         })
     brand_signals.sort(key=lambda r: (-r["unique_posts"], -r["mentions"], r["brand_norm"]))
+    brand_signals = brand_signals[:1000]
 
     # Evidence stream is scoped to this week's own date range (week_start inclusive,
     # +7 days exclusive) so switching weeks actually shows different source posts
@@ -658,19 +665,17 @@ def keyword_evidence_record(row) -> dict:
 
 
 def build_week_evidence(week: str, brands: pd.DataFrame, posts: pd.DataFrame,
-                        keyword_post_index: pd.DataFrame) -> dict[str, dict]:
+                        keyword_post_index: pd.DataFrame,
+                        allowed_brand_pairs: set[tuple[str, str]],
+                        allowed_keyword_pairs: set[tuple[str, str]]) -> dict[str, dict]:
     """Build precise, per-cluster signal evidence payloads kept outside dashboard.json."""
     week_brand_posts = prepare_week_posts(posts, week).sort_values("published_at", ascending=False)
-    valid_brand_pairs = {
-        (str(row.cluster_id), str(row.brand_norm))
-        for row in brands[brands["week_start"].astype(str).eq(week)].itertuples(index=False)
-    }
     week_brand_posts = week_brand_posts[
-        week_brand_posts.apply(lambda row: (str(row["cluster_id"]), str(row["brand_norm"])) in valid_brand_pairs, axis=1)
+        week_brand_posts.apply(lambda row: (str(row["cluster_id"]), str(row["brand_norm"])) in allowed_brand_pairs, axis=1)
     ]
     payloads: dict[str, dict] = {}
     for (cid, norm), rows in week_brand_posts.groupby(["cluster_id", "brand_norm"], sort=False):
-        unique_rows = rows.drop_duplicates("post_key").head(20)
+        unique_rows = rows.drop_duplicates("post_key").head(5)
         payloads.setdefault(str(cid), {"brands": {}, "keywords": {}})["brands"][str(norm)] = [
             evidence_record(row, display=str(row.brand_display))
             for row in unique_rows.itertuples(index=False)
@@ -682,8 +687,13 @@ def build_week_evidence(week: str, brands: pd.DataFrame, posts: pd.DataFrame,
     # rows directly into the nested payload instead of constructing millions of tiny
     # pandas GroupBy frames during historical backfills.
     for row in week_keywords.itertuples(index=False):
+        pair = (str(row.cluster_id), str(row.term_norm))
+        if pair not in allowed_keyword_pairs:
+            continue
         cluster_payload = payloads.setdefault(str(row.cluster_id), {"brands": {}, "keywords": {}})
-        cluster_payload["keywords"].setdefault(str(row.term_norm), []).append(keyword_evidence_record(row))
+        evidence_rows = cluster_payload["keywords"].setdefault(str(row.term_norm), [])
+        if len(evidence_rows) < 5:
+            evidence_rows.append(keyword_evidence_record(row))
     return payloads
 
 
@@ -778,7 +788,17 @@ def main() -> None:
             week, all_weeks, scores, terms, brands, posts, discussion_posts, category_illustrations,
             brand_domain_overrides, tiktok_listed_brand_norms
         )
-        evidence_payloads = build_week_evidence(week, brands, posts, keyword_post_index)
+        allowed_brand_pairs = {
+            (str(row["cluster_id"]), str(row["brand_norm"]))
+            for row in bundle["cluster_brand_signals"]
+        }
+        allowed_keyword_pairs = {
+            (str(row["cluster_id"]), str(row["term_norm"]))
+            for row in bundle["keywords"]
+        }
+        evidence_payloads = build_week_evidence(
+            week, brands, posts, keyword_post_index, allowed_brand_pairs, allowed_keyword_pairs
+        )
         keywords = bundle.pop("keywords")
         bundle["keywords_url"] = f"/data/keywords-{week}.json"
         payload = json.dumps(bundle, ensure_ascii=False, indent=2)
