@@ -1,0 +1,72 @@
+{
+  "meta": {
+    "latest_week": "2026-01-05",
+    "cluster_count": 2,
+    "post_count": 18,
+    "brand_signal_count": 3,
+    "weekly_post_count": 18,
+    "weekly_brand_signal_count": 3,
+    "weekly_unique_brand_count": 2,
+    "verified_brand_count": 1,
+    "known_brand_count": 1,
+    "candidate_brand_count": 0,
+    "term_signal_count": 4,
+    "avg_trend_score": 3.4,
+    "max_trend_score": 4.1
+  },
+  "clusters": [
+    {
+      "week_start": "2026-01-05",
+      "cluster_id": "demo-001",
+      "cluster_name": "Synthetic Personal Care",
+      "trend_score": 4.1,
+      "trend_score_100": 82,
+      "momentum_score": 4.5,
+      "sentiment_score": 3.6,
+      "cross_community_score": 4,
+      "engagement_score": 4.2,
+      "current_week_posts": 12,
+      "previous_week_posts": 6,
+      "growth_rate": 1,
+      "unique_subreddits": 4,
+      "avg_sentiment": 0.21,
+      "avg_log_engagement": 2.8,
+      "terms": [
+        {"term": "gentle formula", "entity_type": "product_phrase", "mentions": 7, "sentiment": 0.25},
+        {"term": "sensitive skin", "entity_type": "need_state", "mentions": 5, "sentiment": 0.12}
+      ],
+      "brands": [
+        {"brand_norm": "demo_brand", "brand_display": "Demo Brand", "brand_signal_type": "confirmed_whitelist_brand", "mentions": 5, "unique_posts": 4, "sentiment": 0.22}
+      ]
+    },
+    {
+      "week_start": "2026-01-05",
+      "cluster_id": "demo-002",
+      "cluster_name": "Synthetic Home Products",
+      "trend_score": 2.7,
+      "trend_score_100": 54,
+      "momentum_score": 2.5,
+      "sentiment_score": 3.1,
+      "cross_community_score": 2,
+      "engagement_score": 3.2,
+      "current_week_posts": 6,
+      "previous_week_posts": 5,
+      "growth_rate": 0.2,
+      "unique_subreddits": 2,
+      "avg_sentiment": 0.04,
+      "avg_log_engagement": 1.9,
+      "terms": [
+        {"term": "compact storage", "entity_type": "product_phrase", "mentions": 4, "sentiment": 0.08},
+        {"term": "small spaces", "entity_type": "need_state", "mentions": 3, "sentiment": 0.01}
+      ],
+      "brands": [
+        {"brand_norm": "sample_company", "brand_display": "Sample Company", "brand_signal_type": "catalog_known_brand", "mentions": 2, "unique_posts": 2, "sentiment": 0.03}
+      ]
+    }
+  ],
+  "keywords": [],
+  "brands": [],
+  "cluster_brand_signals": [],
+  "posts": [],
+  "weeks": ["2026-01-05"]
+}
