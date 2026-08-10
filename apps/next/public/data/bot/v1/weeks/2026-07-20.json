@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0",
   "week_start": "2026-07-20",
-  "generated_at": "2026-08-03T20:04:14Z",
+  "generated_at": "2026-08-10T22:46:09Z",
   "mapping_version": 4,
   "selection_contract": {
     "overall": "top 5 by trend_score within each team scope",
