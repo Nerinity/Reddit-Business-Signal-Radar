@@ -69,9 +69,10 @@ def main() -> None:
     out = pd.DataFrame(index=df.index)
     out["mention_id"] = col(df, "mention_id", "").astype(str)
     missing_id = out["mention_id"].str.strip().eq("") | out["mention_id"].isin(["nan", "None"])
+    missing_rows = df.loc[missing_id]
     out.loc[missing_id, "mention_id"] = [
         f"generated_{content_hash(t, x, i)}"
-        for i, (t, x) in enumerate(zip(col(df, "title", ""), choose_text(df)))
+        for i, (t, x) in enumerate(zip(col(missing_rows, "title", ""), choose_text(missing_rows)))
     ]
 
     out["title_raw"] = col(df, "title", "").fillna("").astype(str)

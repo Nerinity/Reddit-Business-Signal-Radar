@@ -1,0 +1,5462 @@
+{
+  "schema_version": "1.0",
+  "week_start": "2026-08-17",
+  "generated_at": "2026-09-01T15:56:05Z",
+  "mapping_version": 4,
+  "selection_contract": {
+    "overall": "top 5 by trend_score within each team scope",
+    "dimension_highlights": [
+      "momentum_score",
+      "cross_community_score",
+      "sentiment_score",
+      "engagement_score"
+    ],
+    "highlight_exclusions": "exclude overall top 5 and previously selected highlights",
+    "mixed_signal_limit_per_category": 50,
+    "mixed_signal_order": "same default brand/keyword ordering as the product app"
+  },
+  "teams": [
+    {
+      "identity_key": "Full-Service::Full-Service",
+      "ops_team_1": "Full-Service",
+      "ops_team_2": "Full-Service",
+      "mapped_category_count": 76,
+      "matched_category_count": 37,
+      "overall_top5": [
+        {
+          "selection": "overall_trend_score",
+          "rank": 1,
+          "category_id": "C052",
+          "category_name": "Women's Dresses",
+          "scores": {
+            "overall": 4.71,
+            "overall_100": 94.2,
+            "momentum": 5.0,
+            "cross_community": 5.0,
+            "sentiment": 3.57,
+            "engagement": 5.0
+          },
+          "metrics": {
+            "current_week_posts": 5,
+            "previous_week_posts": 2,
+            "growth_rate": 1.5,
+            "unique_subreddits": 5,
+            "avg_sentiment": 0.2,
+            "positive_share": 0.2,
+            "negative_share": 0.0,
+            "avg_log_engagement": 3.4786183807507265
+          },
+          "communities_top5": [
+            {
+              "subreddit": "OUTFITS",
+              "unique_posts": 5,
+              "discussion_share": 0.21739130434782608
+            },
+            {
+              "subreddit": "PetiteFashionAdvice",
+              "unique_posts": 3,
+              "discussion_share": 0.13043478260869565
+            },
+            {
+              "subreddit": "femalefashionadvice",
+              "unique_posts": 3,
+              "discussion_share": 0.13043478260869565
+            },
+            {
+              "subreddit": "PlusSizeFashion",
+              "unique_posts": 2,
+              "discussion_share": 0.08695652173913043
+            },
+            {
+              "subreddit": "VintageFashion",
+              "unique_posts": 2,
+              "discussion_share": 0.08695652173913043
+            }
+          ],
+          "signals_top50": [],
+          "evidence_url": "/data/evidence/2026-08-17/C052.json"
+        },
+        {
+          "selection": "overall_trend_score",
+          "rank": 2,
+          "category_id": "C146",
+          "category_name": "Dolls & Stuffed Toys",
+          "scores": {
+            "overall": 3.78,
+            "overall_100": 75.6,
+            "momentum": 3.6,
+            "cross_community": 5.0,
+            "sentiment": 3.71,
+            "engagement": 3.0
+          },
+          "metrics": {
+            "current_week_posts": 4,
+            "previous_week_posts": 3,
+            "growth_rate": 0.3333333333333333,
+            "unique_subreddits": 4,
+            "avg_sentiment": 0.25,
+            "positive_share": 0.25,
+            "negative_share": 0.0,
+            "avg_log_engagement": 2.2118399688685435
+          },
+          "communities_top5": [
+            {
+              "subreddit": "AmateurRoomPorn",
+              "unique_posts": 1,
+              "discussion_share": 0.07692307692307693
+            },
+            {
+              "subreddit": "Anticonsumption",
+              "unique_posts": 1,
+              "discussion_share": 0.07692307692307693
+            },
+            {
+              "subreddit": "Breadit",
+              "unique_posts": 1,
+              "discussion_share": 0.07692307692307693
+            },
+            {
+              "subreddit": "CleaningTips",
+              "unique_posts": 1,
+              "discussion_share": 0.07692307692307693
+            },
+            {
+              "subreddit": "Dogtraining",
+              "unique_posts": 1,
+              "discussion_share": 0.07692307692307693
+            }
+          ],
+          "signals_top50": [
+            {
+              "rank": 1,
+              "signal_key": "brand:stuffed",
+              "kind": "brand",
+              "display": "Stuffed",
+              "entity_type": "catalog_known_brand",
+              "unique_posts": 2,
+              "mentions": 1,
+              "sentiment": 0.0,
+              "is_tiktok_shop_listed": false,
+              "brand_confidence_tier": "high",
+              "brand_domain": "shopping",
+              "search_url": "https://www.google.com/search?q=Stuffed+brand",
+              "logo_url": ""
+            }
+          ],
+          "evidence_url": "/data/evidence/2026-08-17/C146.json"
+        },
+        {
+          "selection": "overall_trend_score",
+          "rank": 3,
+          "category_id": "C185",
+          "category_name": "Camping & Hiking",
+          "scores": {
+            "overall": 3.75,
+            "overall_100": 75.0,
+            "momentum": 4.2,
+            "cross_community": 5.0,
+            "sentiment": 3.34,
+            "engagement": 2.0
+          },
+          "metrics": {
+            "current_week_posts": 28,
+            "previous_week_posts": 21,
+            "growth_rate": 0.3333333333333333,
+            "unique_subreddits": 4,
+            "avg_sentiment": 0.11904761904761904,
+            "positive_share": 0.14285714285714285,
+            "negative_share": 0.0,
+            "avg_log_engagement": 1.7719136577884633
+          },
+          "communities_top5": [
+            {
+              "subreddit": "camping",
+              "unique_posts": 56,
+              "discussion_share": 0.47058823529411764
+            },
+            {
+              "subreddit": "hiking",
+              "unique_posts": 26,
+              "discussion_share": 0.2184873949579832
+            },
+            {
+              "subreddit": "CampingGear",
+              "unique_posts": 10,
+              "discussion_share": 0.08403361344537816
+            },
+            {
+              "subreddit": "backpacking",
+              "unique_posts": 4,
+              "discussion_share": 0.03361344537815126
+            },
+            {
+              "subreddit": "WhatCarShouldIBuy",
+              "unique_posts": 3,
+              "discussion_share": 0.025210084033613446
+            }
+          ],
+          "signals_top50": [
+            {
+              "rank": 1,
+              "signal_key": "brand:hiking",
+              "kind": "brand",
+              "display": "HIKING",
+              "entity_type": "catalog_known_brand",
+              "unique_posts": 9,
+              "mentions": 2,
+              "sentiment": 0.5,
+              "is_tiktok_shop_listed": true,
+              "brand_confidence_tier": "high",
+              "brand_domain": "shopping",
+              "search_url": "https://www.google.com/search?q=HIKING+brand",
+              "logo_url": ""
+            }
+          ],
+          "evidence_url": "/data/evidence/2026-08-17/C185.json"
+        },
+        {
+          "selection": "overall_trend_score",
+          "rank": 4,
+          "category_id": "C001",
+          "category_name": "Mobile Phone Accessories",
+          "scores": {
+            "overall": 3.64,
+            "overall_100": 72.8,
+            "momentum": 3.6,
+            "cross_community": 4.0,
+            "sentiment": 3.0,
+            "engagement": 4.0
+          },
+          "metrics": {
+            "current_week_posts": 3,
+            "previous_week_posts": 3,
+            "growth_rate": 0.0,
+            "unique_subreddits": 3,
+            "avg_sentiment": 0.0,
+            "positive_share": 0.0,
+            "negative_share": 0.0,
+            "avg_log_engagement": 3.3212452109604946
+          },
+          "communities_top5": [
+            {
+              "subreddit": "iphone",
+              "unique_posts": 6,
+              "discussion_share": 0.11538461538461539
+            },
+            {
+              "subreddit": "degoogle",
+              "unique_posts": 5,
+              "discussion_share": 0.09615384615384616
+            },
+            {
+              "subreddit": "GooglePixel",
+              "unique_posts": 4,
+              "discussion_share": 0.07692307692307693
+            },
+            {
+              "subreddit": "Android",
+              "unique_posts": 2,
+              "discussion_share": 0.038461538461538464
+            },
+            {
+              "subreddit": "Garmin",
+              "unique_posts": 2,
+              "discussion_share": 0.038461538461538464
+            }
+          ],
+          "signals_top50": [],
+          "evidence_url": "/data/evidence/2026-08-17/C001.json"
+        },
+        {
+          "selection": "overall_trend_score",
+          "rank": 5,
+          "category_id": "C075",
+          "category_name": "Office Stationery & Supplies",
+          "scores": {
+            "overall": 3.62,
+            "overall_100": 72.4,
+            "momentum": 4.2,
+            "cross_community": 2.0,
+            "sentiment": 3.71,
+            "engagement": 4.0
+          },
+          "metrics": {
+            "current_week_posts": 12,
+            "previous_week_posts": 10,
+            "growth_rate": 0.2,
+            "unique_subreddits": 1,
+            "avg_sentiment": 0.25,
+            "positive_share": 0.3333333333333333,
+            "negative_share": 0.08333333333333333,
+            "avg_log_engagement": 3.3769044992743384
+          },
+          "communities_top5": [
+            {
+              "subreddit": "stationery",
+              "unique_posts": 27,
+              "discussion_share": 0.8709677419354839
+            },
+            {
+              "subreddit": "CasualConversation",
+              "unique_posts": 1,
+              "discussion_share": 0.03225806451612903
+            },
+            {
+              "subreddit": "DoesAnybodyElse",
+              "unique_posts": 1,
+              "discussion_share": 0.03225806451612903
+            },
+            {
+              "subreddit": "ManyBaggers",
+              "unique_posts": 1,
+              "discussion_share": 0.03225806451612903
+            },
+            {
+              "subreddit": "careerguidance",
+              "unique_posts": 1,
+              "discussion_share": 0.03225806451612903
+            }
+          ],
+          "signals_top50": [
+            {
+              "rank": 1,
+              "signal_key": "brand:haul",
+              "kind": "brand",
+              "display": "HAUL",
+              "entity_type": "catalog_known_brand",
+              "unique_posts": 3,
+              "mentions": 1,
+              "sentiment": 1.0,
+              "is_tiktok_shop_listed": false,
+              "brand_confidence_tier": "high",
+              "brand_domain": "shopping",
+              "search_url": "https://www.google.com/search?q=HAUL+brand",
+              "logo_url": ""
+            },
+            {
+              "rank": 2,
+              "signal_key": "brand:washi tape",
+              "kind": "brand",
+              "display": "Washi tape",
+              "entity_type": "catalog_known_brand",
+              "unique_posts": 2,
+              "mentions": 1,
+              "sentiment": 0.0,
+              "is_tiktok_shop_listed": true,
+              "brand_confidence_tier": "high",
+              "brand_domain": "shopping",
+              "search_url": "https://www.google.com/search?q=Washi+tape+brand",
+              "logo_url": ""
+            }
+          ],
+          "evidence_url": "/data/evidence/2026-08-17/C075.json"
+        }
+      ],
+      "dimension_highlights": [
+        {
+          "selection": "momentum_score",
+          "rank": 1,
+          "category_id": "C063",
+          "category_name": "Home Appliances",
+          "scores": {
+            "overall": 3.59,
+            "overall_100": 71.8,
+            "momentum": 5.0,
+            "cross_community": 2.0,
+            "sentiment": 3.95,
+            "engagement": 2.0
+          },
+          "metrics": {
+            "current_week_posts": 6,
+            "previous_week_posts": 1,
+            "growth_rate": 5.0,
+            "unique_subreddits": 1,
+            "avg_sentiment": 0.3333333333333333,
+            "positive_share": 0.3333333333333333,
+            "negative_share": 0.0,
+            "avg_log_engagement": 2.0170813882122673
+          },
+          "communities_top5": [
+            {
+              "subreddit": "Appliances",
+              "unique_posts": 13,
+              "discussion_share": 0.7647058823529411
+            },
+            {
+              "subreddit": "3Dprinting",
+              "unique_posts": 1,
+              "discussion_share": 0.058823529411764705
+            },
+            {
+              "subreddit": "ApplianceAdvice",
+              "unique_posts": 1,
+              "discussion_share": 0.058823529411764705
+            },
+            {
+              "subreddit": "BuyItForLife",
+              "unique_posts": 1,
+              "discussion_share": 0.058823529411764705
+            },
+            {
+              "subreddit": "organization",
+              "unique_posts": 1,
+              "discussion_share": 0.058823529411764705
+            }
+          ],
+          "signals_top50": [
+            {
+              "rank": 1,
+              "signal_key": "brand:outlet",
+              "kind": "brand",
+              "display": "outlet",
+              "entity_type": "catalog_known_brand",
+              "unique_posts": 3,
+              "mentions": 3,
+              "sentiment": 0.3333333333333333,
+              "is_tiktok_shop_listed": true,
+              "brand_confidence_tier": "high",
+              "brand_domain": "shopping",
+              "search_url": "https://www.google.com/search?q=outlet+brand",
+              "logo_url": ""
+            },
+            {
+              "rank": 2,
+              "signal_key": "brand:dent",
+              "kind": "brand",
+              "display": "Dent",
+              "entity_type": "catalog_known_brand",
+              "unique_posts": 2,
+              "mentions": 2,
+              "sentiment": 0.0,
+              "is_tiktok_shop_listed": false,
+              "brand_confidence_tier": "high",
+              "brand_domain": "shopping",
+              "search_url": "https://www.google.com/search?q=Dent+brand",
+              "logo_url": ""
+            },
+            {
+              "rank": 3,
+              "signal_key": "brand:scratch",
+              "kind": "brand",
+              "display": "Scratch",
+              "entity_type": "catalog_known_brand",
+              "unique_posts": 2,
+              "mentions": 2,
+              "sentiment": 0.0,
+              "is_tiktok_shop_listed": true,
+              "brand_confidence_tier": "high",
+              "brand_domain": "shopping",
+              "search_url": "https://www.google.com/search?q=Scratch+brand",
+              "logo_url": ""
+            }
+          ],
+          "evidence_url": "/data/evidence/2026-08-17/C063.json"
+        },
+        {
+          "selection": "cross_community_score",
+          "rank": 1,
+          "category_id": "C156",
+          "category_name": "Hair Extensions & Wigs",
+          "scores": {
+            "overall": 3.27,
+            "overall_100": 65.4,
+            "momentum": 3.4,
+            "cross_community": 5.0,
+            "sentiment": 3.57,
+            "engagement": 1.0
+          },
+          "metrics": {
+            "current_week_posts": 5,
+            "previous_week_posts": 14,
+            "growth_rate": -0.6428571428571429,
+            "unique_subreddits": 4,
+            "avg_sentiment": 0.2,
+            "positive_share": 0.2,
+            "negative_share": 0.0,
+            "avg_log_engagement": 1.1880342505440864
+          },
+          "communities_top5": [
+            {
+              "subreddit": "Hair",
+              "unique_posts": 5,
+              "discussion_share": 0.2631578947368421
+            },
+            {
+              "subreddit": "femalehairadvice",
+              "unique_posts": 3,
+              "discussion_share": 0.15789473684210525
+            },
+            {
+              "subreddit": "Naturalhair",
+              "unique_posts": 2,
+              "discussion_share": 0.10526315789473684
+            },
+            {
+              "subreddit": "Alibaba",
+              "unique_posts": 1,
+              "discussion_share": 0.05263157894736842
+            },
+            {
+              "subreddit": "AmazonVine",
+              "unique_posts": 1,
+              "discussion_share": 0.05263157894736842
+            }
+          ],
+          "signals_top50": [],
+          "evidence_url": "/data/evidence/2026-08-17/C156.json"
+        },
+        {
+          "selection": "sentiment_score",
+          "rank": 1,
+          "category_id": "C008",
+          "category_name": "Car Electronics",
+          "scores": {
+            "overall": 2.2,
+            "overall_100": 44.0,
+            "momentum": 1.0,
+            "cross_community": 2.0,
+            "sentiment": 5.0,
+            "engagement": 2.0
+          },
+          "metrics": {
+            "current_week_posts": 1,
+            "previous_week_posts": 4,
+            "growth_rate": -0.75,
+            "unique_subreddits": 1,
+            "avg_sentiment": 1.0,
+            "positive_share": 1.0,
+            "negative_share": 0.0,
+            "avg_log_engagement": 4.718498871295094
+          },
+          "communities_top5": [
+            {
+              "subreddit": "AskElectronics",
+              "unique_posts": 3,
+              "discussion_share": 0.25
+            },
+            {
+              "subreddit": "Adulting",
+              "unique_posts": 1,
+              "discussion_share": 0.08333333333333333
+            },
+            {
+              "subreddit": "AmazonVine",
+              "unique_posts": 1,
+              "discussion_share": 0.08333333333333333
+            },
+            {
+              "subreddit": "BuyItForLife",
+              "unique_posts": 1,
+              "discussion_share": 0.08333333333333333
+            },
+            {
+              "subreddit": "InteriorDesign",
+              "unique_posts": 1,
+              "discussion_share": 0.08333333333333333
+            }
+          ],
+          "signals_top50": [],
+          "evidence_url": "/data/evidence/2026-08-17/C008.json"
+        },
+        {
+          "selection": "engagement_score",
+          "rank": 1,
+          "category_id": "C125",
+          "category_name": "Electric & Remote Control Toys",
+          "scores": {
+            "overall": 3.31,
+            "overall_100": 66.2,
+            "momentum": 2.8,
+            "cross_community": 4.0,
+            "sentiment": 3.95,
+            "engagement": 3.0
+          },
+          "metrics": {
+            "current_week_posts": 3,
+            "previous_week_posts": 7,
+            "growth_rate": -0.5714285714285714,
+            "unique_subreddits": 3,
+            "avg_sentiment": 0.3333333333333333,
+            "positive_share": 0.3333333333333333,
+            "negative_share": 0.0,
+            "avg_log_engagement": 2.3633589452586974
+          },
+          "communities_top5": [
+            {
+              "subreddit": "BudgetAudiophile",
+              "unique_posts": 4,
+              "discussion_share": 0.13333333333333333
+            },
+            {
+              "subreddit": "homeassistant",
+              "unique_posts": 4,
+              "discussion_share": 0.13333333333333333
+            },
+            {
+              "subreddit": "homeautomation",
+              "unique_posts": 3,
+              "discussion_share": 0.1
+            },
+            {
+              "subreddit": "jobs",
+              "unique_posts": 3,
+              "discussion_share": 0.1
+            },
+            {
+              "subreddit": "GiftIdeas",
+              "unique_posts": 2,
+              "discussion_share": 0.06666666666666667
+            }
+          ],
+          "signals_top50": [],
+          "evidence_url": "/data/evidence/2026-08-17/C125.json"
+        }
+      ]
+    },
+    {
+      "identity_key": "Local Merchants::L2L - Beauty, Food & Beverage",
+      "ops_team_1": "Local Merchants",
+      "ops_team_2": "L2L - Beauty, Food & Beverage",
+      "mapped_category_count": 24,
+      "matched_category_count": 11,
+      "overall_top5": [
+        {
+          "selection": "overall_trend_score",
+          "rank": 1,
+          "category_id": "C163",
+          "category_name": "Pantry Food",
+          "scores": {
+            "overall": 4.2,
+            "overall_100": 84.0,
+            "momentum": 4.0,
+            "cross_community": 5.0,
+            "sentiment": 3.0,
+            "engagement": 5.0
+          },
+          "metrics": {
+            "current_week_posts": 4,
+            "previous_week_posts": 2,
+            "growth_rate": 1.0,
+            "unique_subreddits": 4,
+            "avg_sentiment": 0.0,
+            "positive_share": 0.0,
+            "negative_share": 0.0,
+            "avg_log_engagement": 4.673003169600529
+          },
+          "communities_top5": [
+            {
+              "subreddit": "povertyfinance",
+              "unique_posts": 5,
+              "discussion_share": 0.2777777777777778
+            },
+            {
+              "subreddit": "Baking",
+              "unique_posts": 2,
+              "discussion_share": 0.1111111111111111
+            },
+            {
+              "subreddit": "BuyItForLife",
+              "unique_posts": 1,
+              "discussion_share": 0.05555555555555555
+            },
+            {
+              "subreddit": "CreditCards",
+              "unique_posts": 1,
+              "discussion_share": 0.05555555555555555
+            },
+            {
+              "subreddit": "HomeDecorating",
+              "unique_posts": 1,
+              "discussion_share": 0.05555555555555555
+            }
+          ],
+          "signals_top50": [],
+          "evidence_url": "/data/evidence/2026-08-17/C163.json"
+        },
+        {
+          "selection": "overall_trend_score",
+          "rank": 2,
+          "category_id": "C120",
+          "category_name": "Bath & Body Care",
+          "scores": {
+            "overall": 3.92,
+            "overall_100": 78.4,
+            "momentum": 3.8,
+            "cross_community": 5.0,
+            "sentiment": 3.0,
+            "engagement": 4.0
+          },
+          "metrics": {
+            "current_week_posts": 15,
+            "previous_week_posts": 17,
+            "growth_rate": -0.11764705882352941,
+            "unique_subreddits": 6,
+            "avg_sentiment": 0.0,
+            "positive_share": 0.06666666666666667,
+            "negative_share": 0.06666666666666667,
+            "avg_log_engagement": 3.096198229657425
+          },
+          "communities_top5": [
+            {
+              "subreddit": "BathandBodyWorks",
+              "unique_posts": 39,
+              "discussion_share": 0.48148148148148145
+            },
+            {
+              "subreddit": "LushCosmetics",
+              "unique_posts": 11,
+              "discussion_share": 0.13580246913580246
+            },
+            {
+              "subreddit": "fragrance",
+              "unique_posts": 4,
+              "discussion_share": 0.04938271604938271
+            },
+            {
+              "subreddit": "FemFragLab",
+              "unique_posts": 3,
+              "discussion_share": 0.037037037037037035
+            },
+            {
+              "subreddit": "BeautyEmpties",
+              "unique_posts": 2,
+              "discussion_share": 0.024691358024691357
+            }
+          ],
+          "signals_top50": [],
+          "evidence_url": "/data/evidence/2026-08-17/C120.json"
+        },
+        {
+          "selection": "overall_trend_score",
+          "rank": 3,
+          "category_id": "C001",
+          "category_name": "Mobile Phone Accessories",
+          "scores": {
+            "overall": 3.64,
+            "overall_100": 72.8,
+            "momentum": 3.6,
+            "cross_community": 4.0,
+            "sentiment": 3.0,
+            "engagement": 4.0
+          },
+          "metrics": {
+            "current_week_posts": 3,
+            "previous_week_posts": 3,
+            "growth_rate": 0.0,
+            "unique_subreddits": 3,
+            "avg_sentiment": 0.0,
+            "positive_share": 0.0,
+            "negative_share": 0.0,
+            "avg_log_engagement": 3.3212452109604946
+          },
+          "communities_top5": [
+            {
+              "subreddit": "iphone",
+              "unique_posts": 6,
+              "discussion_share": 0.11538461538461539
+            },
+            {
+              "subreddit": "degoogle",
+              "unique_posts": 5,
+              "discussion_share": 0.09615384615384616
+            },
+            {
+              "subreddit": "GooglePixel",
+              "unique_posts": 4,
+              "discussion_share": 0.07692307692307693
+            },
+            {
+              "subreddit": "Android",
+              "unique_posts": 2,
+              "discussion_share": 0.038461538461538464
+            },
+            {
+              "subreddit": "Garmin",
+              "unique_posts": 2,
+              "discussion_share": 0.038461538461538464
+            }
+          ],
+          "signals_top50": [],
+          "evidence_url": "/data/evidence/2026-08-17/C001.json"
+        },
+        {
+          "selection": "overall_trend_score",
+          "rank": 4,
+          "category_id": "C131",
+          "category_name": "Home Decor",
+          "scores": {
+            "overall": 3.45,
+            "overall_100": 69.0,
+            "momentum": 4.2,
+            "cross_community": 5.0,
+            "sentiment": 1.86,
+            "engagement": 2.0
+          },
+          "metrics": {
+            "current_week_posts": 5,
+            "previous_week_posts": 4,
+            "growth_rate": 0.25,
+            "unique_subreddits": 4,
+            "avg_sentiment": -0.2,
+            "positive_share": 0.0,
+            "negative_share": 0.2,
+            "avg_log_engagement": 2.0835016134397275
+          },
+          "communities_top5": [
+            {
+              "subreddit": "HomeDecorating",
+              "unique_posts": 10,
+              "discussion_share": 0.3333333333333333
+            },
+            {
+              "subreddit": "minimalism",
+              "unique_posts": 2,
+              "discussion_share": 0.06666666666666667
+            },
+            {
+              "subreddit": "Anticonsumption",
+              "unique_posts": 1,
+              "discussion_share": 0.03333333333333333
+            },
+            {
+              "subreddit": "Apartmentliving",
+              "unique_posts": 1,
+              "discussion_share": 0.03333333333333333
+            },
+            {
+              "subreddit": "DesignerReps",
+              "unique_posts": 1,
+              "discussion_share": 0.03333333333333333
+            }
+          ],
+          "signals_top50": [
+            {
+              "rank": 1,
+              "signal_key": "brand:home decor",
+              "kind": "brand",
+              "display": "Home decor",
+              "entity_type": "catalog_known_brand",
+              "unique_posts": 9,
+              "mentions": 2,
+              "sentiment": 0.0,
+              "is_tiktok_shop_listed": true,
+              "brand_confidence_tier": "high",
+              "brand_domain": "shopping",
+              "search_url": "https://www.google.com/search?q=Home+decor+brand",
+              "logo_url": ""
+            },
+            {
+              "rank": 2,
+              "signal_key": "brand:decor",
+              "kind": "brand",
+              "display": "DECOR",
+              "entity_type": "catalog_known_brand",
+              "unique_posts": 2,
+              "mentions": 1,
+              "sentiment": -1.0,
+              "is_tiktok_shop_listed": true,
+              "brand_confidence_tier": "high",
+              "brand_domain": "shopping",
+              "search_url": "https://www.google.com/search?q=DECOR+brand",
+              "logo_url": ""
+            }
+          ],
+          "evidence_url": "/data/evidence/2026-08-17/C131.json"
+        },
+        {
+          "selection": "overall_trend_score",
+          "rank": 5,
+          "category_id": "C224",
+          "category_name": "Hand & Foot Care",
+          "scores": {
+            "overall": 3.44,
+            "overall_100": 68.8,
+            "momentum": 3.6,
+            "cross_community": 4.0,
+            "sentiment": 3.0,
+            "engagement": 3.0
+          },
+          "metrics": {
+            "current_week_posts": 4,
+            "previous_week_posts": 4,
+            "growth_rate": 0.0,
+            "unique_subreddits": 3,
+            "avg_sentiment": 0.0,
+            "positive_share": 0.0,
+            "negative_share": 0.0,
+            "avg_log_engagement": 2.2589967462078513
+          },
+          "communities_top5": [
+            {
+              "subreddit": "sewing",
+              "unique_posts": 3,
+              "discussion_share": 0.08571428571428572
+            },
+            {
+              "subreddit": "AVexchange",
+              "unique_posts": 2,
+              "discussion_share": 0.05714285714285714
+            },
+            {
+              "subreddit": "ChronicPain",
+              "unique_posts": 2,
+              "discussion_share": 0.05714285714285714
+            },
+            {
+              "subreddit": "HomeImprovement",
+              "unique_posts": 2,
+              "discussion_share": 0.05714285714285714
+            },
+            {
+              "subreddit": "Parenting",
+              "unique_posts": 2,
+              "discussion_share": 0.05714285714285714
+            }
+          ],
+          "signals_top50": [],
+          "evidence_url": "/data/evidence/2026-08-17/C224.json"
+        }
+      ],
+      "dimension_highlights": [
+        {
+          "selection": "momentum_score",
+          "rank": 1,
+          "category_id": "C169",
+          "category_name": "Nutrition & Wellness",
+          "scores": {
+            "overall": 3.4,
+            "overall_100": 68.0,
+            "momentum": 5.0,
+            "cross_community": 3.0,
+            "sentiment": 3.0,
+            "engagement": 1.0
+          },
+          "metrics": {
+            "current_week_posts": 9,
+            "previous_week_posts": 3,
+            "growth_rate": 2.0,
+            "unique_subreddits": 2,
+            "avg_sentiment": 0.0,
+            "positive_share": 0.0,
+            "negative_share": 0.0,
+            "avg_log_engagement": 1.2487209576964964
+          },
+          "communities_top5": [
+            {
+              "subreddit": "nutrition",
+              "unique_posts": 13,
+              "discussion_share": 0.43333333333333335
+            },
+            {
+              "subreddit": "xxfitness",
+              "unique_posts": 3,
+              "discussion_share": 0.1
+            },
+            {
+              "subreddit": "Coffee",
+              "unique_posts": 1,
+              "discussion_share": 0.03333333333333333
+            },
+            {
+              "subreddit": "Meijer",
+              "unique_posts": 1,
+              "discussion_share": 0.03333333333333333
+            },
+            {
+              "subreddit": "QuantifiedSelf",
+              "unique_posts": 1,
+              "discussion_share": 0.03333333333333333
+            }
+          ],
+          "signals_top50": [
+            {
+              "rank": 1,
+              "signal_key": "brand:wellness",
+              "kind": "brand",
+              "display": "wellness",
+              "entity_type": "catalog_known_brand",
+              "unique_posts": 2,
+              "mentions": 1,
+              "sentiment": 0.0,
+              "is_tiktok_shop_listed": true,
+              "brand_confidence_tier": "high",
+              "brand_domain": "shopping",
+              "search_url": "https://www.google.com/search?q=wellness+brand",
+              "logo_url": ""
+            }
+          ],
+          "evidence_url": "/data/evidence/2026-08-17/C169.json"
+        },
+        {
+          "selection": "cross_community_score",
+          "rank": 1,
+          "category_id": "C066",
+          "category_name": "Bedding and Linens",
+          "scores": {
+            "overall": 2.28,
+            "overall_100": 45.6,
+            "momentum": 2.2,
+            "cross_community": 2.0,
+            "sentiment": 3.0,
+            "engagement": 2.0
+          },
+          "metrics": {
+            "current_week_posts": 2,
+            "previous_week_posts": 11,
+            "growth_rate": -0.8181818181818182,
+            "unique_subreddits": 2,
+            "avg_sentiment": 0.0,
+            "positive_share": 0.0,
+            "negative_share": 0.0,
+            "avg_log_engagement": 2.567899218525131
+          },
+          "communities_top5": [
+            {
+              "subreddit": "CleaningTips",
+              "unique_posts": 4,
+              "discussion_share": 0.14814814814814814
+            },
+            {
+              "subreddit": "HomeDecorating",
+              "unique_posts": 3,
+              "discussion_share": 0.1111111111111111
+            },
+            {
+              "subreddit": "Appliances",
+              "unique_posts": 2,
+              "discussion_share": 0.07407407407407407
+            },
+            {
+              "subreddit": "BuyItForLife",
+              "unique_posts": 2,
+              "discussion_share": 0.07407407407407407
+            },
+            {
+              "subreddit": "insomnia",
+              "unique_posts": 2,
+              "discussion_share": 0.07407407407407407
+            }
+          ],
+          "signals_top50": [],
+          "evidence_url": "/data/evidence/2026-08-17/C066.json"
+        },
+        {
+          "selection": "sentiment_score",
+          "rank": 1,
+          "category_id": "C088",
+          "category_name": "Fragrance",
+          "scores": {
+            "overall": 2.96,
+            "overall_100": 59.2,
+            "momentum": 4.4,
+            "cross_community": 2.0,
+            "sentiment": 3.0,
+            "engagement": 1.0
+          },
+          "metrics": {
+            "current_week_posts": 3,
+            "previous_week_posts": 1,
+            "growth_rate": 2.0,
+            "unique_subreddits": 1,
+            "avg_sentiment": 0.0,
+            "positive_share": 0.0,
+            "negative_share": 0.0,
+            "avg_log_engagement": 0.9985774245179969
+          },
+          "communities_top5": [
+            {
+              "subreddit": "fragrance",
+              "unique_posts": 16,
+              "discussion_share": 0.6666666666666666
+            },
+            {
+              "subreddit": "Colognes",
+              "unique_posts": 3,
+              "discussion_share": 0.125
+            },
+            {
+              "subreddit": "FemFragLab",
+              "unique_posts": 2,
+              "discussion_share": 0.08333333333333333
+            },
+            {
+              "subreddit": "Perfumes",
+              "unique_posts": 2,
+              "discussion_share": 0.08333333333333333
+            },
+            {
+              "subreddit": "marshallsfinds",
+              "unique_posts": 1,
+              "discussion_share": 0.041666666666666664
+            }
+          ],
+          "signals_top50": [],
+          "evidence_url": "/data/evidence/2026-08-17/C088.json"
+        },
+        {
+          "selection": "engagement_score",
+          "rank": 1,
+          "category_id": "C220",
+          "category_name": "Nail Care",
+          "scores": {
+            "overall": 1.96,
+            "overall_100": 39.2,
+            "momentum": 1.4,
+            "cross_community": 2.0,
+            "sentiment": 3.0,
+            "engagement": 2.0
+          },
+          "metrics": {
+            "current_week_posts": 1,
+            "previous_week_posts": 0,
+            "growth_rate": 1.0,
+            "unique_subreddits": 1,
+            "avg_sentiment": 0.0,
+            "positive_share": 0.0,
+            "negative_share": 0.0,
+            "avg_log_engagement": 3.091042453358316
+          },
+          "communities_top5": [
+            {
+              "subreddit": "beauty",
+              "unique_posts": 3,
+              "discussion_share": 0.21428571428571427
+            },
+            {
+              "subreddit": "dogs",
+              "unique_posts": 2,
+              "discussion_share": 0.14285714285714285
+            },
+            {
+              "subreddit": "3Dprinting",
+              "unique_posts": 1,
+              "discussion_share": 0.07142857142857142
+            },
+            {
+              "subreddit": "AnalogCommunity",
+              "unique_posts": 1,
+              "discussion_share": 0.07142857142857142
+            },
+            {
+              "subreddit": "BeautyGuruChatter",
+              "unique_posts": 1,
+              "discussion_share": 0.07142857142857142
+            }
+          ],
+          "signals_top50": [],
+          "evidence_url": "/data/evidence/2026-08-17/C220.json"
+        }
+      ]
+    },
+    {
+      "identity_key": "Local Merchants::L2L - Collectibles, Luxury Resale & Nature",
+      "ops_team_1": "Local Merchants",
+      "ops_team_2": "L2L - Collectibles, Luxury Resale & Nature",
+      "mapped_category_count": 14,
+      "matched_category_count": 8,
+      "overall_top5": [
+        {
+          "selection": "overall_trend_score",
+          "rank": 1,
+          "category_id": "C120",
+          "category_name": "Bath & Body Care",
+          "scores": {
+            "overall": 3.92,
+            "overall_100": 78.4,
+            "momentum": 3.8,
+            "cross_community": 5.0,
+            "sentiment": 3.0,
+            "engagement": 4.0
+          },
+          "metrics": {
+            "current_week_posts": 15,
+            "previous_week_posts": 17,
+            "growth_rate": -0.11764705882352941,
+            "unique_subreddits": 6,
+            "avg_sentiment": 0.0,
+            "positive_share": 0.06666666666666667,
+            "negative_share": 0.06666666666666667,
+            "avg_log_engagement": 3.096198229657425
+          },
+          "communities_top5": [
+            {
+              "subreddit": "BathandBodyWorks",
+              "unique_posts": 39,
+              "discussion_share": 0.48148148148148145
+            },
+            {
+              "subreddit": "LushCosmetics",
+              "unique_posts": 11,
+              "discussion_share": 0.13580246913580246
+            },
+            {
+              "subreddit": "fragrance",
+              "unique_posts": 4,
+              "discussion_share": 0.04938271604938271
+            },
+            {
+              "subreddit": "FemFragLab",
+              "unique_posts": 3,
+              "discussion_share": 0.037037037037037035
+            },
+            {
+              "subreddit": "BeautyEmpties",
+              "unique_posts": 2,
+              "discussion_share": 0.024691358024691357
+            }
+          ],
+          "signals_top50": [],
+          "evidence_url": "/data/evidence/2026-08-17/C120.json"
+        },
+        {
+          "selection": "overall_trend_score",
+          "rank": 2,
+          "category_id": "C146",
+          "category_name": "Dolls & Stuffed Toys",
+          "scores": {
+            "overall": 3.78,
+            "overall_100": 75.6,
+            "momentum": 3.6,
+            "cross_community": 5.0,
+            "sentiment": 3.71,
+            "engagement": 3.0
+          },
+          "metrics": {
+            "current_week_posts": 4,
+            "previous_week_posts": 3,
+            "growth_rate": 0.3333333333333333,
+            "unique_subreddits": 4,
+            "avg_sentiment": 0.25,
+            "positive_share": 0.25,
+            "negative_share": 0.0,
+            "avg_log_engagement": 2.2118399688685435
+          },
+          "communities_top5": [
+            {
+              "subreddit": "AmateurRoomPorn",
+              "unique_posts": 1,
+              "discussion_share": 0.07692307692307693
+            },
+            {
+              "subreddit": "Anticonsumption",
+              "unique_posts": 1,
+              "discussion_share": 0.07692307692307693
+            },
+            {
+              "subreddit": "Breadit",
+              "unique_posts": 1,
+              "discussion_share": 0.07692307692307693
+            },
+            {
+              "subreddit": "CleaningTips",
+              "unique_posts": 1,
+              "discussion_share": 0.07692307692307693
+            },
+            {
+              "subreddit": "Dogtraining",
+              "unique_posts": 1,
+              "discussion_share": 0.07692307692307693
+            }
+          ],
+          "signals_top50": [
+            {
+              "rank": 1,
+              "signal_key": "brand:stuffed",
+              "kind": "brand",
+              "display": "Stuffed",
+              "entity_type": "catalog_known_brand",
+              "unique_posts": 2,
+              "mentions": 1,
+              "sentiment": 0.0,
+              "is_tiktok_shop_listed": false,
+              "brand_confidence_tier": "high",
+              "brand_domain": "shopping",
+              "search_url": "https://www.google.com/search?q=Stuffed+brand",
+              "logo_url": ""
+            }
+          ],
+          "evidence_url": "/data/evidence/2026-08-17/C146.json"
+        },
+        {
+          "selection": "overall_trend_score",
+          "rank": 3,
+          "category_id": "C208",
+          "category_name": "Video & Music",
+          "scores": {
+            "overall": 3.59,
+            "overall_100": 71.8,
+            "momentum": 3.8,
+            "cross_community": 5.0,
+            "sentiment": 3.36,
+            "engagement": 2.0
+          },
+          "metrics": {
+            "current_week_posts": 8,
+            "previous_week_posts": 11,
+            "growth_rate": -0.2727272727272727,
+            "unique_subreddits": 6,
+            "avg_sentiment": 0.125,
+            "positive_share": 0.125,
+            "negative_share": 0.0,
+            "avg_log_engagement": 1.9468020252901563
+          },
+          "communities_top5": [
+            {
+              "subreddit": "NewTubers",
+              "unique_posts": 7,
+              "discussion_share": 0.09722222222222222
+            },
+            {
+              "subreddit": "youtube",
+              "unique_posts": 6,
+              "discussion_share": 0.08333333333333333
+            },
+            {
+              "subreddit": "iems",
+              "unique_posts": 5,
+              "discussion_share": 0.06944444444444445
+            },
+            {
+              "subreddit": "guitar",
+              "unique_posts": 4,
+              "discussion_share": 0.05555555555555555
+            },
+            {
+              "subreddit": "Filmmakers",
+              "unique_posts": 3,
+              "discussion_share": 0.041666666666666664
+            }
+          ],
+          "signals_top50": [],
+          "evidence_url": "/data/evidence/2026-08-17/C208.json"
+        },
+        {
+          "selection": "overall_trend_score",
+          "rank": 4,
+          "category_id": "C131",
+          "category_name": "Home Decor",
+          "scores": {
+            "overall": 3.45,
+            "overall_100": 69.0,
+            "momentum": 4.2,
+            "cross_community": 5.0,
+            "sentiment": 1.86,
+            "engagement": 2.0
+          },
+          "metrics": {
+            "current_week_posts": 5,
+            "previous_week_posts": 4,
+            "growth_rate": 0.25,
+            "unique_subreddits": 4,
+            "avg_sentiment": -0.2,
+            "positive_share": 0.0,
+            "negative_share": 0.2,
+            "avg_log_engagement": 2.0835016134397275
+          },
+          "communities_top5": [
+            {
+              "subreddit": "HomeDecorating",
+              "unique_posts": 10,
+              "discussion_share": 0.3333333333333333
+            },
+            {
+              "subreddit": "minimalism",
+              "unique_posts": 2,
+              "discussion_share": 0.06666666666666667
+            },
+            {
+              "subreddit": "Anticonsumption",
+              "unique_posts": 1,
+              "discussion_share": 0.03333333333333333
+            },
+            {
+              "subreddit": "Apartmentliving",
+              "unique_posts": 1,
+              "discussion_share": 0.03333333333333333
+            },
+            {
+              "subreddit": "DesignerReps",
+              "unique_posts": 1,
+              "discussion_share": 0.03333333333333333
+            }
+          ],
+          "signals_top50": [
+            {
+              "rank": 1,
+              "signal_key": "brand:home decor",
+              "kind": "brand",
+              "display": "Home decor",
+              "entity_type": "catalog_known_brand",
+              "unique_posts": 9,
+              "mentions": 2,
+              "sentiment": 0.0,
+              "is_tiktok_shop_listed": true,
+              "brand_confidence_tier": "high",
+              "brand_domain": "shopping",
+              "search_url": "https://www.google.com/search?q=Home+decor+brand",
+              "logo_url": ""
+            },
+            {
+              "rank": 2,
+              "signal_key": "brand:decor",
+              "kind": "brand",
+              "display": "DECOR",
+              "entity_type": "catalog_known_brand",
+              "unique_posts": 2,
+              "mentions": 1,
+              "sentiment": -1.0,
+              "is_tiktok_shop_listed": true,
+              "brand_confidence_tier": "high",
+              "brand_domain": "shopping",
+              "search_url": "https://www.google.com/search?q=DECOR+brand",
+              "logo_url": ""
+            }
+          ],
+          "evidence_url": "/data/evidence/2026-08-17/C131.json"
+        },
+        {
+          "selection": "overall_trend_score",
+          "rank": 5,
+          "category_id": "C088",
+          "category_name": "Fragrance",
+          "scores": {
+            "overall": 2.96,
+            "overall_100": 59.2,
+            "momentum": 4.4,
+            "cross_community": 2.0,
+            "sentiment": 3.0,
+            "engagement": 1.0
+          },
+          "metrics": {
+            "current_week_posts": 3,
+            "previous_week_posts": 1,
+            "growth_rate": 2.0,
+            "unique_subreddits": 1,
+            "avg_sentiment": 0.0,
+            "positive_share": 0.0,
+            "negative_share": 0.0,
+            "avg_log_engagement": 0.9985774245179969
+          },
+          "communities_top5": [
+            {
+              "subreddit": "fragrance",
+              "unique_posts": 16,
+              "discussion_share": 0.6666666666666666
+            },
+            {
+              "subreddit": "Colognes",
+              "unique_posts": 3,
+              "discussion_share": 0.125
+            },
+            {
+              "subreddit": "FemFragLab",
+              "unique_posts": 2,
+              "discussion_share": 0.08333333333333333
+            },
+            {
+              "subreddit": "Perfumes",
+              "unique_posts": 2,
+              "discussion_share": 0.08333333333333333
+            },
+            {
+              "subreddit": "marshallsfinds",
+              "unique_posts": 1,
+              "discussion_share": 0.041666666666666664
+            }
+          ],
+          "signals_top50": [],
+          "evidence_url": "/data/evidence/2026-08-17/C088.json"
+        }
+      ],
+      "dimension_highlights": [
+        {
+          "selection": "momentum_score",
+          "rank": 1,
+          "category_id": "C062",
+          "category_name": "Classic & Novelty Toys",
+          "scores": {
+            "overall": 2.44,
+            "overall_100": 48.8,
+            "momentum": 2.6,
+            "cross_community": 2.0,
+            "sentiment": 3.0,
+            "engagement": 2.0
+          },
+          "metrics": {
+            "current_week_posts": 2,
+            "previous_week_posts": 0,
+            "growth_rate": 2.0,
+            "unique_subreddits": 1,
+            "avg_sentiment": 0.0,
+            "positive_share": 0.0,
+            "negative_share": 0.0,
+            "avg_log_engagement": 2.5619819897016294
+          },
+          "communities_top5": [
+            {
+              "subreddit": "handbags",
+              "unique_posts": 3,
+              "discussion_share": 0.2727272727272727
+            },
+            {
+              "subreddit": "Colognes",
+              "unique_posts": 1,
+              "discussion_share": 0.09090909090909091
+            },
+            {
+              "subreddit": "Fujifilm",
+              "unique_posts": 1,
+              "discussion_share": 0.09090909090909091
+            },
+            {
+              "subreddit": "OUTFITS",
+              "unique_posts": 1,
+              "discussion_share": 0.09090909090909091
+            },
+            {
+              "subreddit": "Perfumes",
+              "unique_posts": 1,
+              "discussion_share": 0.09090909090909091
+            }
+          ],
+          "signals_top50": [],
+          "evidence_url": "/data/evidence/2026-08-17/C062.json"
+        },
+        {
+          "selection": "cross_community_score",
+          "rank": 1,
+          "category_id": "C104",
+          "category_name": "Costume Jewelry & Accessories",
+          "scores": {
+            "overall": 1.8,
+            "overall_100": 36.0,
+            "momentum": 1.0,
+            "cross_community": 2.0,
+            "sentiment": 3.0,
+            "engagement": 2.0
+          },
+          "metrics": {
+            "current_week_posts": 1,
+            "previous_week_posts": 2,
+            "growth_rate": -0.5,
+            "unique_subreddits": 1,
+            "avg_sentiment": 0.0,
+            "positive_share": 0.0,
+            "negative_share": 0.0,
+            "avg_log_engagement": 4.584967478670572
+          },
+          "communities_top5": [
+            {
+              "subreddit": "AskReddit",
+              "unique_posts": 1,
+              "discussion_share": 0.2
+            },
+            {
+              "subreddit": "EngagementRings",
+              "unique_posts": 1,
+              "discussion_share": 0.2
+            },
+            {
+              "subreddit": "Flipping",
+              "unique_posts": 1,
+              "discussion_share": 0.2
+            },
+            {
+              "subreddit": "Parenting",
+              "unique_posts": 1,
+              "discussion_share": 0.2
+            },
+            {
+              "subreddit": "wherecanibuythis",
+              "unique_posts": 1,
+              "discussion_share": 0.2
+            }
+          ],
+          "signals_top50": [],
+          "evidence_url": "/data/evidence/2026-08-17/C104.json"
+        },
+        {
+          "selection": "sentiment_score",
+          "rank": 1,
+          "category_id": "C215",
+          "category_name": "Women's Shoes",
+          "scores": {
+            "overall": 2.36,
+            "overall_100": 47.2,
+            "momentum": 1.4,
+            "cross_community": 2.0,
+            "sentiment": 5.0,
+            "engagement": 2.0
+          },
+          "metrics": {
+            "current_week_posts": 1,
+            "previous_week_posts": 1,
+            "growth_rate": 0.0,
+            "unique_subreddits": 1,
+            "avg_sentiment": 1.0,
+            "positive_share": 1.0,
+            "negative_share": 0.0,
+            "avg_log_engagement": 3.2188758248682006
+          },
+          "communities_top5": [
+            {
+              "subreddit": "running",
+              "unique_posts": 5,
+              "discussion_share": 0.15625
+            },
+            {
+              "subreddit": "HikingGear",
+              "unique_posts": 3,
+              "discussion_share": 0.09375
+            },
+            {
+              "subreddit": "Sneakers",
+              "unique_posts": 3,
+              "discussion_share": 0.09375
+            },
+            {
+              "subreddit": "femalefashionadvice",
+              "unique_posts": 3,
+              "discussion_share": 0.09375
+            },
+            {
+              "subreddit": "AmazonPrime",
+              "unique_posts": 2,
+              "discussion_share": 0.0625
+            }
+          ],
+          "signals_top50": [],
+          "evidence_url": "/data/evidence/2026-08-17/C215.json"
+        }
+      ]
+    },
+    {
+      "identity_key": "Local Merchants::L2L - Electronics, Books, Hardlines & Virtual Goods",
+      "ops_team_1": "Local Merchants",
+      "ops_team_2": "L2L - Electronics, Books, Hardlines & Virtual Goods",
+      "mapped_category_count": 45,
+      "matched_category_count": 22,
+      "overall_top5": [
+        {
+          "selection": "overall_trend_score",
+          "rank": 1,
+          "category_id": "C130",
+          "category_name": "Car Interior Accessories",
+          "scores": {
+            "overall": 4.08,
+            "overall_100": 81.6,
+            "momentum": 4.2,
+            "cross_community": 5.0,
+            "sentiment": 3.0,
+            "engagement": 4.0
+          },
+          "metrics": {
+            "current_week_posts": 5,
+            "previous_week_posts": 3,
+            "growth_rate": 0.6666666666666666,
+            "unique_subreddits": 5,
+            "avg_sentiment": 0.0,
+            "positive_share": 0.0,
+            "negative_share": 0.0,
+            "avg_log_engagement": 2.982771228880768
+          },
+          "communities_top5": [
+            {
+              "subreddit": "WhatCarShouldIBuy",
+              "unique_posts": 14,
+              "discussion_share": 0.2413793103448276
+            },
+            {
+              "subreddit": "InteriorDesign",
+              "unique_posts": 13,
+              "discussion_share": 0.22413793103448276
+            },
+            {
+              "subreddit": "AutoDetailing",
+              "unique_posts": 8,
+              "discussion_share": 0.13793103448275862
+            },
+            {
+              "subreddit": "TeslaModel3",
+              "unique_posts": 5,
+              "discussion_share": 0.08620689655172414
+            },
+            {
+              "subreddit": "Appliances",
+              "unique_posts": 2,
+              "discussion_share": 0.034482758620689655
+            }
+          ],
+          "signals_top50": [
+            {
+              "rank": 1,
+              "signal_key": "brand:macbook",
+              "kind": "brand",
+              "display": "MacBook",
+              "entity_type": "confirmed_whitelist_brand",
+              "unique_posts": 1,
+              "mentions": 1,
+              "sentiment": 0.0,
+              "is_tiktok_shop_listed": false,
+              "brand_confidence_tier": "high",
+              "brand_domain": "shopping",
+              "search_url": "https://www.google.com/search?q=MacBook+brand",
+              "logo_url": ""
+            }
+          ],
+          "evidence_url": "/data/evidence/2026-08-17/C130.json"
+        },
+        {
+          "selection": "overall_trend_score",
+          "rank": 2,
+          "category_id": "C120",
+          "category_name": "Bath & Body Care",
+          "scores": {
+            "overall": 3.92,
+            "overall_100": 78.4,
+            "momentum": 3.8,
+            "cross_community": 5.0,
+            "sentiment": 3.0,
+            "engagement": 4.0
+          },
+          "metrics": {
+            "current_week_posts": 15,
+            "previous_week_posts": 17,
+            "growth_rate": -0.11764705882352941,
+            "unique_subreddits": 6,
+            "avg_sentiment": 0.0,
+            "positive_share": 0.06666666666666667,
+            "negative_share": 0.06666666666666667,
+            "avg_log_engagement": 3.096198229657425
+          },
+          "communities_top5": [
+            {
+              "subreddit": "BathandBodyWorks",
+              "unique_posts": 39,
+              "discussion_share": 0.48148148148148145
+            },
+            {
+              "subreddit": "LushCosmetics",
+              "unique_posts": 11,
+              "discussion_share": 0.13580246913580246
+            },
+            {
+              "subreddit": "fragrance",
+              "unique_posts": 4,
+              "discussion_share": 0.04938271604938271
+            },
+            {
+              "subreddit": "FemFragLab",
+              "unique_posts": 3,
+              "discussion_share": 0.037037037037037035
+            },
+            {
+              "subreddit": "BeautyEmpties",
+              "unique_posts": 2,
+              "discussion_share": 0.024691358024691357
+            }
+          ],
+          "signals_top50": [],
+          "evidence_url": "/data/evidence/2026-08-17/C120.json"
+        },
+        {
+          "selection": "overall_trend_score",
+          "rank": 3,
+          "category_id": "C185",
+          "category_name": "Camping & Hiking",
+          "scores": {
+            "overall": 3.75,
+            "overall_100": 75.0,
+            "momentum": 4.2,
+            "cross_community": 5.0,
+            "sentiment": 3.34,
+            "engagement": 2.0
+          },
+          "metrics": {
+            "current_week_posts": 28,
+            "previous_week_posts": 21,
+            "growth_rate": 0.3333333333333333,
+            "unique_subreddits": 4,
+            "avg_sentiment": 0.11904761904761904,
+            "positive_share": 0.14285714285714285,
+            "negative_share": 0.0,
+            "avg_log_engagement": 1.7719136577884633
+          },
+          "communities_top5": [
+            {
+              "subreddit": "camping",
+              "unique_posts": 56,
+              "discussion_share": 0.47058823529411764
+            },
+            {
+              "subreddit": "hiking",
+              "unique_posts": 26,
+              "discussion_share": 0.2184873949579832
+            },
+            {
+              "subreddit": "CampingGear",
+              "unique_posts": 10,
+              "discussion_share": 0.08403361344537816
+            },
+            {
+              "subreddit": "backpacking",
+              "unique_posts": 4,
+              "discussion_share": 0.03361344537815126
+            },
+            {
+              "subreddit": "WhatCarShouldIBuy",
+              "unique_posts": 3,
+              "discussion_share": 0.025210084033613446
+            }
+          ],
+          "signals_top50": [
+            {
+              "rank": 1,
+              "signal_key": "brand:hiking",
+              "kind": "brand",
+              "display": "HIKING",
+              "entity_type": "catalog_known_brand",
+              "unique_posts": 9,
+              "mentions": 2,
+              "sentiment": 0.5,
+              "is_tiktok_shop_listed": true,
+              "brand_confidence_tier": "high",
+              "brand_domain": "shopping",
+              "search_url": "https://www.google.com/search?q=HIKING+brand",
+              "logo_url": ""
+            }
+          ],
+          "evidence_url": "/data/evidence/2026-08-17/C185.json"
+        },
+        {
+          "selection": "overall_trend_score",
+          "rank": 4,
+          "category_id": "C203",
+          "category_name": "Cameras & Photography",
+          "scores": {
+            "overall": 3.68,
+            "overall_100": 73.6,
+            "momentum": 4.2,
+            "cross_community": 3.0,
+            "sentiment": 4.0,
+            "engagement": 3.0
+          },
+          "metrics": {
+            "current_week_posts": 22,
+            "previous_week_posts": 18,
+            "growth_rate": 0.2222222222222222,
+            "unique_subreddits": 2,
+            "avg_sentiment": 0.3484848484848485,
+            "positive_share": 0.4090909090909091,
+            "negative_share": 0.0,
+            "avg_log_engagement": 2.3184352982952365
+          },
+          "communities_top5": [
+            {
+              "subreddit": "Cameras",
+              "unique_posts": 94,
+              "discussion_share": 0.6527777777777778
+            },
+            {
+              "subreddit": "photography",
+              "unique_posts": 24,
+              "discussion_share": 0.16666666666666666
+            },
+            {
+              "subreddit": "AnalogCommunity",
+              "unique_posts": 5,
+              "discussion_share": 0.034722222222222224
+            },
+            {
+              "subreddit": "Nikon",
+              "unique_posts": 5,
+              "discussion_share": 0.034722222222222224
+            },
+            {
+              "subreddit": "Fujifilm",
+              "unique_posts": 4,
+              "discussion_share": 0.027777777777777776
+            }
+          ],
+          "signals_top50": [
+            {
+              "rank": 1,
+              "signal_key": "brand:sony",
+              "kind": "brand",
+              "display": "SONY",
+              "entity_type": "catalog_known_brand",
+              "unique_posts": 14,
+              "mentions": 3,
+              "sentiment": 0.0,
+              "is_tiktok_shop_listed": true,
+              "brand_confidence_tier": "high",
+              "brand_domain": "shopping",
+              "search_url": "https://www.google.com/search?q=SONY+brand",
+              "logo_url": ""
+            },
+            {
+              "rank": 2,
+              "signal_key": "brand:lens",
+              "kind": "brand",
+              "display": "Lens",
+              "entity_type": "catalog_known_brand",
+              "unique_posts": 7,
+              "mentions": 1,
+              "sentiment": 1.0,
+              "is_tiktok_shop_listed": false,
+              "brand_confidence_tier": "high",
+              "brand_domain": "shopping",
+              "search_url": "https://www.google.com/search?q=Lens+brand",
+              "logo_url": ""
+            },
+            {
+              "rank": 3,
+              "signal_key": "brand:nikon",
+              "kind": "brand",
+              "display": "nikon",
+              "entity_type": "catalog_known_brand",
+              "unique_posts": 4,
+              "mentions": 1,
+              "sentiment": 0.0,
+              "is_tiktok_shop_listed": true,
+              "brand_confidence_tier": "high",
+              "brand_domain": "shopping",
+              "search_url": "https://www.google.com/search?q=nikon+brand",
+              "logo_url": ""
+            },
+            {
+              "rank": 4,
+              "signal_key": "brand:fujifilm",
+              "kind": "brand",
+              "display": "FUJIFILM",
+              "entity_type": "catalog_known_brand",
+              "unique_posts": 3,
+              "mentions": 1,
+              "sentiment": 1.0,
+              "is_tiktok_shop_listed": true,
+              "brand_confidence_tier": "high",
+              "brand_domain": "shopping",
+              "search_url": "https://www.google.com/search?q=FUJIFILM+brand",
+              "logo_url": ""
+            }
+          ],
+          "evidence_url": "/data/evidence/2026-08-17/C203.json"
+        },
+        {
+          "selection": "overall_trend_score",
+          "rank": 5,
+          "category_id": "C001",
+          "category_name": "Mobile Phone Accessories",
+          "scores": {
+            "overall": 3.64,
+            "overall_100": 72.8,
+            "momentum": 3.6,
+            "cross_community": 4.0,
+            "sentiment": 3.0,
+            "engagement": 4.0
+          },
+          "metrics": {
+            "current_week_posts": 3,
+            "previous_week_posts": 3,
+            "growth_rate": 0.0,
+            "unique_subreddits": 3,
+            "avg_sentiment": 0.0,
+            "positive_share": 0.0,
+            "negative_share": 0.0,
+            "avg_log_engagement": 3.3212452109604946
+          },
+          "communities_top5": [
+            {
+              "subreddit": "iphone",
+              "unique_posts": 6,
+              "discussion_share": 0.11538461538461539
+            },
+            {
+              "subreddit": "degoogle",
+              "unique_posts": 5,
+              "discussion_share": 0.09615384615384616
+            },
+            {
+              "subreddit": "GooglePixel",
+              "unique_posts": 4,
+              "discussion_share": 0.07692307692307693
+            },
+            {
+              "subreddit": "Android",
+              "unique_posts": 2,
+              "discussion_share": 0.038461538461538464
+            },
+            {
+              "subreddit": "Garmin",
+              "unique_posts": 2,
+              "discussion_share": 0.038461538461538464
+            }
+          ],
+          "signals_top50": [],
+          "evidence_url": "/data/evidence/2026-08-17/C001.json"
+        }
+      ],
+      "dimension_highlights": [
+        {
+          "selection": "momentum_score",
+          "rank": 1,
+          "category_id": "C063",
+          "category_name": "Home Appliances",
+          "scores": {
+            "overall": 3.59,
+            "overall_100": 71.8,
+            "momentum": 5.0,
+            "cross_community": 2.0,
+            "sentiment": 3.95,
+            "engagement": 2.0
+          },
+          "metrics": {
+            "current_week_posts": 6,
+            "previous_week_posts": 1,
+            "growth_rate": 5.0,
+            "unique_subreddits": 1,
+            "avg_sentiment": 0.3333333333333333,
+            "positive_share": 0.3333333333333333,
+            "negative_share": 0.0,
+            "avg_log_engagement": 2.0170813882122673
+          },
+          "communities_top5": [
+            {
+              "subreddit": "Appliances",
+              "unique_posts": 13,
+              "discussion_share": 0.7647058823529411
+            },
+            {
+              "subreddit": "3Dprinting",
+              "unique_posts": 1,
+              "discussion_share": 0.058823529411764705
+            },
+            {
+              "subreddit": "ApplianceAdvice",
+              "unique_posts": 1,
+              "discussion_share": 0.058823529411764705
+            },
+            {
+              "subreddit": "BuyItForLife",
+              "unique_posts": 1,
+              "discussion_share": 0.058823529411764705
+            },
+            {
+              "subreddit": "organization",
+              "unique_posts": 1,
+              "discussion_share": 0.058823529411764705
+            }
+          ],
+          "signals_top50": [
+            {
+              "rank": 1,
+              "signal_key": "brand:outlet",
+              "kind": "brand",
+              "display": "outlet",
+              "entity_type": "catalog_known_brand",
+              "unique_posts": 3,
+              "mentions": 3,
+              "sentiment": 0.3333333333333333,
+              "is_tiktok_shop_listed": true,
+              "brand_confidence_tier": "high",
+              "brand_domain": "shopping",
+              "search_url": "https://www.google.com/search?q=outlet+brand",
+              "logo_url": ""
+            },
+            {
+              "rank": 2,
+              "signal_key": "brand:dent",
+              "kind": "brand",
+              "display": "Dent",
+              "entity_type": "catalog_known_brand",
+              "unique_posts": 2,
+              "mentions": 2,
+              "sentiment": 0.0,
+              "is_tiktok_shop_listed": false,
+              "brand_confidence_tier": "high",
+              "brand_domain": "shopping",
+              "search_url": "https://www.google.com/search?q=Dent+brand",
+              "logo_url": ""
+            },
+            {
+              "rank": 3,
+              "signal_key": "brand:scratch",
+              "kind": "brand",
+              "display": "Scratch",
+              "entity_type": "catalog_known_brand",
+              "unique_posts": 2,
+              "mentions": 2,
+              "sentiment": 0.0,
+              "is_tiktok_shop_listed": true,
+              "brand_confidence_tier": "high",
+              "brand_domain": "shopping",
+              "search_url": "https://www.google.com/search?q=Scratch+brand",
+              "logo_url": ""
+            }
+          ],
+          "evidence_url": "/data/evidence/2026-08-17/C063.json"
+        },
+        {
+          "selection": "cross_community_score",
+          "rank": 1,
+          "category_id": "C169",
+          "category_name": "Nutrition & Wellness",
+          "scores": {
+            "overall": 3.4,
+            "overall_100": 68.0,
+            "momentum": 5.0,
+            "cross_community": 3.0,
+            "sentiment": 3.0,
+            "engagement": 1.0
+          },
+          "metrics": {
+            "current_week_posts": 9,
+            "previous_week_posts": 3,
+            "growth_rate": 2.0,
+            "unique_subreddits": 2,
+            "avg_sentiment": 0.0,
+            "positive_share": 0.0,
+            "negative_share": 0.0,
+            "avg_log_engagement": 1.2487209576964964
+          },
+          "communities_top5": [
+            {
+              "subreddit": "nutrition",
+              "unique_posts": 13,
+              "discussion_share": 0.43333333333333335
+            },
+            {
+              "subreddit": "xxfitness",
+              "unique_posts": 3,
+              "discussion_share": 0.1
+            },
+            {
+              "subreddit": "Coffee",
+              "unique_posts": 1,
+              "discussion_share": 0.03333333333333333
+            },
+            {
+              "subreddit": "Meijer",
+              "unique_posts": 1,
+              "discussion_share": 0.03333333333333333
+            },
+            {
+              "subreddit": "QuantifiedSelf",
+              "unique_posts": 1,
+              "discussion_share": 0.03333333333333333
+            }
+          ],
+          "signals_top50": [
+            {
+              "rank": 1,
+              "signal_key": "brand:wellness",
+              "kind": "brand",
+              "display": "wellness",
+              "entity_type": "catalog_known_brand",
+              "unique_posts": 2,
+              "mentions": 1,
+              "sentiment": 0.0,
+              "is_tiktok_shop_listed": true,
+              "brand_confidence_tier": "high",
+              "brand_domain": "shopping",
+              "search_url": "https://www.google.com/search?q=wellness+brand",
+              "logo_url": ""
+            }
+          ],
+          "evidence_url": "/data/evidence/2026-08-17/C169.json"
+        },
+        {
+          "selection": "sentiment_score",
+          "rank": 1,
+          "category_id": "C202",
+          "category_name": "Leisure & Outdoor Recreation Equipment",
+          "scores": {
+            "overall": 2.53,
+            "overall_100": 50.6,
+            "momentum": 2.6,
+            "cross_community": 2.0,
+            "sentiment": 4.43,
+            "engagement": 1.0
+          },
+          "metrics": {
+            "current_week_posts": 2,
+            "previous_week_posts": 1,
+            "growth_rate": 1.0,
+            "unique_subreddits": 2,
+            "avg_sentiment": 0.5,
+            "positive_share": 0.5,
+            "negative_share": 0.0,
+            "avg_log_engagement": 1.1512925464970227
+          },
+          "communities_top5": [
+            {
+              "subreddit": "careerguidance",
+              "unique_posts": 2,
+              "discussion_share": 0.2857142857142857
+            },
+            {
+              "subreddit": "Appliances",
+              "unique_posts": 1,
+              "discussion_share": 0.14285714285714285
+            },
+            {
+              "subreddit": "FirstTimeHomeBuyer",
+              "unique_posts": 1,
+              "discussion_share": 0.14285714285714285
+            },
+            {
+              "subreddit": "HikingGear",
+              "unique_posts": 1,
+              "discussion_share": 0.14285714285714285
+            },
+            {
+              "subreddit": "VanLife",
+              "unique_posts": 1,
+              "discussion_share": 0.14285714285714285
+            }
+          ],
+          "signals_top50": [],
+          "evidence_url": "/data/evidence/2026-08-17/C202.json"
+        },
+        {
+          "selection": "engagement_score",
+          "rank": 1,
+          "category_id": "C075",
+          "category_name": "Office Stationery & Supplies",
+          "scores": {
+            "overall": 3.62,
+            "overall_100": 72.4,
+            "momentum": 4.2,
+            "cross_community": 2.0,
+            "sentiment": 3.71,
+            "engagement": 4.0
+          },
+          "metrics": {
+            "current_week_posts": 12,
+            "previous_week_posts": 10,
+            "growth_rate": 0.2,
+            "unique_subreddits": 1,
+            "avg_sentiment": 0.25,
+            "positive_share": 0.3333333333333333,
+            "negative_share": 0.08333333333333333,
+            "avg_log_engagement": 3.3769044992743384
+          },
+          "communities_top5": [
+            {
+              "subreddit": "stationery",
+              "unique_posts": 27,
+              "discussion_share": 0.8709677419354839
+            },
+            {
+              "subreddit": "CasualConversation",
+              "unique_posts": 1,
+              "discussion_share": 0.03225806451612903
+            },
+            {
+              "subreddit": "DoesAnybodyElse",
+              "unique_posts": 1,
+              "discussion_share": 0.03225806451612903
+            },
+            {
+              "subreddit": "ManyBaggers",
+              "unique_posts": 1,
+              "discussion_share": 0.03225806451612903
+            },
+            {
+              "subreddit": "careerguidance",
+              "unique_posts": 1,
+              "discussion_share": 0.03225806451612903
+            }
+          ],
+          "signals_top50": [
+            {
+              "rank": 1,
+              "signal_key": "brand:haul",
+              "kind": "brand",
+              "display": "HAUL",
+              "entity_type": "catalog_known_brand",
+              "unique_posts": 3,
+              "mentions": 1,
+              "sentiment": 1.0,
+              "is_tiktok_shop_listed": false,
+              "brand_confidence_tier": "high",
+              "brand_domain": "shopping",
+              "search_url": "https://www.google.com/search?q=HAUL+brand",
+              "logo_url": ""
+            },
+            {
+              "rank": 2,
+              "signal_key": "brand:washi tape",
+              "kind": "brand",
+              "display": "Washi tape",
+              "entity_type": "catalog_known_brand",
+              "unique_posts": 2,
+              "mentions": 1,
+              "sentiment": 0.0,
+              "is_tiktok_shop_listed": true,
+              "brand_confidence_tier": "high",
+              "brand_domain": "shopping",
+              "search_url": "https://www.google.com/search?q=Washi+tape+brand",
+              "logo_url": ""
+            }
+          ],
+          "evidence_url": "/data/evidence/2026-08-17/C075.json"
+        }
+      ]
+    },
+    {
+      "identity_key": "Local Merchants::L2L - Fashion",
+      "ops_team_1": "Local Merchants",
+      "ops_team_2": "L2L - Fashion",
+      "mapped_category_count": 58,
+      "matched_category_count": 26,
+      "overall_top5": [
+        {
+          "selection": "overall_trend_score",
+          "rank": 1,
+          "category_id": "C067",
+          "category_name": "Luggage & Travel Bags",
+          "scores": {
+            "overall": 4.74,
+            "overall_100": 94.8,
+            "momentum": 5.0,
+            "cross_community": 5.0,
+            "sentiment": 3.71,
+            "engagement": 5.0
+          },
+          "metrics": {
+            "current_week_posts": 8,
+            "previous_week_posts": 2,
+            "growth_rate": 3.0,
+            "unique_subreddits": 5,
+            "avg_sentiment": 0.25,
+            "positive_share": 0.25,
+            "negative_share": 0.0,
+            "avg_log_engagement": 3.3880244819681122
+          },
+          "communities_top5": [
+            {
+              "subreddit": "backpacks",
+              "unique_posts": 7,
+              "discussion_share": 0.21212121212121213
+            },
+            {
+              "subreddit": "handbags",
+              "unique_posts": 6,
+              "discussion_share": 0.18181818181818182
+            },
+            {
+              "subreddit": "BuyItForLife",
+              "unique_posts": 4,
+              "discussion_share": 0.12121212121212122
+            },
+            {
+              "subreddit": "HerOneBag",
+              "unique_posts": 3,
+              "discussion_share": 0.09090909090909091
+            },
+            {
+              "subreddit": "onebag",
+              "unique_posts": 3,
+              "discussion_share": 0.09090909090909091
+            }
+          ],
+          "signals_top50": [
+            {
+              "rank": 1,
+              "signal_key": "brand:backpack",
+              "kind": "brand",
+              "display": "BackPack",
+              "entity_type": "catalog_known_brand",
+              "unique_posts": 3,
+              "mentions": 1,
+              "sentiment": 0.0,
+              "is_tiktok_shop_listed": false,
+              "brand_confidence_tier": "high",
+              "brand_domain": "shopping",
+              "search_url": "https://www.google.com/search?q=BackPack+brand",
+              "logo_url": ""
+            },
+            {
+              "rank": 2,
+              "signal_key": "brand:vacuum",
+              "kind": "brand",
+              "display": "VACUUM",
+              "entity_type": "catalog_known_brand",
+              "unique_posts": 2,
+              "mentions": 2,
+              "sentiment": 0.5,
+              "is_tiktok_shop_listed": true,
+              "brand_confidence_tier": "high",
+              "brand_domain": "shopping",
+              "search_url": "https://www.google.com/search?q=VACUUM+brand",
+              "logo_url": ""
+            },
+            {
+              "rank": 3,
+              "signal_key": "brand:luggage",
+              "kind": "brand",
+              "display": "LUGGAGE",
+              "entity_type": "catalog_known_brand",
+              "unique_posts": 2,
+              "mentions": 1,
+              "sentiment": 1.0,
+              "is_tiktok_shop_listed": false,
+              "brand_confidence_tier": "high",
+              "brand_domain": "shopping",
+              "search_url": "https://www.google.com/search?q=LUGGAGE+brand",
+              "logo_url": ""
+            }
+          ],
+          "evidence_url": "/data/evidence/2026-08-17/C067.json"
+        },
+        {
+          "selection": "overall_trend_score",
+          "rank": 2,
+          "category_id": "C052",
+          "category_name": "Women's Dresses",
+          "scores": {
+            "overall": 4.71,
+            "overall_100": 94.2,
+            "momentum": 5.0,
+            "cross_community": 5.0,
+            "sentiment": 3.57,
+            "engagement": 5.0
+          },
+          "metrics": {
+            "current_week_posts": 5,
+            "previous_week_posts": 2,
+            "growth_rate": 1.5,
+            "unique_subreddits": 5,
+            "avg_sentiment": 0.2,
+            "positive_share": 0.2,
+            "negative_share": 0.0,
+            "avg_log_engagement": 3.4786183807507265
+          },
+          "communities_top5": [
+            {
+              "subreddit": "OUTFITS",
+              "unique_posts": 5,
+              "discussion_share": 0.21739130434782608
+            },
+            {
+              "subreddit": "PetiteFashionAdvice",
+              "unique_posts": 3,
+              "discussion_share": 0.13043478260869565
+            },
+            {
+              "subreddit": "femalefashionadvice",
+              "unique_posts": 3,
+              "discussion_share": 0.13043478260869565
+            },
+            {
+              "subreddit": "PlusSizeFashion",
+              "unique_posts": 2,
+              "discussion_share": 0.08695652173913043
+            },
+            {
+              "subreddit": "VintageFashion",
+              "unique_posts": 2,
+              "discussion_share": 0.08695652173913043
+            }
+          ],
+          "signals_top50": [],
+          "evidence_url": "/data/evidence/2026-08-17/C052.json"
+        },
+        {
+          "selection": "overall_trend_score",
+          "rank": 3,
+          "category_id": "C146",
+          "category_name": "Dolls & Stuffed Toys",
+          "scores": {
+            "overall": 3.78,
+            "overall_100": 75.6,
+            "momentum": 3.6,
+            "cross_community": 5.0,
+            "sentiment": 3.71,
+            "engagement": 3.0
+          },
+          "metrics": {
+            "current_week_posts": 4,
+            "previous_week_posts": 3,
+            "growth_rate": 0.3333333333333333,
+            "unique_subreddits": 4,
+            "avg_sentiment": 0.25,
+            "positive_share": 0.25,
+            "negative_share": 0.0,
+            "avg_log_engagement": 2.2118399688685435
+          },
+          "communities_top5": [
+            {
+              "subreddit": "AmateurRoomPorn",
+              "unique_posts": 1,
+              "discussion_share": 0.07692307692307693
+            },
+            {
+              "subreddit": "Anticonsumption",
+              "unique_posts": 1,
+              "discussion_share": 0.07692307692307693
+            },
+            {
+              "subreddit": "Breadit",
+              "unique_posts": 1,
+              "discussion_share": 0.07692307692307693
+            },
+            {
+              "subreddit": "CleaningTips",
+              "unique_posts": 1,
+              "discussion_share": 0.07692307692307693
+            },
+            {
+              "subreddit": "Dogtraining",
+              "unique_posts": 1,
+              "discussion_share": 0.07692307692307693
+            }
+          ],
+          "signals_top50": [
+            {
+              "rank": 1,
+              "signal_key": "brand:stuffed",
+              "kind": "brand",
+              "display": "Stuffed",
+              "entity_type": "catalog_known_brand",
+              "unique_posts": 2,
+              "mentions": 1,
+              "sentiment": 0.0,
+              "is_tiktok_shop_listed": false,
+              "brand_confidence_tier": "high",
+              "brand_domain": "shopping",
+              "search_url": "https://www.google.com/search?q=Stuffed+brand",
+              "logo_url": ""
+            }
+          ],
+          "evidence_url": "/data/evidence/2026-08-17/C146.json"
+        },
+        {
+          "selection": "overall_trend_score",
+          "rank": 4,
+          "category_id": "C185",
+          "category_name": "Camping & Hiking",
+          "scores": {
+            "overall": 3.75,
+            "overall_100": 75.0,
+            "momentum": 4.2,
+            "cross_community": 5.0,
+            "sentiment": 3.34,
+            "engagement": 2.0
+          },
+          "metrics": {
+            "current_week_posts": 28,
+            "previous_week_posts": 21,
+            "growth_rate": 0.3333333333333333,
+            "unique_subreddits": 4,
+            "avg_sentiment": 0.11904761904761904,
+            "positive_share": 0.14285714285714285,
+            "negative_share": 0.0,
+            "avg_log_engagement": 1.7719136577884633
+          },
+          "communities_top5": [
+            {
+              "subreddit": "camping",
+              "unique_posts": 56,
+              "discussion_share": 0.47058823529411764
+            },
+            {
+              "subreddit": "hiking",
+              "unique_posts": 26,
+              "discussion_share": 0.2184873949579832
+            },
+            {
+              "subreddit": "CampingGear",
+              "unique_posts": 10,
+              "discussion_share": 0.08403361344537816
+            },
+            {
+              "subreddit": "backpacking",
+              "unique_posts": 4,
+              "discussion_share": 0.03361344537815126
+            },
+            {
+              "subreddit": "WhatCarShouldIBuy",
+              "unique_posts": 3,
+              "discussion_share": 0.025210084033613446
+            }
+          ],
+          "signals_top50": [
+            {
+              "rank": 1,
+              "signal_key": "brand:hiking",
+              "kind": "brand",
+              "display": "HIKING",
+              "entity_type": "catalog_known_brand",
+              "unique_posts": 9,
+              "mentions": 2,
+              "sentiment": 0.5,
+              "is_tiktok_shop_listed": true,
+              "brand_confidence_tier": "high",
+              "brand_domain": "shopping",
+              "search_url": "https://www.google.com/search?q=HIKING+brand",
+              "logo_url": ""
+            }
+          ],
+          "evidence_url": "/data/evidence/2026-08-17/C185.json"
+        },
+        {
+          "selection": "overall_trend_score",
+          "rank": 5,
+          "category_id": "C203",
+          "category_name": "Cameras & Photography",
+          "scores": {
+            "overall": 3.68,
+            "overall_100": 73.6,
+            "momentum": 4.2,
+            "cross_community": 3.0,
+            "sentiment": 4.0,
+            "engagement": 3.0
+          },
+          "metrics": {
+            "current_week_posts": 22,
+            "previous_week_posts": 18,
+            "growth_rate": 0.2222222222222222,
+            "unique_subreddits": 2,
+            "avg_sentiment": 0.3484848484848485,
+            "positive_share": 0.4090909090909091,
+            "negative_share": 0.0,
+            "avg_log_engagement": 2.3184352982952365
+          },
+          "communities_top5": [
+            {
+              "subreddit": "Cameras",
+              "unique_posts": 94,
+              "discussion_share": 0.6527777777777778
+            },
+            {
+              "subreddit": "photography",
+              "unique_posts": 24,
+              "discussion_share": 0.16666666666666666
+            },
+            {
+              "subreddit": "AnalogCommunity",
+              "unique_posts": 5,
+              "discussion_share": 0.034722222222222224
+            },
+            {
+              "subreddit": "Nikon",
+              "unique_posts": 5,
+              "discussion_share": 0.034722222222222224
+            },
+            {
+              "subreddit": "Fujifilm",
+              "unique_posts": 4,
+              "discussion_share": 0.027777777777777776
+            }
+          ],
+          "signals_top50": [
+            {
+              "rank": 1,
+              "signal_key": "brand:sony",
+              "kind": "brand",
+              "display": "SONY",
+              "entity_type": "catalog_known_brand",
+              "unique_posts": 14,
+              "mentions": 3,
+              "sentiment": 0.0,
+              "is_tiktok_shop_listed": true,
+              "brand_confidence_tier": "high",
+              "brand_domain": "shopping",
+              "search_url": "https://www.google.com/search?q=SONY+brand",
+              "logo_url": ""
+            },
+            {
+              "rank": 2,
+              "signal_key": "brand:lens",
+              "kind": "brand",
+              "display": "Lens",
+              "entity_type": "catalog_known_brand",
+              "unique_posts": 7,
+              "mentions": 1,
+              "sentiment": 1.0,
+              "is_tiktok_shop_listed": false,
+              "brand_confidence_tier": "high",
+              "brand_domain": "shopping",
+              "search_url": "https://www.google.com/search?q=Lens+brand",
+              "logo_url": ""
+            },
+            {
+              "rank": 3,
+              "signal_key": "brand:nikon",
+              "kind": "brand",
+              "display": "nikon",
+              "entity_type": "catalog_known_brand",
+              "unique_posts": 4,
+              "mentions": 1,
+              "sentiment": 0.0,
+              "is_tiktok_shop_listed": true,
+              "brand_confidence_tier": "high",
+              "brand_domain": "shopping",
+              "search_url": "https://www.google.com/search?q=nikon+brand",
+              "logo_url": ""
+            },
+            {
+              "rank": 4,
+              "signal_key": "brand:fujifilm",
+              "kind": "brand",
+              "display": "FUJIFILM",
+              "entity_type": "catalog_known_brand",
+              "unique_posts": 3,
+              "mentions": 1,
+              "sentiment": 1.0,
+              "is_tiktok_shop_listed": true,
+              "brand_confidence_tier": "high",
+              "brand_domain": "shopping",
+              "search_url": "https://www.google.com/search?q=FUJIFILM+brand",
+              "logo_url": ""
+            }
+          ],
+          "evidence_url": "/data/evidence/2026-08-17/C203.json"
+        }
+      ],
+      "dimension_highlights": [
+        {
+          "selection": "momentum_score",
+          "rank": 1,
+          "category_id": "C063",
+          "category_name": "Home Appliances",
+          "scores": {
+            "overall": 3.59,
+            "overall_100": 71.8,
+            "momentum": 5.0,
+            "cross_community": 2.0,
+            "sentiment": 3.95,
+            "engagement": 2.0
+          },
+          "metrics": {
+            "current_week_posts": 6,
+            "previous_week_posts": 1,
+            "growth_rate": 5.0,
+            "unique_subreddits": 1,
+            "avg_sentiment": 0.3333333333333333,
+            "positive_share": 0.3333333333333333,
+            "negative_share": 0.0,
+            "avg_log_engagement": 2.0170813882122673
+          },
+          "communities_top5": [
+            {
+              "subreddit": "Appliances",
+              "unique_posts": 13,
+              "discussion_share": 0.7647058823529411
+            },
+            {
+              "subreddit": "3Dprinting",
+              "unique_posts": 1,
+              "discussion_share": 0.058823529411764705
+            },
+            {
+              "subreddit": "ApplianceAdvice",
+              "unique_posts": 1,
+              "discussion_share": 0.058823529411764705
+            },
+            {
+              "subreddit": "BuyItForLife",
+              "unique_posts": 1,
+              "discussion_share": 0.058823529411764705
+            },
+            {
+              "subreddit": "organization",
+              "unique_posts": 1,
+              "discussion_share": 0.058823529411764705
+            }
+          ],
+          "signals_top50": [
+            {
+              "rank": 1,
+              "signal_key": "brand:outlet",
+              "kind": "brand",
+              "display": "outlet",
+              "entity_type": "catalog_known_brand",
+              "unique_posts": 3,
+              "mentions": 3,
+              "sentiment": 0.3333333333333333,
+              "is_tiktok_shop_listed": true,
+              "brand_confidence_tier": "high",
+              "brand_domain": "shopping",
+              "search_url": "https://www.google.com/search?q=outlet+brand",
+              "logo_url": ""
+            },
+            {
+              "rank": 2,
+              "signal_key": "brand:dent",
+              "kind": "brand",
+              "display": "Dent",
+              "entity_type": "catalog_known_brand",
+              "unique_posts": 2,
+              "mentions": 2,
+              "sentiment": 0.0,
+              "is_tiktok_shop_listed": false,
+              "brand_confidence_tier": "high",
+              "brand_domain": "shopping",
+              "search_url": "https://www.google.com/search?q=Dent+brand",
+              "logo_url": ""
+            },
+            {
+              "rank": 3,
+              "signal_key": "brand:scratch",
+              "kind": "brand",
+              "display": "Scratch",
+              "entity_type": "catalog_known_brand",
+              "unique_posts": 2,
+              "mentions": 2,
+              "sentiment": 0.0,
+              "is_tiktok_shop_listed": true,
+              "brand_confidence_tier": "high",
+              "brand_domain": "shopping",
+              "search_url": "https://www.google.com/search?q=Scratch+brand",
+              "logo_url": ""
+            }
+          ],
+          "evidence_url": "/data/evidence/2026-08-17/C063.json"
+        },
+        {
+          "selection": "cross_community_score",
+          "rank": 1,
+          "category_id": "C156",
+          "category_name": "Hair Extensions & Wigs",
+          "scores": {
+            "overall": 3.27,
+            "overall_100": 65.4,
+            "momentum": 3.4,
+            "cross_community": 5.0,
+            "sentiment": 3.57,
+            "engagement": 1.0
+          },
+          "metrics": {
+            "current_week_posts": 5,
+            "previous_week_posts": 14,
+            "growth_rate": -0.6428571428571429,
+            "unique_subreddits": 4,
+            "avg_sentiment": 0.2,
+            "positive_share": 0.2,
+            "negative_share": 0.0,
+            "avg_log_engagement": 1.1880342505440864
+          },
+          "communities_top5": [
+            {
+              "subreddit": "Hair",
+              "unique_posts": 5,
+              "discussion_share": 0.2631578947368421
+            },
+            {
+              "subreddit": "femalehairadvice",
+              "unique_posts": 3,
+              "discussion_share": 0.15789473684210525
+            },
+            {
+              "subreddit": "Naturalhair",
+              "unique_posts": 2,
+              "discussion_share": 0.10526315789473684
+            },
+            {
+              "subreddit": "Alibaba",
+              "unique_posts": 1,
+              "discussion_share": 0.05263157894736842
+            },
+            {
+              "subreddit": "AmazonVine",
+              "unique_posts": 1,
+              "discussion_share": 0.05263157894736842
+            }
+          ],
+          "signals_top50": [],
+          "evidence_url": "/data/evidence/2026-08-17/C156.json"
+        },
+        {
+          "selection": "sentiment_score",
+          "rank": 1,
+          "category_id": "C215",
+          "category_name": "Women's Shoes",
+          "scores": {
+            "overall": 2.36,
+            "overall_100": 47.2,
+            "momentum": 1.4,
+            "cross_community": 2.0,
+            "sentiment": 5.0,
+            "engagement": 2.0
+          },
+          "metrics": {
+            "current_week_posts": 1,
+            "previous_week_posts": 1,
+            "growth_rate": 0.0,
+            "unique_subreddits": 1,
+            "avg_sentiment": 1.0,
+            "positive_share": 1.0,
+            "negative_share": 0.0,
+            "avg_log_engagement": 3.2188758248682006
+          },
+          "communities_top5": [
+            {
+              "subreddit": "running",
+              "unique_posts": 5,
+              "discussion_share": 0.15625
+            },
+            {
+              "subreddit": "HikingGear",
+              "unique_posts": 3,
+              "discussion_share": 0.09375
+            },
+            {
+              "subreddit": "Sneakers",
+              "unique_posts": 3,
+              "discussion_share": 0.09375
+            },
+            {
+              "subreddit": "femalefashionadvice",
+              "unique_posts": 3,
+              "discussion_share": 0.09375
+            },
+            {
+              "subreddit": "AmazonPrime",
+              "unique_posts": 2,
+              "discussion_share": 0.0625
+            }
+          ],
+          "signals_top50": [],
+          "evidence_url": "/data/evidence/2026-08-17/C215.json"
+        },
+        {
+          "selection": "engagement_score",
+          "rank": 1,
+          "category_id": "C075",
+          "category_name": "Office Stationery & Supplies",
+          "scores": {
+            "overall": 3.62,
+            "overall_100": 72.4,
+            "momentum": 4.2,
+            "cross_community": 2.0,
+            "sentiment": 3.71,
+            "engagement": 4.0
+          },
+          "metrics": {
+            "current_week_posts": 12,
+            "previous_week_posts": 10,
+            "growth_rate": 0.2,
+            "unique_subreddits": 1,
+            "avg_sentiment": 0.25,
+            "positive_share": 0.3333333333333333,
+            "negative_share": 0.08333333333333333,
+            "avg_log_engagement": 3.3769044992743384
+          },
+          "communities_top5": [
+            {
+              "subreddit": "stationery",
+              "unique_posts": 27,
+              "discussion_share": 0.8709677419354839
+            },
+            {
+              "subreddit": "CasualConversation",
+              "unique_posts": 1,
+              "discussion_share": 0.03225806451612903
+            },
+            {
+              "subreddit": "DoesAnybodyElse",
+              "unique_posts": 1,
+              "discussion_share": 0.03225806451612903
+            },
+            {
+              "subreddit": "ManyBaggers",
+              "unique_posts": 1,
+              "discussion_share": 0.03225806451612903
+            },
+            {
+              "subreddit": "careerguidance",
+              "unique_posts": 1,
+              "discussion_share": 0.03225806451612903
+            }
+          ],
+          "signals_top50": [
+            {
+              "rank": 1,
+              "signal_key": "brand:haul",
+              "kind": "brand",
+              "display": "HAUL",
+              "entity_type": "catalog_known_brand",
+              "unique_posts": 3,
+              "mentions": 1,
+              "sentiment": 1.0,
+              "is_tiktok_shop_listed": false,
+              "brand_confidence_tier": "high",
+              "brand_domain": "shopping",
+              "search_url": "https://www.google.com/search?q=HAUL+brand",
+              "logo_url": ""
+            },
+            {
+              "rank": 2,
+              "signal_key": "brand:washi tape",
+              "kind": "brand",
+              "display": "Washi tape",
+              "entity_type": "catalog_known_brand",
+              "unique_posts": 2,
+              "mentions": 1,
+              "sentiment": 0.0,
+              "is_tiktok_shop_listed": true,
+              "brand_confidence_tier": "high",
+              "brand_domain": "shopping",
+              "search_url": "https://www.google.com/search?q=Washi+tape+brand",
+              "logo_url": ""
+            }
+          ],
+          "evidence_url": "/data/evidence/2026-08-17/C075.json"
+        }
+      ]
+    },
+    {
+      "identity_key": "Local Merchants::L2L - Health & Elevated Home",
+      "ops_team_1": "Local Merchants",
+      "ops_team_2": "L2L - Health & Elevated Home",
+      "mapped_category_count": 44,
+      "matched_category_count": 22,
+      "overall_top5": [
+        {
+          "selection": "overall_trend_score",
+          "rank": 1,
+          "category_id": "C052",
+          "category_name": "Women's Dresses",
+          "scores": {
+            "overall": 4.71,
+            "overall_100": 94.2,
+            "momentum": 5.0,
+            "cross_community": 5.0,
+            "sentiment": 3.57,
+            "engagement": 5.0
+          },
+          "metrics": {
+            "current_week_posts": 5,
+            "previous_week_posts": 2,
+            "growth_rate": 1.5,
+            "unique_subreddits": 5,
+            "avg_sentiment": 0.2,
+            "positive_share": 0.2,
+            "negative_share": 0.0,
+            "avg_log_engagement": 3.4786183807507265
+          },
+          "communities_top5": [
+            {
+              "subreddit": "OUTFITS",
+              "unique_posts": 5,
+              "discussion_share": 0.21739130434782608
+            },
+            {
+              "subreddit": "PetiteFashionAdvice",
+              "unique_posts": 3,
+              "discussion_share": 0.13043478260869565
+            },
+            {
+              "subreddit": "femalefashionadvice",
+              "unique_posts": 3,
+              "discussion_share": 0.13043478260869565
+            },
+            {
+              "subreddit": "PlusSizeFashion",
+              "unique_posts": 2,
+              "discussion_share": 0.08695652173913043
+            },
+            {
+              "subreddit": "VintageFashion",
+              "unique_posts": 2,
+              "discussion_share": 0.08695652173913043
+            }
+          ],
+          "signals_top50": [],
+          "evidence_url": "/data/evidence/2026-08-17/C052.json"
+        },
+        {
+          "selection": "overall_trend_score",
+          "rank": 2,
+          "category_id": "C129",
+          "category_name": "Staples & Cooking Essentials",
+          "scores": {
+            "overall": 4.11,
+            "overall_100": 82.2,
+            "momentum": 5.0,
+            "cross_community": 4.0,
+            "sentiment": 3.57,
+            "engagement": 3.0
+          },
+          "metrics": {
+            "current_week_posts": 5,
+            "previous_week_posts": 1,
+            "growth_rate": 4.0,
+            "unique_subreddits": 3,
+            "avg_sentiment": 0.2,
+            "positive_share": 0.2,
+            "negative_share": 0.0,
+            "avg_log_engagement": 2.645888802561514
+          },
+          "communities_top5": [
+            {
+              "subreddit": "Cooking",
+              "unique_posts": 11,
+              "discussion_share": 0.3793103448275862
+            },
+            {
+              "subreddit": "Staples",
+              "unique_posts": 6,
+              "discussion_share": 0.20689655172413793
+            },
+            {
+              "subreddit": "FashionReps",
+              "unique_posts": 4,
+              "discussion_share": 0.13793103448275862
+            },
+            {
+              "subreddit": "KitchenConfidential",
+              "unique_posts": 1,
+              "discussion_share": 0.034482758620689655
+            },
+            {
+              "subreddit": "Naturalhair",
+              "unique_posts": 1,
+              "discussion_share": 0.034482758620689655
+            }
+          ],
+          "signals_top50": [],
+          "evidence_url": "/data/evidence/2026-08-17/C129.json"
+        },
+        {
+          "selection": "overall_trend_score",
+          "rank": 3,
+          "category_id": "C120",
+          "category_name": "Bath & Body Care",
+          "scores": {
+            "overall": 3.92,
+            "overall_100": 78.4,
+            "momentum": 3.8,
+            "cross_community": 5.0,
+            "sentiment": 3.0,
+            "engagement": 4.0
+          },
+          "metrics": {
+            "current_week_posts": 15,
+            "previous_week_posts": 17,
+            "growth_rate": -0.11764705882352941,
+            "unique_subreddits": 6,
+            "avg_sentiment": 0.0,
+            "positive_share": 0.06666666666666667,
+            "negative_share": 0.06666666666666667,
+            "avg_log_engagement": 3.096198229657425
+          },
+          "communities_top5": [
+            {
+              "subreddit": "BathandBodyWorks",
+              "unique_posts": 39,
+              "discussion_share": 0.48148148148148145
+            },
+            {
+              "subreddit": "LushCosmetics",
+              "unique_posts": 11,
+              "discussion_share": 0.13580246913580246
+            },
+            {
+              "subreddit": "fragrance",
+              "unique_posts": 4,
+              "discussion_share": 0.04938271604938271
+            },
+            {
+              "subreddit": "FemFragLab",
+              "unique_posts": 3,
+              "discussion_share": 0.037037037037037035
+            },
+            {
+              "subreddit": "BeautyEmpties",
+              "unique_posts": 2,
+              "discussion_share": 0.024691358024691357
+            }
+          ],
+          "signals_top50": [],
+          "evidence_url": "/data/evidence/2026-08-17/C120.json"
+        },
+        {
+          "selection": "overall_trend_score",
+          "rank": 4,
+          "category_id": "C185",
+          "category_name": "Camping & Hiking",
+          "scores": {
+            "overall": 3.75,
+            "overall_100": 75.0,
+            "momentum": 4.2,
+            "cross_community": 5.0,
+            "sentiment": 3.34,
+            "engagement": 2.0
+          },
+          "metrics": {
+            "current_week_posts": 28,
+            "previous_week_posts": 21,
+            "growth_rate": 0.3333333333333333,
+            "unique_subreddits": 4,
+            "avg_sentiment": 0.11904761904761904,
+            "positive_share": 0.14285714285714285,
+            "negative_share": 0.0,
+            "avg_log_engagement": 1.7719136577884633
+          },
+          "communities_top5": [
+            {
+              "subreddit": "camping",
+              "unique_posts": 56,
+              "discussion_share": 0.47058823529411764
+            },
+            {
+              "subreddit": "hiking",
+              "unique_posts": 26,
+              "discussion_share": 0.2184873949579832
+            },
+            {
+              "subreddit": "CampingGear",
+              "unique_posts": 10,
+              "discussion_share": 0.08403361344537816
+            },
+            {
+              "subreddit": "backpacking",
+              "unique_posts": 4,
+              "discussion_share": 0.03361344537815126
+            },
+            {
+              "subreddit": "WhatCarShouldIBuy",
+              "unique_posts": 3,
+              "discussion_share": 0.025210084033613446
+            }
+          ],
+          "signals_top50": [
+            {
+              "rank": 1,
+              "signal_key": "brand:hiking",
+              "kind": "brand",
+              "display": "HIKING",
+              "entity_type": "catalog_known_brand",
+              "unique_posts": 9,
+              "mentions": 2,
+              "sentiment": 0.5,
+              "is_tiktok_shop_listed": true,
+              "brand_confidence_tier": "high",
+              "brand_domain": "shopping",
+              "search_url": "https://www.google.com/search?q=HIKING+brand",
+              "logo_url": ""
+            }
+          ],
+          "evidence_url": "/data/evidence/2026-08-17/C185.json"
+        },
+        {
+          "selection": "overall_trend_score",
+          "rank": 5,
+          "category_id": "C075",
+          "category_name": "Office Stationery & Supplies",
+          "scores": {
+            "overall": 3.62,
+            "overall_100": 72.4,
+            "momentum": 4.2,
+            "cross_community": 2.0,
+            "sentiment": 3.71,
+            "engagement": 4.0
+          },
+          "metrics": {
+            "current_week_posts": 12,
+            "previous_week_posts": 10,
+            "growth_rate": 0.2,
+            "unique_subreddits": 1,
+            "avg_sentiment": 0.25,
+            "positive_share": 0.3333333333333333,
+            "negative_share": 0.08333333333333333,
+            "avg_log_engagement": 3.3769044992743384
+          },
+          "communities_top5": [
+            {
+              "subreddit": "stationery",
+              "unique_posts": 27,
+              "discussion_share": 0.8709677419354839
+            },
+            {
+              "subreddit": "CasualConversation",
+              "unique_posts": 1,
+              "discussion_share": 0.03225806451612903
+            },
+            {
+              "subreddit": "DoesAnybodyElse",
+              "unique_posts": 1,
+              "discussion_share": 0.03225806451612903
+            },
+            {
+              "subreddit": "ManyBaggers",
+              "unique_posts": 1,
+              "discussion_share": 0.03225806451612903
+            },
+            {
+              "subreddit": "careerguidance",
+              "unique_posts": 1,
+              "discussion_share": 0.03225806451612903
+            }
+          ],
+          "signals_top50": [
+            {
+              "rank": 1,
+              "signal_key": "brand:haul",
+              "kind": "brand",
+              "display": "HAUL",
+              "entity_type": "catalog_known_brand",
+              "unique_posts": 3,
+              "mentions": 1,
+              "sentiment": 1.0,
+              "is_tiktok_shop_listed": false,
+              "brand_confidence_tier": "high",
+              "brand_domain": "shopping",
+              "search_url": "https://www.google.com/search?q=HAUL+brand",
+              "logo_url": ""
+            },
+            {
+              "rank": 2,
+              "signal_key": "brand:washi tape",
+              "kind": "brand",
+              "display": "Washi tape",
+              "entity_type": "catalog_known_brand",
+              "unique_posts": 2,
+              "mentions": 1,
+              "sentiment": 0.0,
+              "is_tiktok_shop_listed": true,
+              "brand_confidence_tier": "high",
+              "brand_domain": "shopping",
+              "search_url": "https://www.google.com/search?q=Washi+tape+brand",
+              "logo_url": ""
+            }
+          ],
+          "evidence_url": "/data/evidence/2026-08-17/C075.json"
+        }
+      ],
+      "dimension_highlights": [
+        {
+          "selection": "momentum_score",
+          "rank": 1,
+          "category_id": "C063",
+          "category_name": "Home Appliances",
+          "scores": {
+            "overall": 3.59,
+            "overall_100": 71.8,
+            "momentum": 5.0,
+            "cross_community": 2.0,
+            "sentiment": 3.95,
+            "engagement": 2.0
+          },
+          "metrics": {
+            "current_week_posts": 6,
+            "previous_week_posts": 1,
+            "growth_rate": 5.0,
+            "unique_subreddits": 1,
+            "avg_sentiment": 0.3333333333333333,
+            "positive_share": 0.3333333333333333,
+            "negative_share": 0.0,
+            "avg_log_engagement": 2.0170813882122673
+          },
+          "communities_top5": [
+            {
+              "subreddit": "Appliances",
+              "unique_posts": 13,
+              "discussion_share": 0.7647058823529411
+            },
+            {
+              "subreddit": "3Dprinting",
+              "unique_posts": 1,
+              "discussion_share": 0.058823529411764705
+            },
+            {
+              "subreddit": "ApplianceAdvice",
+              "unique_posts": 1,
+              "discussion_share": 0.058823529411764705
+            },
+            {
+              "subreddit": "BuyItForLife",
+              "unique_posts": 1,
+              "discussion_share": 0.058823529411764705
+            },
+            {
+              "subreddit": "organization",
+              "unique_posts": 1,
+              "discussion_share": 0.058823529411764705
+            }
+          ],
+          "signals_top50": [
+            {
+              "rank": 1,
+              "signal_key": "brand:outlet",
+              "kind": "brand",
+              "display": "outlet",
+              "entity_type": "catalog_known_brand",
+              "unique_posts": 3,
+              "mentions": 3,
+              "sentiment": 0.3333333333333333,
+              "is_tiktok_shop_listed": true,
+              "brand_confidence_tier": "high",
+              "brand_domain": "shopping",
+              "search_url": "https://www.google.com/search?q=outlet+brand",
+              "logo_url": ""
+            },
+            {
+              "rank": 2,
+              "signal_key": "brand:dent",
+              "kind": "brand",
+              "display": "Dent",
+              "entity_type": "catalog_known_brand",
+              "unique_posts": 2,
+              "mentions": 2,
+              "sentiment": 0.0,
+              "is_tiktok_shop_listed": false,
+              "brand_confidence_tier": "high",
+              "brand_domain": "shopping",
+              "search_url": "https://www.google.com/search?q=Dent+brand",
+              "logo_url": ""
+            },
+            {
+              "rank": 3,
+              "signal_key": "brand:scratch",
+              "kind": "brand",
+              "display": "Scratch",
+              "entity_type": "catalog_known_brand",
+              "unique_posts": 2,
+              "mentions": 2,
+              "sentiment": 0.0,
+              "is_tiktok_shop_listed": true,
+              "brand_confidence_tier": "high",
+              "brand_domain": "shopping",
+              "search_url": "https://www.google.com/search?q=Scratch+brand",
+              "logo_url": ""
+            }
+          ],
+          "evidence_url": "/data/evidence/2026-08-17/C063.json"
+        },
+        {
+          "selection": "cross_community_score",
+          "rank": 1,
+          "category_id": "C131",
+          "category_name": "Home Decor",
+          "scores": {
+            "overall": 3.45,
+            "overall_100": 69.0,
+            "momentum": 4.2,
+            "cross_community": 5.0,
+            "sentiment": 1.86,
+            "engagement": 2.0
+          },
+          "metrics": {
+            "current_week_posts": 5,
+            "previous_week_posts": 4,
+            "growth_rate": 0.25,
+            "unique_subreddits": 4,
+            "avg_sentiment": -0.2,
+            "positive_share": 0.0,
+            "negative_share": 0.2,
+            "avg_log_engagement": 2.0835016134397275
+          },
+          "communities_top5": [
+            {
+              "subreddit": "HomeDecorating",
+              "unique_posts": 10,
+              "discussion_share": 0.3333333333333333
+            },
+            {
+              "subreddit": "minimalism",
+              "unique_posts": 2,
+              "discussion_share": 0.06666666666666667
+            },
+            {
+              "subreddit": "Anticonsumption",
+              "unique_posts": 1,
+              "discussion_share": 0.03333333333333333
+            },
+            {
+              "subreddit": "Apartmentliving",
+              "unique_posts": 1,
+              "discussion_share": 0.03333333333333333
+            },
+            {
+              "subreddit": "DesignerReps",
+              "unique_posts": 1,
+              "discussion_share": 0.03333333333333333
+            }
+          ],
+          "signals_top50": [
+            {
+              "rank": 1,
+              "signal_key": "brand:home decor",
+              "kind": "brand",
+              "display": "Home decor",
+              "entity_type": "catalog_known_brand",
+              "unique_posts": 9,
+              "mentions": 2,
+              "sentiment": 0.0,
+              "is_tiktok_shop_listed": true,
+              "brand_confidence_tier": "high",
+              "brand_domain": "shopping",
+              "search_url": "https://www.google.com/search?q=Home+decor+brand",
+              "logo_url": ""
+            },
+            {
+              "rank": 2,
+              "signal_key": "brand:decor",
+              "kind": "brand",
+              "display": "DECOR",
+              "entity_type": "catalog_known_brand",
+              "unique_posts": 2,
+              "mentions": 1,
+              "sentiment": -1.0,
+              "is_tiktok_shop_listed": true,
+              "brand_confidence_tier": "high",
+              "brand_domain": "shopping",
+              "search_url": "https://www.google.com/search?q=DECOR+brand",
+              "logo_url": ""
+            }
+          ],
+          "evidence_url": "/data/evidence/2026-08-17/C131.json"
+        },
+        {
+          "selection": "sentiment_score",
+          "rank": 1,
+          "category_id": "C060",
+          "category_name": "Dog & Cat Food",
+          "scores": {
+            "overall": 3.61,
+            "overall_100": 72.2,
+            "momentum": 2.8,
+            "cross_community": 4.0,
+            "sentiment": 4.43,
+            "engagement": 4.0
+          },
+          "metrics": {
+            "current_week_posts": 4,
+            "previous_week_posts": 9,
+            "growth_rate": -0.5555555555555556,
+            "unique_subreddits": 3,
+            "avg_sentiment": 0.5,
+            "positive_share": 0.5,
+            "negative_share": 0.0,
+            "avg_log_engagement": 2.8943034887131476
+          },
+          "communities_top5": [
+            {
+              "subreddit": "CatAdvice",
+              "unique_posts": 51,
+              "discussion_share": 0.4811320754716981
+            },
+            {
+              "subreddit": "cats",
+              "unique_posts": 18,
+              "discussion_share": 0.16981132075471697
+            },
+            {
+              "subreddit": "dogs",
+              "unique_posts": 12,
+              "discussion_share": 0.11320754716981132
+            },
+            {
+              "subreddit": "CatTraining",
+              "unique_posts": 6,
+              "discussion_share": 0.05660377358490566
+            },
+            {
+              "subreddit": "Pets",
+              "unique_posts": 6,
+              "discussion_share": 0.05660377358490566
+            }
+          ],
+          "signals_top50": [
+            {
+              "rank": 1,
+              "signal_key": "brand:litter",
+              "kind": "brand",
+              "display": "LITTER",
+              "entity_type": "catalog_known_brand",
+              "unique_posts": 2,
+              "mentions": 1,
+              "sentiment": 1.0,
+              "is_tiktok_shop_listed": false,
+              "brand_confidence_tier": "high",
+              "brand_domain": "shopping",
+              "search_url": "https://www.google.com/search?q=LITTER+brand",
+              "logo_url": ""
+            }
+          ],
+          "evidence_url": "/data/evidence/2026-08-17/C060.json"
+        },
+        {
+          "selection": "engagement_score",
+          "rank": 1,
+          "category_id": "C043",
+          "category_name": "Milk & Dairy",
+          "scores": {
+            "overall": 2.88,
+            "overall_100": 57.6,
+            "momentum": 3.2,
+            "cross_community": 4.0,
+            "sentiment": 1.0,
+            "engagement": 3.0
+          },
+          "metrics": {
+            "current_week_posts": 4,
+            "previous_week_posts": 6,
+            "growth_rate": -0.3333333333333333,
+            "unique_subreddits": 3,
+            "avg_sentiment": -0.5,
+            "positive_share": 0.0,
+            "negative_share": 0.5,
+            "avg_log_engagement": 2.6258006970758805
+          },
+          "communities_top5": [
+            {
+              "subreddit": "espresso",
+              "unique_posts": 3,
+              "discussion_share": 0.08108108108108109
+            },
+            {
+              "subreddit": "traderjoes",
+              "unique_posts": 3,
+              "discussion_share": 0.08108108108108109
+            },
+            {
+              "subreddit": "Baking",
+              "unique_posts": 2,
+              "discussion_share": 0.05405405405405406
+            },
+            {
+              "subreddit": "Kroger",
+              "unique_posts": 2,
+              "discussion_share": 0.05405405405405406
+            },
+            {
+              "subreddit": "Mommit",
+              "unique_posts": 2,
+              "discussion_share": 0.05405405405405406
+            }
+          ],
+          "signals_top50": [
+            {
+              "rank": 1,
+              "signal_key": "brand:dairy",
+              "kind": "brand",
+              "display": "dairy",
+              "entity_type": "catalog_known_brand",
+              "unique_posts": 5,
+              "mentions": 1,
+              "sentiment": -1.0,
+              "is_tiktok_shop_listed": false,
+              "brand_confidence_tier": "high",
+              "brand_domain": "shopping",
+              "search_url": "https://www.google.com/search?q=dairy+brand",
+              "logo_url": ""
+            },
+            {
+              "rank": 2,
+              "signal_key": "brand:cups",
+              "kind": "brand",
+              "display": "CUPS",
+              "entity_type": "catalog_known_brand",
+              "unique_posts": 3,
+              "mentions": 1,
+              "sentiment": -1.0,
+              "is_tiktok_shop_listed": false,
+              "brand_confidence_tier": "high",
+              "brand_domain": "shopping",
+              "search_url": "https://www.google.com/search?q=CUPS+brand",
+              "logo_url": ""
+            },
+            {
+              "rank": 3,
+              "signal_key": "brand:philips",
+              "kind": "brand",
+              "display": "PHILIPS",
+              "entity_type": "confirmed_whitelist_brand",
+              "unique_posts": 1,
+              "mentions": 1,
+              "sentiment": -1.0,
+              "is_tiktok_shop_listed": true,
+              "brand_confidence_tier": "high",
+              "brand_domain": "shopping",
+              "search_url": "https://www.google.com/search?q=PHILIPS+brand",
+              "logo_url": ""
+            }
+          ],
+          "evidence_url": "/data/evidence/2026-08-17/C043.json"
+        }
+      ]
+    },
+    {
+      "identity_key": "Local Merchants::L2L - Personal Care and Lifestyle",
+      "ops_team_1": "Local Merchants",
+      "ops_team_2": "L2L - Personal Care and Lifestyle",
+      "mapped_category_count": 50,
+      "matched_category_count": 26,
+      "overall_top5": [
+        {
+          "selection": "overall_trend_score",
+          "rank": 1,
+          "category_id": "C120",
+          "category_name": "Bath & Body Care",
+          "scores": {
+            "overall": 3.92,
+            "overall_100": 78.4,
+            "momentum": 3.8,
+            "cross_community": 5.0,
+            "sentiment": 3.0,
+            "engagement": 4.0
+          },
+          "metrics": {
+            "current_week_posts": 15,
+            "previous_week_posts": 17,
+            "growth_rate": -0.11764705882352941,
+            "unique_subreddits": 6,
+            "avg_sentiment": 0.0,
+            "positive_share": 0.06666666666666667,
+            "negative_share": 0.06666666666666667,
+            "avg_log_engagement": 3.096198229657425
+          },
+          "communities_top5": [
+            {
+              "subreddit": "BathandBodyWorks",
+              "unique_posts": 39,
+              "discussion_share": 0.48148148148148145
+            },
+            {
+              "subreddit": "LushCosmetics",
+              "unique_posts": 11,
+              "discussion_share": 0.13580246913580246
+            },
+            {
+              "subreddit": "fragrance",
+              "unique_posts": 4,
+              "discussion_share": 0.04938271604938271
+            },
+            {
+              "subreddit": "FemFragLab",
+              "unique_posts": 3,
+              "discussion_share": 0.037037037037037035
+            },
+            {
+              "subreddit": "BeautyEmpties",
+              "unique_posts": 2,
+              "discussion_share": 0.024691358024691357
+            }
+          ],
+          "signals_top50": [],
+          "evidence_url": "/data/evidence/2026-08-17/C120.json"
+        },
+        {
+          "selection": "overall_trend_score",
+          "rank": 2,
+          "category_id": "C146",
+          "category_name": "Dolls & Stuffed Toys",
+          "scores": {
+            "overall": 3.78,
+            "overall_100": 75.6,
+            "momentum": 3.6,
+            "cross_community": 5.0,
+            "sentiment": 3.71,
+            "engagement": 3.0
+          },
+          "metrics": {
+            "current_week_posts": 4,
+            "previous_week_posts": 3,
+            "growth_rate": 0.3333333333333333,
+            "unique_subreddits": 4,
+            "avg_sentiment": 0.25,
+            "positive_share": 0.25,
+            "negative_share": 0.0,
+            "avg_log_engagement": 2.2118399688685435
+          },
+          "communities_top5": [
+            {
+              "subreddit": "AmateurRoomPorn",
+              "unique_posts": 1,
+              "discussion_share": 0.07692307692307693
+            },
+            {
+              "subreddit": "Anticonsumption",
+              "unique_posts": 1,
+              "discussion_share": 0.07692307692307693
+            },
+            {
+              "subreddit": "Breadit",
+              "unique_posts": 1,
+              "discussion_share": 0.07692307692307693
+            },
+            {
+              "subreddit": "CleaningTips",
+              "unique_posts": 1,
+              "discussion_share": 0.07692307692307693
+            },
+            {
+              "subreddit": "Dogtraining",
+              "unique_posts": 1,
+              "discussion_share": 0.07692307692307693
+            }
+          ],
+          "signals_top50": [
+            {
+              "rank": 1,
+              "signal_key": "brand:stuffed",
+              "kind": "brand",
+              "display": "Stuffed",
+              "entity_type": "catalog_known_brand",
+              "unique_posts": 2,
+              "mentions": 1,
+              "sentiment": 0.0,
+              "is_tiktok_shop_listed": false,
+              "brand_confidence_tier": "high",
+              "brand_domain": "shopping",
+              "search_url": "https://www.google.com/search?q=Stuffed+brand",
+              "logo_url": ""
+            }
+          ],
+          "evidence_url": "/data/evidence/2026-08-17/C146.json"
+        },
+        {
+          "selection": "overall_trend_score",
+          "rank": 3,
+          "category_id": "C001",
+          "category_name": "Mobile Phone Accessories",
+          "scores": {
+            "overall": 3.64,
+            "overall_100": 72.8,
+            "momentum": 3.6,
+            "cross_community": 4.0,
+            "sentiment": 3.0,
+            "engagement": 4.0
+          },
+          "metrics": {
+            "current_week_posts": 3,
+            "previous_week_posts": 3,
+            "growth_rate": 0.0,
+            "unique_subreddits": 3,
+            "avg_sentiment": 0.0,
+            "positive_share": 0.0,
+            "negative_share": 0.0,
+            "avg_log_engagement": 3.3212452109604946
+          },
+          "communities_top5": [
+            {
+              "subreddit": "iphone",
+              "unique_posts": 6,
+              "discussion_share": 0.11538461538461539
+            },
+            {
+              "subreddit": "degoogle",
+              "unique_posts": 5,
+              "discussion_share": 0.09615384615384616
+            },
+            {
+              "subreddit": "GooglePixel",
+              "unique_posts": 4,
+              "discussion_share": 0.07692307692307693
+            },
+            {
+              "subreddit": "Android",
+              "unique_posts": 2,
+              "discussion_share": 0.038461538461538464
+            },
+            {
+              "subreddit": "Garmin",
+              "unique_posts": 2,
+              "discussion_share": 0.038461538461538464
+            }
+          ],
+          "signals_top50": [],
+          "evidence_url": "/data/evidence/2026-08-17/C001.json"
+        },
+        {
+          "selection": "overall_trend_score",
+          "rank": 4,
+          "category_id": "C060",
+          "category_name": "Dog & Cat Food",
+          "scores": {
+            "overall": 3.61,
+            "overall_100": 72.2,
+            "momentum": 2.8,
+            "cross_community": 4.0,
+            "sentiment": 4.43,
+            "engagement": 4.0
+          },
+          "metrics": {
+            "current_week_posts": 4,
+            "previous_week_posts": 9,
+            "growth_rate": -0.5555555555555556,
+            "unique_subreddits": 3,
+            "avg_sentiment": 0.5,
+            "positive_share": 0.5,
+            "negative_share": 0.0,
+            "avg_log_engagement": 2.8943034887131476
+          },
+          "communities_top5": [
+            {
+              "subreddit": "CatAdvice",
+              "unique_posts": 51,
+              "discussion_share": 0.4811320754716981
+            },
+            {
+              "subreddit": "cats",
+              "unique_posts": 18,
+              "discussion_share": 0.16981132075471697
+            },
+            {
+              "subreddit": "dogs",
+              "unique_posts": 12,
+              "discussion_share": 0.11320754716981132
+            },
+            {
+              "subreddit": "CatTraining",
+              "unique_posts": 6,
+              "discussion_share": 0.05660377358490566
+            },
+            {
+              "subreddit": "Pets",
+              "unique_posts": 6,
+              "discussion_share": 0.05660377358490566
+            }
+          ],
+          "signals_top50": [
+            {
+              "rank": 1,
+              "signal_key": "brand:litter",
+              "kind": "brand",
+              "display": "LITTER",
+              "entity_type": "catalog_known_brand",
+              "unique_posts": 2,
+              "mentions": 1,
+              "sentiment": 1.0,
+              "is_tiktok_shop_listed": false,
+              "brand_confidence_tier": "high",
+              "brand_domain": "shopping",
+              "search_url": "https://www.google.com/search?q=LITTER+brand",
+              "logo_url": ""
+            }
+          ],
+          "evidence_url": "/data/evidence/2026-08-17/C060.json"
+        },
+        {
+          "selection": "overall_trend_score",
+          "rank": 5,
+          "category_id": "C158",
+          "category_name": "Nasal & Oral Care",
+          "scores": {
+            "overall": 3.56,
+            "overall_100": 71.2,
+            "momentum": 4.4,
+            "cross_community": 3.0,
+            "sentiment": 3.0,
+            "engagement": 3.0
+          },
+          "metrics": {
+            "current_week_posts": 3,
+            "previous_week_posts": 1,
+            "growth_rate": 2.0,
+            "unique_subreddits": 2,
+            "avg_sentiment": 0.0,
+            "positive_share": 0.0,
+            "negative_share": 0.0,
+            "avg_log_engagement": 2.17157089695751
+          },
+          "communities_top5": [
+            {
+              "subreddit": "tressless",
+              "unique_posts": 37,
+              "discussion_share": 0.7115384615384616
+            },
+            {
+              "subreddit": "Biohackers",
+              "unique_posts": 2,
+              "discussion_share": 0.038461538461538464
+            },
+            {
+              "subreddit": "CatAdvice",
+              "unique_posts": 2,
+              "discussion_share": 0.038461538461538464
+            },
+            {
+              "subreddit": "BabyBumps",
+              "unique_posts": 1,
+              "discussion_share": 0.019230769230769232
+            },
+            {
+              "subreddit": "BuyItForLife",
+              "unique_posts": 1,
+              "discussion_share": 0.019230769230769232
+            }
+          ],
+          "signals_top50": [],
+          "evidence_url": "/data/evidence/2026-08-17/C158.json"
+        }
+      ],
+      "dimension_highlights": [
+        {
+          "selection": "momentum_score",
+          "rank": 1,
+          "category_id": "C169",
+          "category_name": "Nutrition & Wellness",
+          "scores": {
+            "overall": 3.4,
+            "overall_100": 68.0,
+            "momentum": 5.0,
+            "cross_community": 3.0,
+            "sentiment": 3.0,
+            "engagement": 1.0
+          },
+          "metrics": {
+            "current_week_posts": 9,
+            "previous_week_posts": 3,
+            "growth_rate": 2.0,
+            "unique_subreddits": 2,
+            "avg_sentiment": 0.0,
+            "positive_share": 0.0,
+            "negative_share": 0.0,
+            "avg_log_engagement": 1.2487209576964964
+          },
+          "communities_top5": [
+            {
+              "subreddit": "nutrition",
+              "unique_posts": 13,
+              "discussion_share": 0.43333333333333335
+            },
+            {
+              "subreddit": "xxfitness",
+              "unique_posts": 3,
+              "discussion_share": 0.1
+            },
+            {
+              "subreddit": "Coffee",
+              "unique_posts": 1,
+              "discussion_share": 0.03333333333333333
+            },
+            {
+              "subreddit": "Meijer",
+              "unique_posts": 1,
+              "discussion_share": 0.03333333333333333
+            },
+            {
+              "subreddit": "QuantifiedSelf",
+              "unique_posts": 1,
+              "discussion_share": 0.03333333333333333
+            }
+          ],
+          "signals_top50": [
+            {
+              "rank": 1,
+              "signal_key": "brand:wellness",
+              "kind": "brand",
+              "display": "wellness",
+              "entity_type": "catalog_known_brand",
+              "unique_posts": 2,
+              "mentions": 1,
+              "sentiment": 0.0,
+              "is_tiktok_shop_listed": true,
+              "brand_confidence_tier": "high",
+              "brand_domain": "shopping",
+              "search_url": "https://www.google.com/search?q=wellness+brand",
+              "logo_url": ""
+            }
+          ],
+          "evidence_url": "/data/evidence/2026-08-17/C169.json"
+        },
+        {
+          "selection": "cross_community_score",
+          "rank": 1,
+          "category_id": "C014",
+          "category_name": "Dog & Cat Litter",
+          "scores": {
+            "overall": 3.48,
+            "overall_100": 69.6,
+            "momentum": 3.8,
+            "cross_community": 5.0,
+            "sentiment": 1.78,
+            "engagement": 3.0
+          },
+          "metrics": {
+            "current_week_posts": 14,
+            "previous_week_posts": 16,
+            "growth_rate": -0.125,
+            "unique_subreddits": 5,
+            "avg_sentiment": -0.21428571428571427,
+            "positive_share": 0.0,
+            "negative_share": 0.21428571428571427,
+            "avg_log_engagement": 2.155016138067738
+          },
+          "communities_top5": [
+            {
+              "subreddit": "CatAdvice",
+              "unique_posts": 72,
+              "discussion_share": 0.5669291338582677
+            },
+            {
+              "subreddit": "CatTraining",
+              "unique_posts": 22,
+              "discussion_share": 0.1732283464566929
+            },
+            {
+              "subreddit": "cats",
+              "unique_posts": 9,
+              "discussion_share": 0.07086614173228346
+            },
+            {
+              "subreddit": "Pets",
+              "unique_posts": 5,
+              "discussion_share": 0.03937007874015748
+            },
+            {
+              "subreddit": "CleaningTips",
+              "unique_posts": 4,
+              "discussion_share": 0.031496062992125984
+            }
+          ],
+          "signals_top50": [
+            {
+              "rank": 1,
+              "signal_key": "brand:litter",
+              "kind": "brand",
+              "display": "LITTER",
+              "entity_type": "catalog_known_brand",
+              "unique_posts": 26,
+              "mentions": 3,
+              "sentiment": -0.3333333333333333,
+              "is_tiktok_shop_listed": false,
+              "brand_confidence_tier": "high",
+              "brand_domain": "shopping",
+              "search_url": "https://www.google.com/search?q=LITTER+brand",
+              "logo_url": ""
+            }
+          ],
+          "evidence_url": "/data/evidence/2026-08-17/C014.json"
+        },
+        {
+          "selection": "sentiment_score",
+          "rank": 1,
+          "category_id": "C115",
+          "category_name": "Kitchen Knives",
+          "scores": {
+            "overall": 2.2,
+            "overall_100": 44.0,
+            "momentum": 1.0,
+            "cross_community": 2.0,
+            "sentiment": 5.0,
+            "engagement": 2.0
+          },
+          "metrics": {
+            "current_week_posts": 1,
+            "previous_week_posts": 3,
+            "growth_rate": -0.6666666666666666,
+            "unique_subreddits": 1,
+            "avg_sentiment": 1.0,
+            "positive_share": 1.0,
+            "negative_share": 0.0,
+            "avg_log_engagement": 3.332204510175204
+          },
+          "communities_top5": [
+            {
+              "subreddit": "Adulting",
+              "unique_posts": 1,
+              "discussion_share": 0.125
+            },
+            {
+              "subreddit": "Anticonsumption",
+              "unique_posts": 1,
+              "discussion_share": 0.125
+            },
+            {
+              "subreddit": "CleaningTips",
+              "unique_posts": 1,
+              "discussion_share": 0.125
+            },
+            {
+              "subreddit": "KitchenConfidential",
+              "unique_posts": 1,
+              "discussion_share": 0.125
+            },
+            {
+              "subreddit": "Montessori",
+              "unique_posts": 1,
+              "discussion_share": 0.125
+            }
+          ],
+          "signals_top50": [],
+          "evidence_url": "/data/evidence/2026-08-17/C115.json"
+        },
+        {
+          "selection": "engagement_score",
+          "rank": 1,
+          "category_id": "C125",
+          "category_name": "Electric & Remote Control Toys",
+          "scores": {
+            "overall": 3.31,
+            "overall_100": 66.2,
+            "momentum": 2.8,
+            "cross_community": 4.0,
+            "sentiment": 3.95,
+            "engagement": 3.0
+          },
+          "metrics": {
+            "current_week_posts": 3,
+            "previous_week_posts": 7,
+            "growth_rate": -0.5714285714285714,
+            "unique_subreddits": 3,
+            "avg_sentiment": 0.3333333333333333,
+            "positive_share": 0.3333333333333333,
+            "negative_share": 0.0,
+            "avg_log_engagement": 2.3633589452586974
+          },
+          "communities_top5": [
+            {
+              "subreddit": "BudgetAudiophile",
+              "unique_posts": 4,
+              "discussion_share": 0.13333333333333333
+            },
+            {
+              "subreddit": "homeassistant",
+              "unique_posts": 4,
+              "discussion_share": 0.13333333333333333
+            },
+            {
+              "subreddit": "homeautomation",
+              "unique_posts": 3,
+              "discussion_share": 0.1
+            },
+            {
+              "subreddit": "jobs",
+              "unique_posts": 3,
+              "discussion_share": 0.1
+            },
+            {
+              "subreddit": "GiftIdeas",
+              "unique_posts": 2,
+              "discussion_share": 0.06666666666666667
+            }
+          ],
+          "signals_top50": [],
+          "evidence_url": "/data/evidence/2026-08-17/C125.json"
+        }
+      ]
+    },
+    {
+      "identity_key": "Local Merchants::MAI / Unmanaged",
+      "ops_team_1": "Local Merchants",
+      "ops_team_2": "MAI / Unmanaged",
+      "mapped_category_count": 89,
+      "matched_category_count": 43,
+      "overall_top5": [
+        {
+          "selection": "overall_trend_score",
+          "rank": 1,
+          "category_id": "C052",
+          "category_name": "Women's Dresses",
+          "scores": {
+            "overall": 4.71,
+            "overall_100": 94.2,
+            "momentum": 5.0,
+            "cross_community": 5.0,
+            "sentiment": 3.57,
+            "engagement": 5.0
+          },
+          "metrics": {
+            "current_week_posts": 5,
+            "previous_week_posts": 2,
+            "growth_rate": 1.5,
+            "unique_subreddits": 5,
+            "avg_sentiment": 0.2,
+            "positive_share": 0.2,
+            "negative_share": 0.0,
+            "avg_log_engagement": 3.4786183807507265
+          },
+          "communities_top5": [
+            {
+              "subreddit": "OUTFITS",
+              "unique_posts": 5,
+              "discussion_share": 0.21739130434782608
+            },
+            {
+              "subreddit": "PetiteFashionAdvice",
+              "unique_posts": 3,
+              "discussion_share": 0.13043478260869565
+            },
+            {
+              "subreddit": "femalefashionadvice",
+              "unique_posts": 3,
+              "discussion_share": 0.13043478260869565
+            },
+            {
+              "subreddit": "PlusSizeFashion",
+              "unique_posts": 2,
+              "discussion_share": 0.08695652173913043
+            },
+            {
+              "subreddit": "VintageFashion",
+              "unique_posts": 2,
+              "discussion_share": 0.08695652173913043
+            }
+          ],
+          "signals_top50": [],
+          "evidence_url": "/data/evidence/2026-08-17/C052.json"
+        },
+        {
+          "selection": "overall_trend_score",
+          "rank": 2,
+          "category_id": "C163",
+          "category_name": "Pantry Food",
+          "scores": {
+            "overall": 4.2,
+            "overall_100": 84.0,
+            "momentum": 4.0,
+            "cross_community": 5.0,
+            "sentiment": 3.0,
+            "engagement": 5.0
+          },
+          "metrics": {
+            "current_week_posts": 4,
+            "previous_week_posts": 2,
+            "growth_rate": 1.0,
+            "unique_subreddits": 4,
+            "avg_sentiment": 0.0,
+            "positive_share": 0.0,
+            "negative_share": 0.0,
+            "avg_log_engagement": 4.673003169600529
+          },
+          "communities_top5": [
+            {
+              "subreddit": "povertyfinance",
+              "unique_posts": 5,
+              "discussion_share": 0.2777777777777778
+            },
+            {
+              "subreddit": "Baking",
+              "unique_posts": 2,
+              "discussion_share": 0.1111111111111111
+            },
+            {
+              "subreddit": "BuyItForLife",
+              "unique_posts": 1,
+              "discussion_share": 0.05555555555555555
+            },
+            {
+              "subreddit": "CreditCards",
+              "unique_posts": 1,
+              "discussion_share": 0.05555555555555555
+            },
+            {
+              "subreddit": "HomeDecorating",
+              "unique_posts": 1,
+              "discussion_share": 0.05555555555555555
+            }
+          ],
+          "signals_top50": [],
+          "evidence_url": "/data/evidence/2026-08-17/C163.json"
+        },
+        {
+          "selection": "overall_trend_score",
+          "rank": 3,
+          "category_id": "C129",
+          "category_name": "Staples & Cooking Essentials",
+          "scores": {
+            "overall": 4.11,
+            "overall_100": 82.2,
+            "momentum": 5.0,
+            "cross_community": 4.0,
+            "sentiment": 3.57,
+            "engagement": 3.0
+          },
+          "metrics": {
+            "current_week_posts": 5,
+            "previous_week_posts": 1,
+            "growth_rate": 4.0,
+            "unique_subreddits": 3,
+            "avg_sentiment": 0.2,
+            "positive_share": 0.2,
+            "negative_share": 0.0,
+            "avg_log_engagement": 2.645888802561514
+          },
+          "communities_top5": [
+            {
+              "subreddit": "Cooking",
+              "unique_posts": 11,
+              "discussion_share": 0.3793103448275862
+            },
+            {
+              "subreddit": "Staples",
+              "unique_posts": 6,
+              "discussion_share": 0.20689655172413793
+            },
+            {
+              "subreddit": "FashionReps",
+              "unique_posts": 4,
+              "discussion_share": 0.13793103448275862
+            },
+            {
+              "subreddit": "KitchenConfidential",
+              "unique_posts": 1,
+              "discussion_share": 0.034482758620689655
+            },
+            {
+              "subreddit": "Naturalhair",
+              "unique_posts": 1,
+              "discussion_share": 0.034482758620689655
+            }
+          ],
+          "signals_top50": [],
+          "evidence_url": "/data/evidence/2026-08-17/C129.json"
+        },
+        {
+          "selection": "overall_trend_score",
+          "rank": 4,
+          "category_id": "C120",
+          "category_name": "Bath & Body Care",
+          "scores": {
+            "overall": 3.92,
+            "overall_100": 78.4,
+            "momentum": 3.8,
+            "cross_community": 5.0,
+            "sentiment": 3.0,
+            "engagement": 4.0
+          },
+          "metrics": {
+            "current_week_posts": 15,
+            "previous_week_posts": 17,
+            "growth_rate": -0.11764705882352941,
+            "unique_subreddits": 6,
+            "avg_sentiment": 0.0,
+            "positive_share": 0.06666666666666667,
+            "negative_share": 0.06666666666666667,
+            "avg_log_engagement": 3.096198229657425
+          },
+          "communities_top5": [
+            {
+              "subreddit": "BathandBodyWorks",
+              "unique_posts": 39,
+              "discussion_share": 0.48148148148148145
+            },
+            {
+              "subreddit": "LushCosmetics",
+              "unique_posts": 11,
+              "discussion_share": 0.13580246913580246
+            },
+            {
+              "subreddit": "fragrance",
+              "unique_posts": 4,
+              "discussion_share": 0.04938271604938271
+            },
+            {
+              "subreddit": "FemFragLab",
+              "unique_posts": 3,
+              "discussion_share": 0.037037037037037035
+            },
+            {
+              "subreddit": "BeautyEmpties",
+              "unique_posts": 2,
+              "discussion_share": 0.024691358024691357
+            }
+          ],
+          "signals_top50": [],
+          "evidence_url": "/data/evidence/2026-08-17/C120.json"
+        },
+        {
+          "selection": "overall_trend_score",
+          "rank": 5,
+          "category_id": "C146",
+          "category_name": "Dolls & Stuffed Toys",
+          "scores": {
+            "overall": 3.78,
+            "overall_100": 75.6,
+            "momentum": 3.6,
+            "cross_community": 5.0,
+            "sentiment": 3.71,
+            "engagement": 3.0
+          },
+          "metrics": {
+            "current_week_posts": 4,
+            "previous_week_posts": 3,
+            "growth_rate": 0.3333333333333333,
+            "unique_subreddits": 4,
+            "avg_sentiment": 0.25,
+            "positive_share": 0.25,
+            "negative_share": 0.0,
+            "avg_log_engagement": 2.2118399688685435
+          },
+          "communities_top5": [
+            {
+              "subreddit": "AmateurRoomPorn",
+              "unique_posts": 1,
+              "discussion_share": 0.07692307692307693
+            },
+            {
+              "subreddit": "Anticonsumption",
+              "unique_posts": 1,
+              "discussion_share": 0.07692307692307693
+            },
+            {
+              "subreddit": "Breadit",
+              "unique_posts": 1,
+              "discussion_share": 0.07692307692307693
+            },
+            {
+              "subreddit": "CleaningTips",
+              "unique_posts": 1,
+              "discussion_share": 0.07692307692307693
+            },
+            {
+              "subreddit": "Dogtraining",
+              "unique_posts": 1,
+              "discussion_share": 0.07692307692307693
+            }
+          ],
+          "signals_top50": [
+            {
+              "rank": 1,
+              "signal_key": "brand:stuffed",
+              "kind": "brand",
+              "display": "Stuffed",
+              "entity_type": "catalog_known_brand",
+              "unique_posts": 2,
+              "mentions": 1,
+              "sentiment": 0.0,
+              "is_tiktok_shop_listed": false,
+              "brand_confidence_tier": "high",
+              "brand_domain": "shopping",
+              "search_url": "https://www.google.com/search?q=Stuffed+brand",
+              "logo_url": ""
+            }
+          ],
+          "evidence_url": "/data/evidence/2026-08-17/C146.json"
+        }
+      ],
+      "dimension_highlights": [
+        {
+          "selection": "momentum_score",
+          "rank": 1,
+          "category_id": "C169",
+          "category_name": "Nutrition & Wellness",
+          "scores": {
+            "overall": 3.4,
+            "overall_100": 68.0,
+            "momentum": 5.0,
+            "cross_community": 3.0,
+            "sentiment": 3.0,
+            "engagement": 1.0
+          },
+          "metrics": {
+            "current_week_posts": 9,
+            "previous_week_posts": 3,
+            "growth_rate": 2.0,
+            "unique_subreddits": 2,
+            "avg_sentiment": 0.0,
+            "positive_share": 0.0,
+            "negative_share": 0.0,
+            "avg_log_engagement": 1.2487209576964964
+          },
+          "communities_top5": [
+            {
+              "subreddit": "nutrition",
+              "unique_posts": 13,
+              "discussion_share": 0.43333333333333335
+            },
+            {
+              "subreddit": "xxfitness",
+              "unique_posts": 3,
+              "discussion_share": 0.1
+            },
+            {
+              "subreddit": "Coffee",
+              "unique_posts": 1,
+              "discussion_share": 0.03333333333333333
+            },
+            {
+              "subreddit": "Meijer",
+              "unique_posts": 1,
+              "discussion_share": 0.03333333333333333
+            },
+            {
+              "subreddit": "QuantifiedSelf",
+              "unique_posts": 1,
+              "discussion_share": 0.03333333333333333
+            }
+          ],
+          "signals_top50": [
+            {
+              "rank": 1,
+              "signal_key": "brand:wellness",
+              "kind": "brand",
+              "display": "wellness",
+              "entity_type": "catalog_known_brand",
+              "unique_posts": 2,
+              "mentions": 1,
+              "sentiment": 0.0,
+              "is_tiktok_shop_listed": true,
+              "brand_confidence_tier": "high",
+              "brand_domain": "shopping",
+              "search_url": "https://www.google.com/search?q=wellness+brand",
+              "logo_url": ""
+            }
+          ],
+          "evidence_url": "/data/evidence/2026-08-17/C169.json"
+        },
+        {
+          "selection": "cross_community_score",
+          "rank": 1,
+          "category_id": "C111",
+          "category_name": "Audio & Video",
+          "scores": {
+            "overall": 3.7,
+            "overall_100": 74.0,
+            "momentum": 4.2,
+            "cross_community": 5.0,
+            "sentiment": 3.12,
+            "engagement": 2.0
+          },
+          "metrics": {
+            "current_week_posts": 8,
+            "previous_week_posts": 6,
+            "growth_rate": 0.3333333333333333,
+            "unique_subreddits": 8,
+            "avg_sentiment": 0.04166666666666666,
+            "positive_share": 0.25,
+            "negative_share": 0.125,
+            "avg_log_engagement": 1.7546316034889389
+          },
+          "communities_top5": [
+            {
+              "subreddit": "youtube",
+              "unique_posts": 6,
+              "discussion_share": 0.07894736842105263
+            },
+            {
+              "subreddit": "NewTubers",
+              "unique_posts": 5,
+              "discussion_share": 0.06578947368421052
+            },
+            {
+              "subreddit": "guitar",
+              "unique_posts": 5,
+              "discussion_share": 0.06578947368421052
+            },
+            {
+              "subreddit": "GooglePixel",
+              "unique_posts": 4,
+              "discussion_share": 0.05263157894736842
+            },
+            {
+              "subreddit": "HeadphoneAdvice",
+              "unique_posts": 4,
+              "discussion_share": 0.05263157894736842
+            }
+          ],
+          "signals_top50": [],
+          "evidence_url": "/data/evidence/2026-08-17/C111.json"
+        },
+        {
+          "selection": "sentiment_score",
+          "rank": 1,
+          "category_id": "C115",
+          "category_name": "Kitchen Knives",
+          "scores": {
+            "overall": 2.2,
+            "overall_100": 44.0,
+            "momentum": 1.0,
+            "cross_community": 2.0,
+            "sentiment": 5.0,
+            "engagement": 2.0
+          },
+          "metrics": {
+            "current_week_posts": 1,
+            "previous_week_posts": 3,
+            "growth_rate": -0.6666666666666666,
+            "unique_subreddits": 1,
+            "avg_sentiment": 1.0,
+            "positive_share": 1.0,
+            "negative_share": 0.0,
+            "avg_log_engagement": 3.332204510175204
+          },
+          "communities_top5": [
+            {
+              "subreddit": "Adulting",
+              "unique_posts": 1,
+              "discussion_share": 0.125
+            },
+            {
+              "subreddit": "Anticonsumption",
+              "unique_posts": 1,
+              "discussion_share": 0.125
+            },
+            {
+              "subreddit": "CleaningTips",
+              "unique_posts": 1,
+              "discussion_share": 0.125
+            },
+            {
+              "subreddit": "KitchenConfidential",
+              "unique_posts": 1,
+              "discussion_share": 0.125
+            },
+            {
+              "subreddit": "Montessori",
+              "unique_posts": 1,
+              "discussion_share": 0.125
+            }
+          ],
+          "signals_top50": [],
+          "evidence_url": "/data/evidence/2026-08-17/C115.json"
+        },
+        {
+          "selection": "engagement_score",
+          "rank": 1,
+          "category_id": "C075",
+          "category_name": "Office Stationery & Supplies",
+          "scores": {
+            "overall": 3.62,
+            "overall_100": 72.4,
+            "momentum": 4.2,
+            "cross_community": 2.0,
+            "sentiment": 3.71,
+            "engagement": 4.0
+          },
+          "metrics": {
+            "current_week_posts": 12,
+            "previous_week_posts": 10,
+            "growth_rate": 0.2,
+            "unique_subreddits": 1,
+            "avg_sentiment": 0.25,
+            "positive_share": 0.3333333333333333,
+            "negative_share": 0.08333333333333333,
+            "avg_log_engagement": 3.3769044992743384
+          },
+          "communities_top5": [
+            {
+              "subreddit": "stationery",
+              "unique_posts": 27,
+              "discussion_share": 0.8709677419354839
+            },
+            {
+              "subreddit": "CasualConversation",
+              "unique_posts": 1,
+              "discussion_share": 0.03225806451612903
+            },
+            {
+              "subreddit": "DoesAnybodyElse",
+              "unique_posts": 1,
+              "discussion_share": 0.03225806451612903
+            },
+            {
+              "subreddit": "ManyBaggers",
+              "unique_posts": 1,
+              "discussion_share": 0.03225806451612903
+            },
+            {
+              "subreddit": "careerguidance",
+              "unique_posts": 1,
+              "discussion_share": 0.03225806451612903
+            }
+          ],
+          "signals_top50": [
+            {
+              "rank": 1,
+              "signal_key": "brand:haul",
+              "kind": "brand",
+              "display": "HAUL",
+              "entity_type": "catalog_known_brand",
+              "unique_posts": 3,
+              "mentions": 1,
+              "sentiment": 1.0,
+              "is_tiktok_shop_listed": false,
+              "brand_confidence_tier": "high",
+              "brand_domain": "shopping",
+              "search_url": "https://www.google.com/search?q=HAUL+brand",
+              "logo_url": ""
+            },
+            {
+              "rank": 2,
+              "signal_key": "brand:washi tape",
+              "kind": "brand",
+              "display": "Washi tape",
+              "entity_type": "catalog_known_brand",
+              "unique_posts": 2,
+              "mentions": 1,
+              "sentiment": 0.0,
+              "is_tiktok_shop_listed": true,
+              "brand_confidence_tier": "high",
+              "brand_domain": "shopping",
+              "search_url": "https://www.google.com/search?q=Washi+tape+brand",
+              "logo_url": ""
+            }
+          ],
+          "evidence_url": "/data/evidence/2026-08-17/C075.json"
+        }
+      ]
+    },
+    {
+      "identity_key": "POP::POP",
+      "ops_team_1": "POP",
+      "ops_team_2": "POP",
+      "mapped_category_count": 119,
+      "matched_category_count": 60,
+      "overall_top5": [
+        {
+          "selection": "overall_trend_score",
+          "rank": 1,
+          "category_id": "C067",
+          "category_name": "Luggage & Travel Bags",
+          "scores": {
+            "overall": 4.74,
+            "overall_100": 94.8,
+            "momentum": 5.0,
+            "cross_community": 5.0,
+            "sentiment": 3.71,
+            "engagement": 5.0
+          },
+          "metrics": {
+            "current_week_posts": 8,
+            "previous_week_posts": 2,
+            "growth_rate": 3.0,
+            "unique_subreddits": 5,
+            "avg_sentiment": 0.25,
+            "positive_share": 0.25,
+            "negative_share": 0.0,
+            "avg_log_engagement": 3.3880244819681122
+          },
+          "communities_top5": [
+            {
+              "subreddit": "backpacks",
+              "unique_posts": 7,
+              "discussion_share": 0.21212121212121213
+            },
+            {
+              "subreddit": "handbags",
+              "unique_posts": 6,
+              "discussion_share": 0.18181818181818182
+            },
+            {
+              "subreddit": "BuyItForLife",
+              "unique_posts": 4,
+              "discussion_share": 0.12121212121212122
+            },
+            {
+              "subreddit": "HerOneBag",
+              "unique_posts": 3,
+              "discussion_share": 0.09090909090909091
+            },
+            {
+              "subreddit": "onebag",
+              "unique_posts": 3,
+              "discussion_share": 0.09090909090909091
+            }
+          ],
+          "signals_top50": [
+            {
+              "rank": 1,
+              "signal_key": "brand:backpack",
+              "kind": "brand",
+              "display": "BackPack",
+              "entity_type": "catalog_known_brand",
+              "unique_posts": 3,
+              "mentions": 1,
+              "sentiment": 0.0,
+              "is_tiktok_shop_listed": false,
+              "brand_confidence_tier": "high",
+              "brand_domain": "shopping",
+              "search_url": "https://www.google.com/search?q=BackPack+brand",
+              "logo_url": ""
+            },
+            {
+              "rank": 2,
+              "signal_key": "brand:vacuum",
+              "kind": "brand",
+              "display": "VACUUM",
+              "entity_type": "catalog_known_brand",
+              "unique_posts": 2,
+              "mentions": 2,
+              "sentiment": 0.5,
+              "is_tiktok_shop_listed": true,
+              "brand_confidence_tier": "high",
+              "brand_domain": "shopping",
+              "search_url": "https://www.google.com/search?q=VACUUM+brand",
+              "logo_url": ""
+            },
+            {
+              "rank": 3,
+              "signal_key": "brand:luggage",
+              "kind": "brand",
+              "display": "LUGGAGE",
+              "entity_type": "catalog_known_brand",
+              "unique_posts": 2,
+              "mentions": 1,
+              "sentiment": 1.0,
+              "is_tiktok_shop_listed": false,
+              "brand_confidence_tier": "high",
+              "brand_domain": "shopping",
+              "search_url": "https://www.google.com/search?q=LUGGAGE+brand",
+              "logo_url": ""
+            }
+          ],
+          "evidence_url": "/data/evidence/2026-08-17/C067.json"
+        },
+        {
+          "selection": "overall_trend_score",
+          "rank": 2,
+          "category_id": "C052",
+          "category_name": "Women's Dresses",
+          "scores": {
+            "overall": 4.71,
+            "overall_100": 94.2,
+            "momentum": 5.0,
+            "cross_community": 5.0,
+            "sentiment": 3.57,
+            "engagement": 5.0
+          },
+          "metrics": {
+            "current_week_posts": 5,
+            "previous_week_posts": 2,
+            "growth_rate": 1.5,
+            "unique_subreddits": 5,
+            "avg_sentiment": 0.2,
+            "positive_share": 0.2,
+            "negative_share": 0.0,
+            "avg_log_engagement": 3.4786183807507265
+          },
+          "communities_top5": [
+            {
+              "subreddit": "OUTFITS",
+              "unique_posts": 5,
+              "discussion_share": 0.21739130434782608
+            },
+            {
+              "subreddit": "PetiteFashionAdvice",
+              "unique_posts": 3,
+              "discussion_share": 0.13043478260869565
+            },
+            {
+              "subreddit": "femalefashionadvice",
+              "unique_posts": 3,
+              "discussion_share": 0.13043478260869565
+            },
+            {
+              "subreddit": "PlusSizeFashion",
+              "unique_posts": 2,
+              "discussion_share": 0.08695652173913043
+            },
+            {
+              "subreddit": "VintageFashion",
+              "unique_posts": 2,
+              "discussion_share": 0.08695652173913043
+            }
+          ],
+          "signals_top50": [],
+          "evidence_url": "/data/evidence/2026-08-17/C052.json"
+        },
+        {
+          "selection": "overall_trend_score",
+          "rank": 3,
+          "category_id": "C101",
+          "category_name": "Dog & Cat Furniture",
+          "scores": {
+            "overall": 4.09,
+            "overall_100": 81.8,
+            "momentum": 4.2,
+            "cross_community": 5.0,
+            "sentiment": 2.05,
+            "engagement": 5.0
+          },
+          "metrics": {
+            "current_week_posts": 6,
+            "previous_week_posts": 6,
+            "growth_rate": 0.0,
+            "unique_subreddits": 5,
+            "avg_sentiment": -0.16666666666666666,
+            "positive_share": 0.16666666666666666,
+            "negative_share": 0.3333333333333333,
+            "avg_log_engagement": 3.4271640670648047
+          },
+          "communities_top5": [
+            {
+              "subreddit": "CatAdvice",
+              "unique_posts": 31,
+              "discussion_share": 0.36046511627906974
+            },
+            {
+              "subreddit": "Pets",
+              "unique_posts": 14,
+              "discussion_share": 0.16279069767441862
+            },
+            {
+              "subreddit": "cats",
+              "unique_posts": 7,
+              "discussion_share": 0.08139534883720931
+            },
+            {
+              "subreddit": "CatTraining",
+              "unique_posts": 4,
+              "discussion_share": 0.046511627906976744
+            },
+            {
+              "subreddit": "dogs",
+              "unique_posts": 4,
+              "discussion_share": 0.046511627906976744
+            }
+          ],
+          "signals_top50": [
+            {
+              "rank": 1,
+              "signal_key": "brand:kitten",
+              "kind": "brand",
+              "display": "Kitten",
+              "entity_type": "catalog_known_brand",
+              "unique_posts": 4,
+              "mentions": 1,
+              "sentiment": -1.0,
+              "is_tiktok_shop_listed": false,
+              "brand_confidence_tier": "high",
+              "brand_domain": "shopping",
+              "search_url": "https://www.google.com/search?q=Kitten+brand",
+              "logo_url": ""
+            },
+            {
+              "rank": 2,
+              "signal_key": "brand:vet",
+              "kind": "brand",
+              "display": "vet",
+              "entity_type": "catalog_known_brand",
+              "unique_posts": 3,
+              "mentions": 1,
+              "sentiment": 1.0,
+              "is_tiktok_shop_listed": false,
+              "brand_confidence_tier": "high",
+              "brand_domain": "shopping",
+              "search_url": "https://www.google.com/search?q=vet+brand",
+              "logo_url": ""
+            },
+            {
+              "rank": 3,
+              "signal_key": "brand:slip",
+              "kind": "brand",
+              "display": "Slip",
+              "entity_type": "confirmed_whitelist_brand",
+              "unique_posts": 1,
+              "mentions": 1,
+              "sentiment": -1.0,
+              "is_tiktok_shop_listed": true,
+              "brand_confidence_tier": "high",
+              "brand_domain": "shopping",
+              "search_url": "https://www.google.com/search?q=Slip+brand",
+              "logo_url": ""
+            }
+          ],
+          "evidence_url": "/data/evidence/2026-08-17/C101.json"
+        },
+        {
+          "selection": "overall_trend_score",
+          "rank": 4,
+          "category_id": "C130",
+          "category_name": "Car Interior Accessories",
+          "scores": {
+            "overall": 4.08,
+            "overall_100": 81.6,
+            "momentum": 4.2,
+            "cross_community": 5.0,
+            "sentiment": 3.0,
+            "engagement": 4.0
+          },
+          "metrics": {
+            "current_week_posts": 5,
+            "previous_week_posts": 3,
+            "growth_rate": 0.6666666666666666,
+            "unique_subreddits": 5,
+            "avg_sentiment": 0.0,
+            "positive_share": 0.0,
+            "negative_share": 0.0,
+            "avg_log_engagement": 2.982771228880768
+          },
+          "communities_top5": [
+            {
+              "subreddit": "WhatCarShouldIBuy",
+              "unique_posts": 14,
+              "discussion_share": 0.2413793103448276
+            },
+            {
+              "subreddit": "InteriorDesign",
+              "unique_posts": 13,
+              "discussion_share": 0.22413793103448276
+            },
+            {
+              "subreddit": "AutoDetailing",
+              "unique_posts": 8,
+              "discussion_share": 0.13793103448275862
+            },
+            {
+              "subreddit": "TeslaModel3",
+              "unique_posts": 5,
+              "discussion_share": 0.08620689655172414
+            },
+            {
+              "subreddit": "Appliances",
+              "unique_posts": 2,
+              "discussion_share": 0.034482758620689655
+            }
+          ],
+          "signals_top50": [
+            {
+              "rank": 1,
+              "signal_key": "brand:macbook",
+              "kind": "brand",
+              "display": "MacBook",
+              "entity_type": "confirmed_whitelist_brand",
+              "unique_posts": 1,
+              "mentions": 1,
+              "sentiment": 0.0,
+              "is_tiktok_shop_listed": false,
+              "brand_confidence_tier": "high",
+              "brand_domain": "shopping",
+              "search_url": "https://www.google.com/search?q=MacBook+brand",
+              "logo_url": ""
+            }
+          ],
+          "evidence_url": "/data/evidence/2026-08-17/C130.json"
+        },
+        {
+          "selection": "overall_trend_score",
+          "rank": 5,
+          "category_id": "C120",
+          "category_name": "Bath & Body Care",
+          "scores": {
+            "overall": 3.92,
+            "overall_100": 78.4,
+            "momentum": 3.8,
+            "cross_community": 5.0,
+            "sentiment": 3.0,
+            "engagement": 4.0
+          },
+          "metrics": {
+            "current_week_posts": 15,
+            "previous_week_posts": 17,
+            "growth_rate": -0.11764705882352941,
+            "unique_subreddits": 6,
+            "avg_sentiment": 0.0,
+            "positive_share": 0.06666666666666667,
+            "negative_share": 0.06666666666666667,
+            "avg_log_engagement": 3.096198229657425
+          },
+          "communities_top5": [
+            {
+              "subreddit": "BathandBodyWorks",
+              "unique_posts": 39,
+              "discussion_share": 0.48148148148148145
+            },
+            {
+              "subreddit": "LushCosmetics",
+              "unique_posts": 11,
+              "discussion_share": 0.13580246913580246
+            },
+            {
+              "subreddit": "fragrance",
+              "unique_posts": 4,
+              "discussion_share": 0.04938271604938271
+            },
+            {
+              "subreddit": "FemFragLab",
+              "unique_posts": 3,
+              "discussion_share": 0.037037037037037035
+            },
+            {
+              "subreddit": "BeautyEmpties",
+              "unique_posts": 2,
+              "discussion_share": 0.024691358024691357
+            }
+          ],
+          "signals_top50": [],
+          "evidence_url": "/data/evidence/2026-08-17/C120.json"
+        }
+      ],
+      "dimension_highlights": [
+        {
+          "selection": "momentum_score",
+          "rank": 1,
+          "category_id": "C063",
+          "category_name": "Home Appliances",
+          "scores": {
+            "overall": 3.59,
+            "overall_100": 71.8,
+            "momentum": 5.0,
+            "cross_community": 2.0,
+            "sentiment": 3.95,
+            "engagement": 2.0
+          },
+          "metrics": {
+            "current_week_posts": 6,
+            "previous_week_posts": 1,
+            "growth_rate": 5.0,
+            "unique_subreddits": 1,
+            "avg_sentiment": 0.3333333333333333,
+            "positive_share": 0.3333333333333333,
+            "negative_share": 0.0,
+            "avg_log_engagement": 2.0170813882122673
+          },
+          "communities_top5": [
+            {
+              "subreddit": "Appliances",
+              "unique_posts": 13,
+              "discussion_share": 0.7647058823529411
+            },
+            {
+              "subreddit": "3Dprinting",
+              "unique_posts": 1,
+              "discussion_share": 0.058823529411764705
+            },
+            {
+              "subreddit": "ApplianceAdvice",
+              "unique_posts": 1,
+              "discussion_share": 0.058823529411764705
+            },
+            {
+              "subreddit": "BuyItForLife",
+              "unique_posts": 1,
+              "discussion_share": 0.058823529411764705
+            },
+            {
+              "subreddit": "organization",
+              "unique_posts": 1,
+              "discussion_share": 0.058823529411764705
+            }
+          ],
+          "signals_top50": [
+            {
+              "rank": 1,
+              "signal_key": "brand:outlet",
+              "kind": "brand",
+              "display": "outlet",
+              "entity_type": "catalog_known_brand",
+              "unique_posts": 3,
+              "mentions": 3,
+              "sentiment": 0.3333333333333333,
+              "is_tiktok_shop_listed": true,
+              "brand_confidence_tier": "high",
+              "brand_domain": "shopping",
+              "search_url": "https://www.google.com/search?q=outlet+brand",
+              "logo_url": ""
+            },
+            {
+              "rank": 2,
+              "signal_key": "brand:dent",
+              "kind": "brand",
+              "display": "Dent",
+              "entity_type": "catalog_known_brand",
+              "unique_posts": 2,
+              "mentions": 2,
+              "sentiment": 0.0,
+              "is_tiktok_shop_listed": false,
+              "brand_confidence_tier": "high",
+              "brand_domain": "shopping",
+              "search_url": "https://www.google.com/search?q=Dent+brand",
+              "logo_url": ""
+            },
+            {
+              "rank": 3,
+              "signal_key": "brand:scratch",
+              "kind": "brand",
+              "display": "Scratch",
+              "entity_type": "catalog_known_brand",
+              "unique_posts": 2,
+              "mentions": 2,
+              "sentiment": 0.0,
+              "is_tiktok_shop_listed": true,
+              "brand_confidence_tier": "high",
+              "brand_domain": "shopping",
+              "search_url": "https://www.google.com/search?q=Scratch+brand",
+              "logo_url": ""
+            }
+          ],
+          "evidence_url": "/data/evidence/2026-08-17/C063.json"
+        },
+        {
+          "selection": "cross_community_score",
+          "rank": 1,
+          "category_id": "C111",
+          "category_name": "Audio & Video",
+          "scores": {
+            "overall": 3.7,
+            "overall_100": 74.0,
+            "momentum": 4.2,
+            "cross_community": 5.0,
+            "sentiment": 3.12,
+            "engagement": 2.0
+          },
+          "metrics": {
+            "current_week_posts": 8,
+            "previous_week_posts": 6,
+            "growth_rate": 0.3333333333333333,
+            "unique_subreddits": 8,
+            "avg_sentiment": 0.04166666666666666,
+            "positive_share": 0.25,
+            "negative_share": 0.125,
+            "avg_log_engagement": 1.7546316034889389
+          },
+          "communities_top5": [
+            {
+              "subreddit": "youtube",
+              "unique_posts": 6,
+              "discussion_share": 0.07894736842105263
+            },
+            {
+              "subreddit": "NewTubers",
+              "unique_posts": 5,
+              "discussion_share": 0.06578947368421052
+            },
+            {
+              "subreddit": "guitar",
+              "unique_posts": 5,
+              "discussion_share": 0.06578947368421052
+            },
+            {
+              "subreddit": "GooglePixel",
+              "unique_posts": 4,
+              "discussion_share": 0.05263157894736842
+            },
+            {
+              "subreddit": "HeadphoneAdvice",
+              "unique_posts": 4,
+              "discussion_share": 0.05263157894736842
+            }
+          ],
+          "signals_top50": [],
+          "evidence_url": "/data/evidence/2026-08-17/C111.json"
+        },
+        {
+          "selection": "sentiment_score",
+          "rank": 1,
+          "category_id": "C008",
+          "category_name": "Car Electronics",
+          "scores": {
+            "overall": 2.2,
+            "overall_100": 44.0,
+            "momentum": 1.0,
+            "cross_community": 2.0,
+            "sentiment": 5.0,
+            "engagement": 2.0
+          },
+          "metrics": {
+            "current_week_posts": 1,
+            "previous_week_posts": 4,
+            "growth_rate": -0.75,
+            "unique_subreddits": 1,
+            "avg_sentiment": 1.0,
+            "positive_share": 1.0,
+            "negative_share": 0.0,
+            "avg_log_engagement": 4.718498871295094
+          },
+          "communities_top5": [
+            {
+              "subreddit": "AskElectronics",
+              "unique_posts": 3,
+              "discussion_share": 0.25
+            },
+            {
+              "subreddit": "Adulting",
+              "unique_posts": 1,
+              "discussion_share": 0.08333333333333333
+            },
+            {
+              "subreddit": "AmazonVine",
+              "unique_posts": 1,
+              "discussion_share": 0.08333333333333333
+            },
+            {
+              "subreddit": "BuyItForLife",
+              "unique_posts": 1,
+              "discussion_share": 0.08333333333333333
+            },
+            {
+              "subreddit": "InteriorDesign",
+              "unique_posts": 1,
+              "discussion_share": 0.08333333333333333
+            }
+          ],
+          "signals_top50": [],
+          "evidence_url": "/data/evidence/2026-08-17/C008.json"
+        },
+        {
+          "selection": "engagement_score",
+          "rank": 1,
+          "category_id": "C075",
+          "category_name": "Office Stationery & Supplies",
+          "scores": {
+            "overall": 3.62,
+            "overall_100": 72.4,
+            "momentum": 4.2,
+            "cross_community": 2.0,
+            "sentiment": 3.71,
+            "engagement": 4.0
+          },
+          "metrics": {
+            "current_week_posts": 12,
+            "previous_week_posts": 10,
+            "growth_rate": 0.2,
+            "unique_subreddits": 1,
+            "avg_sentiment": 0.25,
+            "positive_share": 0.3333333333333333,
+            "negative_share": 0.08333333333333333,
+            "avg_log_engagement": 3.3769044992743384
+          },
+          "communities_top5": [
+            {
+              "subreddit": "stationery",
+              "unique_posts": 27,
+              "discussion_share": 0.8709677419354839
+            },
+            {
+              "subreddit": "CasualConversation",
+              "unique_posts": 1,
+              "discussion_share": 0.03225806451612903
+            },
+            {
+              "subreddit": "DoesAnybodyElse",
+              "unique_posts": 1,
+              "discussion_share": 0.03225806451612903
+            },
+            {
+              "subreddit": "ManyBaggers",
+              "unique_posts": 1,
+              "discussion_share": 0.03225806451612903
+            },
+            {
+              "subreddit": "careerguidance",
+              "unique_posts": 1,
+              "discussion_share": 0.03225806451612903
+            }
+          ],
+          "signals_top50": [
+            {
+              "rank": 1,
+              "signal_key": "brand:haul",
+              "kind": "brand",
+              "display": "HAUL",
+              "entity_type": "catalog_known_brand",
+              "unique_posts": 3,
+              "mentions": 1,
+              "sentiment": 1.0,
+              "is_tiktok_shop_listed": false,
+              "brand_confidence_tier": "high",
+              "brand_domain": "shopping",
+              "search_url": "https://www.google.com/search?q=HAUL+brand",
+              "logo_url": ""
+            },
+            {
+              "rank": 2,
+              "signal_key": "brand:washi tape",
+              "kind": "brand",
+              "display": "Washi tape",
+              "entity_type": "catalog_known_brand",
+              "unique_posts": 2,
+              "mentions": 1,
+              "sentiment": 0.0,
+              "is_tiktok_shop_listed": true,
+              "brand_confidence_tier": "high",
+              "brand_domain": "shopping",
+              "search_url": "https://www.google.com/search?q=Washi+tape+brand",
+              "logo_url": ""
+            }
+          ],
+          "evidence_url": "/data/evidence/2026-08-17/C075.json"
+        }
+      ]
+    }
+  ]
+}
